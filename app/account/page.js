@@ -6,6 +6,7 @@ import { useUser } from "@/lib/useUser";
 import { getMyBookings } from "@/lib/bookings";
 import { getFavouriteStudios } from "@/lib/favourites";
 import { getWallet } from "@/lib/wallet";
+import { ReferStudio } from "@/components/booking/ReferStudio";
 import { signOut } from "@/lib/auth";
 
 function fmtRange(during) {
@@ -109,6 +110,15 @@ export default function AccountPage() {
                 </div>
               )}
             </div>
+          </div>
+        </section>
+      )}
+
+      {user && (
+        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
+          <div className="sey-container" style={{ padding: "20px 0" }}>
+            <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Invite a studio · €15</h2>
+            <ReferStudio />
           </div>
         </section>
       )}

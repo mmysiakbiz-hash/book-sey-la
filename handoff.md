@@ -62,7 +62,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 **K. Favourites, wallet/referrals** — 🚧 in progress (step by step).
 - ✅ **K1 Favourites**: `lib/favourites.js` (client, RLS `fav_self`), `SaveStudioButton` heart on the venue header, "Saved studios" list on `/account`. Verified vs live DB (insert/select/delete + per-user isolation).
 - ✅ **K2 Wallet**: `lib/wallet.js` (read-only, RLS `wallet_self` by email) + Wallet section on `/account` (balance + history, empty-state hint). Verified vs live DB (owner reads own, isolation by email).
-- ⬜ **K3 Referrals**: `referrals` SELECT-only — needs a server route to create an invite (referrer = session email) + completion crediting both wallets when the referred studio goes live.
+- ✅ **K3 Referrals**: invite a studio → both get €15 when it goes live. `POST /api/refer` (service role; referrer email from the verified session, dedupe unique index, no self-refer). Completion is a DB trigger on `studios` (`complete_referrals_for_studio`): when a studio with a matching `owner_email` goes active, it marks the referral completed and inserts two `wallet_transactions` — so credit can't be gamed (only real go-lives pay out). `/account` "Invite a studio" section (`ReferStudio` + `lib/referrals.js`) with pending/completed list. Verified vs live DB (pending → studio go-live → both credited €15, idempotent). **K fully done.**
 
 **L. Auth polish** — optional phone OTP (needs SMS provider); proper account management, sign-out everywhere.
 
