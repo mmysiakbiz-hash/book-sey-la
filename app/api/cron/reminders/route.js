@@ -9,7 +9,8 @@
 // public.due_reminders(kind) (SECURITY DEFINER — resolves the customer email).
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendBrevoEmail, bookingReminderEmail } from "@/lib/email";
+import { sendBrevoEmail, bookingReminderEmail, reviewRequestEmail } from "@/lib/email";
+import { signReviewToken } from "@/lib/reviewToken";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,6 +52,37 @@ async function processKind(supabase, kind) {
   return { kind, due: due.length, sent: sentIds.length };
 }
 
+// Post-visit review requests: email a signed review link, then stamp
+// review_requested_at so it goes out only once per booking.
+async function processReviewRequests(supabase, origin) {
+  const { data: due, error } = await supabase.rpc("due_review_requests");
+  if (error) return { kind: "review_request", error: error.message };
+  if (!due || !due.length) return { kind: "review_request", due: 0, sent: 0 };
+
+  const sentIds = [];
+  for (const b of due) {
+    if (!b.email) continue;
+    const token = signReviewToken(b.id);
+    if (!token) return { kind: "review_request", error: "review_secret_not_configured" };
+    const reviewUrl = `${origin}/review/${b.id}?t=${token}`;
+    const { subject, html } = reviewRequestEmail({
+      studioName: b.studio_name || "",
+      serviceName: b.service_name || "",
+      reviewUrl,
+    });
+    const mail = await sendBrevoEmail({ to: b.email, subject, html });
+    if (!mail.error) sentIds.push(b.id);
+    else console.error(`[cron] review request email failed for ${b.id}:`, mail.error);
+  }
+
+  if (sentIds.length) {
+    const stamp = new Date().toISOString();
+    const { error: upErr } = await supabase.from("bookings").update({ review_requested_at: stamp }).in("id", sentIds);
+    if (upErr) console.error("[cron] review_requested_at update failed:", upErr.message);
+  }
+  return { kind: "review_request", due: due.length, sent: sentIds.length };
+}
+
 export async function GET(req) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -70,9 +102,11 @@ export async function GET(req) {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  const origin = new URL(req.url).origin;
   const results = [];
   results.push(await processKind(supabase, "24h"));
   results.push(await processKind(supabase, "2h"));
+  results.push(await processReviewRequests(supabase, origin));
 
   return NextResponse.json({ ok: true, results });
 }

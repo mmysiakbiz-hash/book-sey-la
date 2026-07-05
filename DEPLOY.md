@@ -87,7 +87,16 @@ zaczynających się za ~24h i ~2h i ustawia flagi `reminded_24h/2h` (nie zdubluj
 - Alternatywa niezależna od planu: wskaż darmowy scheduler (np. cron-job.org)
   na `https://<adres>/api/cron/reminders?token=<CRON_SECRET>` co godzinę.
 - Test ręczny: `https://<adres>/api/cron/reminders?token=<CRON_SECRET>` →
-  `{ "ok": true, "results": [ { "kind": "24h", ... }, { "kind": "2h", ... } ] }`.
+  `{ "ok": true, "results": [ {24h}, {2h}, {review_request} ] }`.
+
+## 6. Recenzje (po wizycie)
+Ten sam cron (`/api/cron/reminders`) wysyła też **prośbę o recenzję** po wizycie
+(mail z podpisanym linkiem `/review/<id>?t=...`). Gość wystawia ocenę bez logowania;
+zapis idzie przez `/api/review` (service role — tabela `reviews` nie ma polityki
+INSERT dla klienta). Recenzje pokazują się na stronie lokalu (sekcja „reviews").
+- Wymaga `SUPABASE_SERVICE_ROLE_KEY` + `BREVO_API_KEY`. Token linku podpisywany
+  `REVIEW_SECRET` (albo `CRON_SECRET`, jeśli `REVIEW_SECRET` nie ustawisz).
+- Nic dodatkowego do klikania — działa razem z crona z pkt 5.
 
 ## Kolejne sesje (żeby agent mógł pushować sam)
 Następną sesję Claude Code otwórz **na repo `book-sey-la`** (nie na paczce Design) —

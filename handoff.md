@@ -45,7 +45,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 **D. Reminders 24h/2h** — ✅ DONE. `GET /api/cron/reminders` (Vercel Cron `vercel.json`, hourly) → SQL fn `public.due_reminders(kind)` (SECURITY DEFINER, resolves customer email from auth.users) → Brevo reminder mail → flips `reminded_24h/2h`. Secured by `CRON_SECRET`. Verified against live DB with temp bookings (24h + 2h buckets correct). Needs `CRON_SECRET` in Vercel; on Hobby plan Vercel Cron runs daily only — use an external hourly scheduler hitting `?token=CRON_SECRET` if hourly is needed. Details: `DEPLOY.md §5`.
 
-**E. Reviews** — post-visit review-request email; review submission via server/Edge Function (table `reviews` has **no client INSERT** policy). Then repoint venue reviews to the `reviews` table (FK embed) so the section lights up.
+**E. Reviews** — ✅ DONE. Post-visit review-request email folded into the hourly cron (`due_review_requests()` SQL fn + `bookings.review_requested_at` flag + `reviews.booking_id` unique). Submission: public page `/review/[bookingId]?t=<token>` → `POST /api/review` (service role insert; token = HMAC of bookingId via `lib/reviewToken.js`, `REVIEW_SECRET`/`CRON_SECRET`). Venue page repointed: `getStudioBySlug` embeds `reviews(...)`, real reviews lead the list + drive the headline score/count; `VenueClose` renders per-review star ratings. Needs `SUPABASE_SERVICE_ROLE_KEY`, `BREVO_API_KEY`, `REVIEW_SECRET`(or `CRON_SECRET`). Details: `DEPLOY.md §6`.
 
 **F. Panels wired to Supabase** — `/panel` agenda from real `bookings`; services/team/hours config writes (`owns_studio` RLS); admin stats from real data.
 

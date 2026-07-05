@@ -41,6 +41,7 @@ function VenueClose({ studio }) {
       when: r.relative_time_description || r.when || r.time || "",
       text: r.text || r.comment || r.review || "",
       img: r.profile_photo_url || r.img || r.avatar || "",
+      rating: Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5))),
     }))
     .filter((r) => r.text);
   const hasReviews = reviews.length > 0;
@@ -64,7 +65,7 @@ function VenueClose({ studio }) {
           <div className="vn-reviews">
             {reviews.map((r, i) => (
               <figure className="vn-review" key={r.name + i}>
-                <div className="vn-quote-rating">{[0,1,2,3,4].map(j=><Icon key={j} name="star" size={14} color="var(--brass)" />)}</div>
+                <div className="vn-quote-rating">{[0,1,2,3,4].map(j=><Icon key={j} name="star" size={14} color={j < r.rating ? "var(--brass)" : "var(--line-strong)"} />)}</div>
                 <blockquote>{r.text}</blockquote>
                 <figcaption className="vn-review-by">
                   {r.img
