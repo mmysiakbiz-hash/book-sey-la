@@ -8,7 +8,7 @@ import { SaveStudioButton } from "@/components/booking/SaveStudioButton";
 
 const U = "https://images.unsplash.com/photo-";
 
-function VenueHero({ studio }) {
+function VenueHero({ studio, hasClasses }) {
   // Live studio from Supabase when available; demo (Kreol Spa) fallback otherwise.
   const name = (studio && studio.name) || "Kreol Spa";
   const parts = name.trim().split(" ");
@@ -37,7 +37,7 @@ function VenueHero({ studio }) {
           </a>
           <nav className="vn-nav" aria-label="Sections">
             <a href="#services">Services</a>
-            <a href="#classes">Classes</a>
+            {hasClasses && <a href="#classes">Classes</a>}
             <a href="#team">Team</a>
             <a href="#gallery">Gallery</a>
             {hasReviews && <a href="#reviews">Reviews</a>}
@@ -67,7 +67,10 @@ function VenueHero({ studio }) {
           </div>
           <div className="vn-hero-actions">
             <Button size="lg" href="#services" as="a">Book a treatment</Button>
-            <Button size="lg" variant="secondary" href="#visit" as="a">Get directions</Button>
+            <Button size="lg" variant="secondary" href="#visit" as="a"
+              style={{ background: "rgba(255,255,255,0.14)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.7)", backdropFilter: "blur(4px)" }}>
+              Get directions
+            </Button>
           </div>
         </div>
       </section>
