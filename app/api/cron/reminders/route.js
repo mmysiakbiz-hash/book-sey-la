@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendBrevoEmail, bookingReminderEmail, reviewRequestEmail, billingBlockedEmail } from "@/lib/email";
+import { sendWhatsApp, bookingReminderText, hasWhatsApp } from "@/lib/whatsapp";
 import { signReviewToken } from "@/lib/reviewToken";
 
 const GRACE_MS = 14 * 24 * 3600 * 1000;
@@ -33,16 +34,28 @@ async function processKind(supabase, kind) {
 
   const sentIds = [];
   for (const b of due) {
-    if (!b.email) continue;
-    const { subject, html } = bookingReminderEmail({
-      studioName: b.studio_name || "",
-      serviceName: b.service_name || "",
-      whenText: whenText(b.starts_at),
-      kind,
-    });
-    const mail = await sendBrevoEmail({ to: b.email, subject, html });
-    if (!mail.error) sentIds.push(b.id);
-    else console.error(`[cron] ${kind} reminder email failed for ${b.id}:`, mail.error);
+    let delivered = false;
+    if (b.email) {
+      const { subject, html } = bookingReminderEmail({
+        studioName: b.studio_name || "",
+        serviceName: b.service_name || "",
+        whenText: whenText(b.starts_at),
+        kind,
+      });
+      const mail = await sendBrevoEmail({ to: b.email, subject, html });
+      if (!mail.error) delivered = true;
+      else console.error(`[cron] ${kind} reminder email failed for ${b.id}:`, mail.error);
+    }
+    if (b.phone && hasWhatsApp()) {
+      const wa = await sendWhatsApp({
+        to: b.phone,
+        body: bookingReminderText({ studioName: b.studio_name || "", serviceName: b.service_name || "", whenText: whenText(b.starts_at), kind }),
+      });
+      if (wa.ok) delivered = true;
+      else if (wa.error) console.error(`[cron] ${kind} reminder whatsapp failed for ${b.id}:`, wa.error);
+    }
+    // Flag flips when the reminder went out on at least one channel.
+    if (delivered) sentIds.push(b.id);
   }
 
   // Flip the flag only for the ones that actually went out, so transient email

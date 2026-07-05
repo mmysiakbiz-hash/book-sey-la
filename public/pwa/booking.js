@@ -102,6 +102,7 @@
           durationMin: p.durationMin || 60,
           priceEur: p.priceEur != null ? p.priceEur : null,
           notes: p.notes || null,
+          phone: p.phone || null,
         }),
       });
       var json = await res.json().catch(function () { return { error: "http_" + res.status }; });

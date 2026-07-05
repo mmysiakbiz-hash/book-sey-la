@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendBrevoEmail, bookingConfirmationEmail } from "@/lib/email";
+import { sendWhatsApp, bookingConfirmationText, hasWhatsApp } from "@/lib/whatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,9 +68,10 @@ export async function POST(req) {
   const price = body.priceEur != null ? Number(body.priceEur) : null;
   const commissionDue = isNewClient && price != null ? Math.round(price * 0.20 * 100) / 100 : 0;
 
-  // Carry a display name/email so the studio owner sees who's coming (owners
+  // Carry a display name/email/phone so the studio owner sees who's coming (owners
   // can't read auth.users). The customer sharing this with the studio is expected.
   const displayName = (user.user_metadata && user.user_metadata.name) || null;
+  const phone = typeof body.phone === "string" && body.phone.trim() ? body.phone.trim() : ((user.user_metadata && user.user_metadata.phone) || null);
 
   const { data: booking, error } = await supabase
     .from("bookings")
@@ -86,6 +88,7 @@ export async function POST(req) {
       commission_due: commissionDue,
       guest_name: displayName,
       guest_email: user.email || null,
+      guest_phone: phone,
       notes: body.notes || null,
     })
     .select("id, during, status, price_eur")
@@ -115,5 +118,13 @@ export async function POST(req) {
   const mail = await sendBrevoEmail({ to: user.email, subject, html });
   if (mail.error) console.error("[book] confirmation email failed:", mail.error);
 
-  return NextResponse.json({ ok: true, booking, emailed: !mail.error, emailError: mail.error || null });
+  // WhatsApp confirmation is additive (no-op unless WHAPI_TOKEN is set + phone known).
+  let waSent = false;
+  if (phone && hasWhatsApp()) {
+    const wa = await sendWhatsApp({ to: phone, body: bookingConfirmationText({ studioName, serviceName, whenText, priceText }) });
+    waSent = !!wa.ok;
+    if (wa.error) console.error("[book] confirmation whatsapp failed:", wa.error);
+  }
+
+  return NextResponse.json({ ok: true, booking, emailed: !mail.error, whatsapped: waSent, emailError: mail.error || null });
 }
