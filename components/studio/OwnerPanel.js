@@ -11,7 +11,7 @@ import {
   getStudioBookings, setBookingStatus, rescheduleBooking,
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
-  createOwnerBooking, getStudioClients, saveClientNote,
+  createOwnerBooking, getStudioClients, saveClientNote, saveClientTags,
   getTimeOff, addTimeOff, deleteTimeOff,
   getLoyalty, saveLoyalty, redeemLoyalty, sendMarketing,
   getWaitlist, setWaitlistStatus, deleteWaitlistEntry,
@@ -285,6 +285,7 @@ export default function OwnerPanel() {
       ) : view === "clients" && studio ? (
         <Clients2 clients={clients} loyalty={loyalty}
           onSaveNote={(email, note) => saveClientNote(studio.id, email, note)}
+          onSaveTags={async (email, tags) => { await saveClientTags(studio.id, email, tags); loadClients(studio.id); }}
           onSaveLoyalty={async (p) => { const r = await saveLoyalty(studio.id, p); loadClients(studio.id); return r; }}
           onRedeem={async (email) => { await redeemLoyalty(studio.id, email); loadClients(studio.id); }} />
       ) : view === "classes" && studio ? (
@@ -752,16 +753,17 @@ function Waitlist2({ rows, onStatus, onDelete }) {
   );
 }
 
-function MarketingComposer({ count }) {
+function MarketingComposer({ count, tags }) {
   const [open, setOpen] = React.useState(false);
   const [msg, setMsg] = React.useState("");
+  const [seg, setSeg] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [result, setResult] = React.useState("");
   async function send() {
     if (!msg.trim()) return;
-    if (typeof window !== "undefined" && !window.confirm(`Email this to your clients (up to ${count})?`)) return;
+    if (typeof window !== "undefined" && !window.confirm(seg ? `Email this to clients tagged “${seg}”?` : `Email this to your clients (up to ${count})?`)) return;
     setBusy(true); setResult("");
-    const r = await sendMarketing(msg);
+    const r = await sendMarketing(msg, seg);
     setBusy(false);
     if (r && r.ok) { setResult(`Sent to ${r.sent}/${r.recipients} clients.`); setMsg(""); }
     else setResult("Couldn't send" + (r && r.error ? ` (${r.error})` : "") + ".");
@@ -776,6 +778,15 @@ function MarketingComposer({ count }) {
         <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
           <textarea rows={4} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={"e.g. 20% off cuts this week — book your slot!"}
             style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" }} />
+          {tags && tags.length > 0 && (
+            <label style={{ fontSize: "var(--text-sm)", color: "var(--cocoa)", display: "flex", alignItems: "center", gap: 8 }}>
+              Send to
+              <select value={seg} onChange={(e) => setSeg(e.target.value)} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "6px 10px", font: "inherit", fontFamily: "var(--font-body)" }}>
+                <option value="">everyone</option>
+                {tags.map((t) => <option key={t} value={t}>tag: {t}</option>)}
+              </select>
+            </label>
+          )}
           <button style={{ ...primaryBtn, justifySelf: "start", padding: "9px 18px", fontSize: "var(--text-sm)" }} onClick={send} disabled={busy || !msg.trim()}>{busy ? "Sending…" : "Send to clients"}</button>
           {result && <span style={{ fontSize: "var(--text-sm)", color: "var(--eucalyptus)", fontWeight: 600 }}>{result}</span>}
         </div>
@@ -846,10 +857,12 @@ function BlockTime({ onAdd, onDone }) {
   );
 }
 
-function Clients2({ clients, loyalty, onSaveNote, onSaveLoyalty, onRedeem }) {
+function Clients2({ clients, loyalty, onSaveNote, onSaveTags, onSaveLoyalty, onRedeem }) {
   const [open, setOpen] = React.useState(null); // client key with note editor open
   const [draft, setDraft] = React.useState("");
+  const [tagInput, setTagInput] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const allTags = React.useMemo(() => Array.from(new Set((clients || []).flatMap((c) => c.tags || []))).sort(), [clients]);
 
   const req = loyalty && loyalty.stamps_required ? loyalty.stamps_required : 0;
   const active = !!(loyalty && loyalty.active && req);
@@ -867,7 +880,7 @@ function Clients2({ clients, loyalty, onSaveNote, onSaveLoyalty, onRedeem }) {
 
   return (
     <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
-      <MarketingComposer count={clients.length} />
+      <MarketingComposer count={clients.length} tags={allTags} />
       <LoyaltyEditor loyalty={loyalty} onSave={onSaveLoyalty} />
       {clients.length > 0 && (
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -885,6 +898,11 @@ function Clients2({ clients, loyalty, onSaveNote, onSaveLoyalty, onRedeem }) {
             <span style={{ flex: 1, minWidth: 160 }}>
               <span style={{ fontWeight: 600, color: "var(--cocoa)" }}>{c.name}</span>
               <span style={{ display: "block", color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>{c.email || c.phone || "—"}</span>
+              {(c.tags || []).length > 0 && (
+                <span style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                  {c.tags.map((t) => <span key={t} style={{ fontSize: 10, fontWeight: 700, color: "var(--clay)", background: "var(--blush, #f6ece9)", padding: "2px 7px", borderRadius: 999 }}>{t}</span>)}
+                </span>
+              )}
             </span>
             <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{c.visits} visit{c.visits === 1 ? "" : "s"}</span>
             <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>€{Math.round(c.spent)}</span>
@@ -902,7 +920,19 @@ function Clients2({ clients, loyalty, onSaveNote, onSaveLoyalty, onRedeem }) {
               <textarea rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Private note (allergies, preferences…)"
                 style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" }} />
               <button style={{ ...primaryBtn, justifySelf: "start", padding: "8px 16px", fontSize: "var(--text-sm)" }} onClick={() => saveNote(c)} disabled={busy || !(c.email)}>{busy ? "Saving…" : "Save note"}</button>
-              {!c.email && <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>Notes need an email on the client.</span>}
+              {c.email && (
+                <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", borderTop: "1px solid var(--line)", paddingTop: 10 }}>
+                  {(c.tags || []).map((t) => (
+                    <span key={t} style={{ fontSize: 11, fontWeight: 700, color: "var(--clay)", background: "var(--blush, #f6ece9)", padding: "3px 8px", borderRadius: 999, display: "inline-flex", gap: 4 }}>{t}
+                      <button onClick={() => onSaveTags(c.email, (c.tags || []).filter((x) => x !== t))} style={{ border: "none", background: "none", color: "var(--clay)", cursor: "pointer", padding: 0 }}>×</button>
+                    </span>
+                  ))}
+                  <input value={open === c.key ? tagInput : ""} onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && tagInput.trim()) { onSaveTags(c.email, [...(c.tags || []), tagInput.trim()]); setTagInput(""); } }}
+                    placeholder="+ tag (Enter)" style={{ border: "1.5px solid var(--border)", borderRadius: 999, padding: "5px 10px", fontSize: "var(--text-xs)", fontFamily: "var(--font-body)", width: 120 }} />
+                </div>
+              )}
+              {!c.email && <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>Notes & tags need an email on the client.</span>}
             </div>
           )}
         </div>

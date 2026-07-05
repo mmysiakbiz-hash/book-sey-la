@@ -22,6 +22,7 @@ export async function POST(req) {
   if (!token) return NextResponse.json({ error: "auth_required" }, { status: 401 });
   const body = await req.json().catch(() => null);
   const message = body && typeof body.message === "string" ? body.message.trim() : "";
+  const tag = body && typeof body.tag === "string" ? body.tag.trim() : "";
   if (!message) return NextResponse.json({ error: "empty_message" }, { status: 400 });
 
   // Act as the owner — RLS scopes reads to studios/bookings they own.
@@ -34,7 +35,15 @@ export async function POST(req) {
   if (!studio) return NextResponse.json({ error: "no_studio" }, { status: 400 });
 
   const { data: rows } = await supabase.from("bookings").select("guest_email").eq("studio_id", studio.id);
-  const emails = Array.from(new Set((rows || []).map((r) => (r.guest_email || "").trim().toLowerCase()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)))).slice(0, MAX);
+  let emails = Array.from(new Set((rows || []).map((r) => (r.guest_email || "").trim().toLowerCase()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))));
+
+  // Optional segment: only clients tagged `tag`.
+  if (tag) {
+    const { data: tagged } = await supabase.from("client_notes").select("client_email").eq("studio_id", studio.id).contains("tags", [tag]);
+    const allow = new Set((tagged || []).map((t) => (t.client_email || "").toLowerCase()));
+    emails = emails.filter((e) => allow.has(e));
+  }
+  emails = emails.slice(0, MAX);
   if (emails.length === 0) return NextResponse.json({ ok: true, sent: 0, recipients: 0 });
 
   const origin = new URL(req.url).origin;
