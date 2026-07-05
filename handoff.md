@@ -43,7 +43,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 **C. PWA booking → `/api/book`** (heart of product) — ✅ DONE (see DONE list). Wired: supabase-js UMD + `window.SEY_BOOK`, real email magic-link login, session shared from the site, `BookFlow` writes real bookings via `/api/book`. Depends on **B** for the confirmation/magic-link emails to actually land, and on prod Supabase reachability for studios to carry `dbId` (demo fallback when unreachable). Not yet: a dedicated in-PWA "email OTP code" entry (currently magic-link redirect back to `/pwa/`); staff/deposit not sent (staff_id null, pay handled as before).
 
-**D. Reminders 24h/2h** — cron (Vercel Cron or Supabase Edge Function) using `bookings.reminded_24h/reminded_2h` + Brevo API.
+**D. Reminders 24h/2h** — ✅ DONE. `GET /api/cron/reminders` (Vercel Cron `vercel.json`, hourly) → SQL fn `public.due_reminders(kind)` (SECURITY DEFINER, resolves customer email from auth.users) → Brevo reminder mail → flips `reminded_24h/2h`. Secured by `CRON_SECRET`. Verified against live DB with temp bookings (24h + 2h buckets correct). Needs `CRON_SECRET` in Vercel; on Hobby plan Vercel Cron runs daily only — use an external hourly scheduler hitting `?token=CRON_SECRET` if hourly is needed. Details: `DEPLOY.md §5`.
 
 **E. Reviews** — post-visit review-request email; review submission via server/Edge Function (table `reviews` has **no client INSERT** policy). Then repoint venue reviews to the `reviews` table (FK embed) so the section lights up.
 

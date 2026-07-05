@@ -77,6 +77,18 @@ Tylko jeśli NIE chcesz używać `SUPABASE_SERVICE_ROLE_KEY`. Supabase →
 Diagnostyka: jeśli **4b** działa (Brevo API OK), a magic-link nadal nie przychodzi,
 sprawdź czy `serviceRoleConfigured` = true (4c) oraz redirecty/URL-config (pkt 3).
 
+## 5. Przypomnienia 24h / 2h (cron)
+Endpoint `GET /api/cron/reminders` wysyła przypomnienia (Brevo) o rezerwacjach
+zaczynających się za ~24h i ~2h i ustawia flagi `reminded_24h/2h` (nie zdubluje).
+- W Vercel dodaj sekret **`CRON_SECRET`** (dowolny losowy ciąg). Wymaga też
+  `SUPABASE_SERVICE_ROLE_KEY` i `BREVO_API_KEY` (już z pkt 4).
+- Harmonogram jest w `vercel.json` (`0 * * * *` = co godzinę). **Uwaga:** na planie
+  **Hobby** Vercel odpala crony tylko **raz na dobę** — na Pro działa co godzinę.
+- Alternatywa niezależna od planu: wskaż darmowy scheduler (np. cron-job.org)
+  na `https://<adres>/api/cron/reminders?token=<CRON_SECRET>` co godzinę.
+- Test ręczny: `https://<adres>/api/cron/reminders?token=<CRON_SECRET>` →
+  `{ "ok": true, "results": [ { "kind": "24h", ... }, { "kind": "2h", ... } ] }`.
+
 ## Kolejne sesje (żeby agent mógł pushować sam)
 Następną sesję Claude Code otwórz **na repo `book-sey-la`** (nie na paczce Design) —
 wtedy commity lecą prosto do repo, a Vercel deployuje automatycznie.
