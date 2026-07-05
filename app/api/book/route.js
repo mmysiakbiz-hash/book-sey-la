@@ -34,6 +34,19 @@ export async function POST(req) {
   const end = new Date(start.getTime() + (body.durationMin || 60) * 60000);
   const during = `[${start.toISOString()},${end.toISOString()})`;
 
+  // A client "acquired" via sey.la = one with no prior booking at this studio.
+  // Their first booking carries a 20% commission; regulars a studio imported
+  // itself already have history, so they don't. (RLS lets the user read their
+  // own bookings, which is all we need to detect a first-time visit.)
+  const { count: priorCount } = await supabase
+    .from("bookings")
+    .select("id", { count: "exact", head: true })
+    .eq("studio_id", body.studioId)
+    .eq("customer_id", user.id);
+  const isNewClient = (priorCount || 0) === 0;
+  const price = body.priceEur != null ? Number(body.priceEur) : null;
+  const commissionDue = isNewClient && price != null ? Math.round(price * 0.20 * 100) / 100 : 0;
+
   const { data: booking, error } = await supabase
     .from("bookings")
     .insert({
@@ -43,9 +56,10 @@ export async function POST(req) {
       customer_id: user.id,
       during,
       status: "confirmed",
-      price_eur: body.priceEur != null ? body.priceEur : null,
+      price_eur: price,
       source: "web",
-      is_new_client: false,
+      is_new_client: isNewClient,
+      commission_due: commissionDue,
       notes: body.notes || null,
     })
     .select("id, during, status, price_eur")

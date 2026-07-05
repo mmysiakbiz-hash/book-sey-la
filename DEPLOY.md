@@ -112,9 +112,12 @@ service-role. Zdjęcia lądują w publicznym buckecie `studio-photos`.
 
 ## 8. Billing (na razie zaślepka Stripe)
 Model: **3 miesiące gratis** od rejestracji salonu (`studios.trial_ends_at`), potem
-**400 SCR za każdego pracownika** wpiętego do konta, **14 dni** na wpłatę, a po tym
-okresie konto zostaje **zablokowane** (`billing_blocked=true` → salon znika z
-publicznej strony; właściciel dalej ma dostęp do `/panel`).
+**500 SCR za użytkownika** (właściciel = pierwszy użytkownik, +500 za każdego
+pracownika → 500 × max(1, pracownicy)) **plus 20% prowizji od pierwszej rezerwacji
+pozyskanego klienta** (`bookings.commission_due`; stali klienci wgrani przez salon
+mają już historię, więc bez prowizji). **14 dni** na wpłatę, a po tym okresie konto
+zostaje **zablokowane** (`billing_blocked=true` → salon znika z publicznej strony;
+właściciel dalej ma dostęp do `/panel`).
 - Właściciel widzi status w `/panel → Billing` (trial/termin/kwota/grace). Przycisk
   płatności to **placeholder** („coming soon") — realny Stripe dojdzie później.
 - Blokadę po przekroczeniu grace robi dzienny cron (`/api/cron/reminders`,
