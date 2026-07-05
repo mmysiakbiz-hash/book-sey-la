@@ -66,7 +66,10 @@ export async function POST(req) {
   const action = body && body.action;
 
   if (action === "bi") {
-    const { data, error } = await db.rpc("admin_bi");
+    const args = {};
+    if (body.from) args.p_from = body.from;
+    if (body.to) args.p_to = body.to;
+    const { data, error } = await db.rpc("admin_bi", args);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ bi: data });
   }

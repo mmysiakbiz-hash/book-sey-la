@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [bookings, setBookings] = React.useState(null);
   const [users, setUsers] = React.useState(null);
   const [busy, setBusy] = React.useState("");
+  const [range, setRange] = React.useState("all"); // all | 7d | 30d | 90d
 
   const api = React.useCallback((action, extra) => call(action, token, session, extra), [token, session]);
 
@@ -103,7 +104,13 @@ export default function AdminPage() {
     } catch (e) { setErr(e.message); }
   }
 
-  async function refreshBi() { try { setBi((await api("bi")).bi); } catch (e) {} }
+  function rangeArgs(key) {
+    if (key === "all") return {};
+    const days = { "7d": 7, "30d": 30, "90d": 90 }[key] || 30;
+    return { from: new Date(Date.now() - days * 864e5).toISOString(), to: new Date().toISOString() };
+  }
+  async function loadBi(r) { try { setBi((await api("bi", rangeArgs(r))).bi); setRange(r); } catch (e) { setErr(e.message); } }
+  async function refreshBi() { try { setBi((await api("bi", rangeArgs(range))).bi); } catch (e) {} }
 
   async function studioAction(id, op, value) {
     const labels = { delete: "Delete this studio and ALL its data? This cannot be undone." };
@@ -159,7 +166,7 @@ export default function AdminPage() {
       </div>
       {err && <p style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</p>}
 
-      {tab === "overview" && bi && <Overview bi={bi} />}
+      {tab === "overview" && bi && <Overview bi={bi} range={range} onRange={loadBi} />}
       {tab === "studios" && <Studios rows={studios} busy={busy} onAction={studioAction} />}
       {tab === "bookings" && <Bookings rows={bookings} busy={busy} onAction={bookingAction} />}
       {tab === "users" && <Users rows={users} />}
@@ -167,11 +174,20 @@ export default function AdminPage() {
   );
 }
 
-function Overview({ bi }) {
+function Overview({ bi, range, onRange }) {
   const s = bi.studios || {};
   const max = Math.max(1, ...(bi.bookings_14d || []).map((d) => d.count));
+  const RANGES = [["all", "All time"], ["7d", "7 days"], ["30d", "30 days"], ["90d", "90 days"]];
+  const chartLabel = range === "all" ? "last 14 days" : range === "7d" ? "last 7 days" : range === "30d" ? "last 30 days" : "last 90 days";
   return (
     <>
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", marginRight: 4 }}>Period:</span>
+        {RANGES.map(([k, l]) => (
+          <button key={k} onClick={() => onRange(k)} style={{ ...MINI, background: range === k ? "var(--clay)" : "var(--surface)", color: range === k ? "var(--surface)" : "var(--cocoa)", borderColor: range === k ? "var(--clay)" : "var(--line)" }}>{l}</button>
+        ))}
+        <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)", marginLeft: 6 }}>Studios &amp; MRR are always current; other metrics use the period.</span>
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 22 }}>
         <Stat label="Studios" value={s.total} sub={`${(s.active || 0) + (s.verified || 0)} live · ${s.unclaimed || 0} unclaimed · ${s.draft || 0} draft`} />
         <Stat label="MRR (subscriptions)" value={`${bi.mrr_scr || 0} SCR`} sub="500 SCR × live users" />
@@ -185,7 +201,7 @@ function Overview({ bi }) {
         <Stat label="Billing-blocked" value={s.blocked || 0} />
       </div>
 
-      <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 10px" }}>Bookings · last 14 days</h2>
+      <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 10px" }}>Bookings · {chartLabel}</h2>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
         {(bi.bookings_14d || []).length === 0 && <span style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No bookings in the last 14 days.</span>}
         {(bi.bookings_14d || []).map((d) => (
