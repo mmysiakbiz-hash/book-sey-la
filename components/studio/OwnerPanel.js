@@ -13,6 +13,7 @@ import {
   createOwnerBooking, getStudioClients, saveClientNote,
   getTimeOff, addTimeOff, deleteTimeOff,
   getLoyalty, saveLoyalty, redeemLoyalty, sendMarketing,
+  getWaitlist, setWaitlistStatus, deleteWaitlistEntry,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -42,6 +43,7 @@ export default function OwnerPanel() {
   const [classes, setClasses] = React.useState(null);
   const [clients, setClients] = React.useState(null);
   const [loyalty, setLoyalty] = React.useState(null);
+  const [waitlist, setWaitlist] = React.useState(null);
   const [timeOff, setTimeOff] = React.useState(null);
   const [catalog, setCatalog] = React.useState({ services: [], staff: [] });
   const [justClaimed, setJustClaimed] = React.useState(false);
@@ -117,6 +119,7 @@ export default function OwnerPanel() {
     const [rows, lp] = await Promise.all([getStudioClients(studioId), getLoyalty(studioId)]);
     setClients(rows); setLoyalty(lp);
   }
+  async function loadWaitlist(studioId) { setWaitlist(await getWaitlist(studioId)); }
 
   React.useEffect(() => {
     load();
@@ -262,8 +265,8 @@ export default function OwnerPanel() {
       {/* owner tabs — only once a studio exists */}
       {studio && (
         <div style={{ display: "flex", gap: 8, marginBottom: 22, borderBottom: "1px solid var(--line)" }}>
-          {[["bookings", "Bookings"], ["clients", "Clients"], ["classes", "Classes"], ["billing", "Billing"], ["setup", "Edit page"]].map(([v, lbl]) => (
-            <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); if (v === "classes") loadClasses(studio.id); if (v === "clients") loadClients(studio.id); }}
+          {[["bookings", "Bookings"], ["clients", "Clients"], ["waitlist", "Waitlist"], ["classes", "Classes"], ["billing", "Billing"], ["setup", "Edit page"]].map(([v, lbl]) => (
+            <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); if (v === "classes") loadClasses(studio.id); if (v === "clients") loadClients(studio.id); if (v === "waitlist") loadWaitlist(studio.id); }}
               style={{ background: "none", border: "none", borderBottom: "2px solid " + (view === v ? "var(--clay)" : "transparent"), color: view === v ? "var(--cocoa)" : "var(--cocoa-60)", fontWeight: 600, fontSize: "var(--text-body)", padding: "8px 4px", marginBottom: -1, cursor: "pointer" }}>
               {lbl}
             </button>
@@ -276,6 +279,8 @@ export default function OwnerPanel() {
           catalog={catalog} onAdd={(p) => createOwnerBooking(studio.id, p)}
           timeOff={timeOff} onAddTimeOff={(p) => addTimeOff(studio.id, p)} onDeleteTimeOff={deleteTimeOff}
           onReschedule={async (id, p) => { const r = await rescheduleBooking(id, p); loadBookings(studio.id); return r; }} />
+      ) : view === "waitlist" && studio ? (
+        <Waitlist2 rows={waitlist} onStatus={async (id, s) => { await setWaitlistStatus(id, s); loadWaitlist(studio.id); }} onDelete={async (id) => { await deleteWaitlistEntry(id); loadWaitlist(studio.id); }} />
       ) : view === "clients" && studio ? (
         <Clients2 clients={clients} loyalty={loyalty}
           onSaveNote={(email, note) => saveClientNote(studio.id, email, note)}
@@ -717,6 +722,27 @@ function AddAppointment({ catalog, onAdd, onDone }) {
         <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Adding…" : "Add appointment"}</button>
         {err && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</span>}
       </div>
+    </div>
+  );
+}
+
+function Waitlist2({ rows, onStatus, onDelete }) {
+  if (rows == null) return <p style={{ color: "var(--text-muted)" }}>Loading waitlist…</p>;
+  if (rows.length === 0) return <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", maxWidth: 640 }}>No one waiting yet. Clients can join from your page when they can't find a time.</p>;
+  const pill = { active: "var(--eucalyptus)", waiting: "#C79A3B", notified: "var(--cocoa-60)", booked: "var(--eucalyptus)" };
+  return (
+    <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
+      {rows.map((w) => (
+        <div key={w.id} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ flex: 1, minWidth: 160 }}>
+            <span style={{ fontWeight: 600, color: "var(--cocoa)" }}>{w.name}</span>
+            <span style={{ display: "block", color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>{w.email}{w.phone ? ` · ${w.phone}` : ""}{w.service ? ` · ${w.service}` : ""}{w.note ? ` · “${w.note}”` : ""}</span>
+          </span>
+          <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: pill[w.status] || "var(--cocoa-40)" }}>{w.status}</span>
+          {w.status === "waiting" && <button onClick={() => onStatus(w.id, "notified")} style={{ border: "1px solid var(--line)", background: "var(--surface)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--cocoa)" }}>Mark contacted</button>}
+          <button onClick={() => onDelete(w.id)} style={{ border: "none", background: "none", color: "var(--cocoa-40)", cursor: "pointer", fontSize: 18 }}>×</button>
+        </div>
+      ))}
     </div>
   );
 }
