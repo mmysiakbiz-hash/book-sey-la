@@ -18,8 +18,9 @@ function Nav() {
         <nav className="lp-nav-links" aria-label="Primary">
           <a href="#categories">Explore</a>
           <a href="#how">How it works</a>
-          <a href="#studios">For studios</a>
+          <a href="/for-studios">For studios</a>
           <Button variant="ghost" size="sm" as="a" href="/login">Log in</Button>
+          <Button variant="primary" size="sm" as="a" href="/pwa/">Open app</Button>
         </nav>
         <button className="lp-nav-burger" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(v => !v)}>
           <Icon name={open ? "close" : "menu"} />
@@ -29,8 +30,9 @@ function Nav() {
         <div className="lp-nav-mobile sey-container">
           <a href="#categories" onClick={() => setOpen(false)}>Explore</a>
           <a href="#how" onClick={() => setOpen(false)}>How it works</a>
-          <a href="#studios" onClick={() => setOpen(false)}>For studios</a>
+          <a href="/for-studios" onClick={() => setOpen(false)}>For studios</a>
           <Button variant="secondary" full as="a" href="/login">Log in</Button>
+          <Button variant="primary" full as="a" href="/pwa/">Open app</Button>
         </div>
       )}
     </header>

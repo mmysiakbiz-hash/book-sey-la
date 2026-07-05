@@ -28,23 +28,27 @@ function FinalCTA() {
             <div className="lp-footer-brand">
               <Logo color="var(--cream)" mono />
               <p>Real-time booking for beauty &amp; wellness across the Seychelles.</p>
-              <a className="lp-footer-studios" href="#">
+              <a className="lp-footer-studios" href="/for-studios">
                 List your studio <Icon name="arrowRight" size={16} />
               </a>
             </div>
             <nav className="lp-footer-nav" aria-label="Footer">
-              <a href="#categories">Explore</a>
-              <a href="#studios-featured">Featured studios</a>
+              <a href="/pwa/">Open app</a>
+              <a href="/search">Explore</a>
               <a href="#how">How it works</a>
-              <a href="#trust">Why sey.la</a>
+              <a href="/for-studios">For studios</a>
+              <a href="/business">Business</a>
+              <a href="/account">My account</a>
+              <a href="/login">Log in</a>
             </nav>
           </div>
           <div className="lp-footer-bottom">
             <span>© 2026 sey.la</span>
             <div className="lp-footer-links">
-              <a href="#">Privacy</a>
-              <a href="#">Terms</a>
-              <a href="#">Support</a>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
+              <a href="/refund">Refunds</a>
+              <a href="/contact">Support</a>
             </div>
           </div>
         </div>

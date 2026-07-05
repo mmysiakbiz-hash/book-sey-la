@@ -307,6 +307,10 @@ a:hover { color: var(--brand-hover); }
   .lp-nav-mobile { display: flex; }
 }
 
+/* ---- Input ---- */
+.sey-input:focus-within { border-color: var(--eucalyptus); box-shadow: var(--shadow-focus); }
+.sey-input input::placeholder { color: var(--cocoa-40); }
+
 /* ---- Section rhythm ---- */
 .lp-section { padding-block: var(--section-y); position: relative; }
 .lp-alt { background: var(--shell-alt); }

@@ -39,10 +39,6 @@ export function Input({ iconLeft, shape = "rect", style = {}, containerStyle = {
         }}
         {...rest}
       />
-      <style dangerouslySetInnerHTML={{ __html: `
-        .sey-input:focus-within { border-color: var(--eucalyptus); box-shadow: var(--shadow-focus); }
-        .sey-input input::placeholder { color: var(--cocoa-40); }
-      ` }} />
     </div>
   );
 }
