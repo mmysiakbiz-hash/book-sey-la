@@ -7,7 +7,7 @@ import { billingStatus } from "@/lib/billing";
 import {
   getMyStudio, createDraftStudio, updateStudio,
   saveServices, saveStaff, saveHours, uploadPhoto, publishStudio,
-  getStudioBookings, setBookingStatus,
+  getStudioBookings, setBookingStatus, rescheduleBooking,
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
   createOwnerBooking, getStudioClients, saveClientNote,
@@ -274,7 +274,8 @@ export default function OwnerPanel() {
       {view === "bookings" && studio ? (
         <Agenda bookings={bookings} onRefresh={() => loadBookings(studio.id)} onEdit={() => setView("setup")} publicUrl={publicUrl} live={live}
           catalog={catalog} onAdd={(p) => createOwnerBooking(studio.id, p)}
-          timeOff={timeOff} onAddTimeOff={(p) => addTimeOff(studio.id, p)} onDeleteTimeOff={deleteTimeOff} />
+          timeOff={timeOff} onAddTimeOff={(p) => addTimeOff(studio.id, p)} onDeleteTimeOff={deleteTimeOff}
+          onReschedule={async (id, p) => { const r = await rescheduleBooking(id, p); loadBookings(studio.id); return r; }} />
       ) : view === "clients" && studio ? (
         <Clients2 clients={clients} loyalty={loyalty}
           onSaveNote={(email, note) => saveClientNote(studio.id, email, note)}
@@ -425,10 +426,11 @@ export default function OwnerPanel() {
   );
 }
 
-function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, timeOff, onAddTimeOff, onDeleteTimeOff }) {
+function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, timeOff, onAddTimeOff, onDeleteTimeOff, onReschedule }) {
   const [busy, setBusy] = React.useState(null);
   const [adding, setAdding] = React.useState(false);
   const [blocking, setBlocking] = React.useState(false);
+  const [moving, setMoving] = React.useState(null); // { id, date, time, durationMin }
   if (bookings == null) return <p style={{ color: "var(--text-muted)" }}>Loading bookings…</p>;
 
   const now = Date.now();
@@ -499,19 +501,32 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
             <div key={g.key} style={{ marginBottom: 20 }}>
               <div style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--cocoa)", margin: "0 0 10px" }}>{g.label}</div>
               <div style={{ display: "grid", gap: 8 }}>
-                {g.items.map((b) => (
-                  <div key={b.id} style={card}>
+                {g.items.map((b) => {
+                  const durMin = b.start && b.end ? Math.round((b.end - b.start) / 60000) : 60;
+                  const isMoving = moving && moving.id === b.id;
+                  return (
+                  <div key={b.id} style={{ ...card, flexWrap: "wrap" }}>
                     <div style={{ width: 58, fontWeight: 700, color: "var(--clay)", fontSize: "var(--text-sm)" }}>{timeLabel(b.start)}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{b.service}</div>
                       <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{b.client}{b.staff ? ` · ${b.staff}` : ""}{b.price != null ? ` · €${Math.round(b.price)}` : ""}</div>
                     </div>
+                    <button onClick={() => setMoving(isMoving ? null : { id: b.id, date: b.start ? b.start.toISOString().slice(0, 10) : "", time: b.start ? b.start.toTimeString().slice(0, 5) : "", durationMin: durMin })}
+                      style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>Move</button>
                     <button onClick={() => act(b.id, "cancelled")} disabled={busy === b.id}
                       style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>
                       {busy === b.id ? "…" : "Cancel"}
                     </button>
+                    {isMoving && (
+                      <div style={{ width: "100%", display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <input type="date" value={moving.date} onChange={(e) => setMoving({ ...moving, date: e.target.value })} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "7px 10px", font: "inherit", fontFamily: "var(--font-body)" }} />
+                        <input type="time" value={moving.time} onChange={(e) => setMoving({ ...moving, time: e.target.value })} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "7px 10px", font: "inherit", fontFamily: "var(--font-body)" }} />
+                        <button style={{ ...primaryBtn, padding: "7px 14px", fontSize: "var(--text-xs)" }} disabled={busy === b.id || !moving.date || !moving.time}
+                          onClick={async () => { setBusy(b.id); await onReschedule(b.id, { startISO: new Date(`${moving.date}T${moving.time}`).toISOString(), durationMin: moving.durationMin }); setBusy(null); setMoving(null); }}>Save</button>
+                      </div>
+                    )}
                   </div>
-                ))}
+                ); })}
               </div>
             </div>
           ))}

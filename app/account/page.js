@@ -3,7 +3,7 @@ import React from "react";
 import CustomerAccount from "@/components/sections/CustomerAccount";
 import { Button } from "@/components/core/Button";
 import { useUser } from "@/lib/useUser";
-import { getMyBookings } from "@/lib/bookings";
+import { getMyBookings, getMyRewards } from "@/lib/bookings";
 import { getFavouriteStudios } from "@/lib/favourites";
 import { getWallet } from "@/lib/wallet";
 import { ReferStudio } from "@/components/booking/ReferStudio";
@@ -24,10 +24,11 @@ export default function AccountPage() {
   const [bookings, setBookings] = React.useState(null);
   const [faves, setFaves] = React.useState(null);
   const [wallet, setWallet] = React.useState(null);
+  const [rewards, setRewards] = React.useState(null);
 
   React.useEffect(() => {
-    if (user) { getMyBookings().then(setBookings); getFavouriteStudios().then(setFaves); getWallet().then(setWallet); }
-    else { setBookings(null); setFaves(null); setWallet(null); }
+    if (user) { getMyBookings().then(setBookings); getFavouriteStudios().then(setFaves); getWallet().then(setWallet); getMyRewards().then(setRewards); }
+    else { setBookings(null); setFaves(null); setWallet(null); setRewards(null); }
   }, [user]);
 
   return (
@@ -72,6 +73,27 @@ export default function AccountPage() {
                     <span style={{ color: "var(--confirmed)", fontWeight: 600 }}>{b.status || "confirmed"}</span>
                   </span>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {user && rewards && rewards.length > 0 && (
+        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
+          <div className="sey-container" style={{ padding: "20px 0" }}>
+            <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Your rewards</h2>
+            <div style={{ display: "grid", gap: 10 }}>
+              {rewards.map((r) => (
+                <a key={r.studioId} href={r.slug ? `/studio/${r.slug}` : "#"} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px", textDecoration: "none", color: "inherit" }}>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontWeight: 600 }}>{r.name}</span>
+                    <span style={{ display: "block", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>{r.eligible ? `🎁 Reward ready: ${r.reward}` : `${r.stamps}/${r.required} visits → ${r.reward}`}</span>
+                  </span>
+                  <span style={{ display: "inline-flex", gap: 3 }}>
+                    {Array.from({ length: r.required }, (_, i) => <span key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: i < r.stamps ? "var(--clay)" : "var(--line-strong)" }} />)}
+                  </span>
+                </a>
               ))}
             </div>
           </div>
