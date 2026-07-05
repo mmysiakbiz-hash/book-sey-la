@@ -82,10 +82,12 @@ Endpoint `GET /api/cron/reminders` wysyła przypomnienia (Brevo) o rezerwacjach
 zaczynających się za ~24h i ~2h i ustawia flagi `reminded_24h/2h` (nie zdubluje).
 - W Vercel dodaj sekret **`CRON_SECRET`** (dowolny losowy ciąg). Wymaga też
   `SUPABASE_SERVICE_ROLE_KEY` i `BREVO_API_KEY` (już z pkt 4).
-- Harmonogram jest w `vercel.json` (`0 * * * *` = co godzinę). **Uwaga:** na planie
-  **Hobby** Vercel odpala crony tylko **raz na dobę** — na Pro działa co godzinę.
-- Alternatywa niezależna od planu: wskaż darmowy scheduler (np. cron-job.org)
-  na `https://<adres>/api/cron/reminders?token=<CRON_SECRET>` co godzinę.
+- Harmonogram w `vercel.json` to `0 7 * * *` (raz dziennie) — **Hobby/Free
+  wymaga cronów max raz na dobę; harmonogram częstszy niż dobowy powoduje błąd
+  deploya i Vercel przestaje budować.** Nie zmieniaj na częstszy, dopóki nie masz Pro.
+- Dla realnych przypomnień 24h/2h (częstszych) wskaż darmowy scheduler
+  (np. cron-job.org) na `https://<adres>/api/cron/reminders?token=<CRON_SECRET>`
+  co godzinę — działa niezależnie od planu Vercel. Na Pro możesz wrócić do `0 * * * *`.
 - Test ręczny: `https://<adres>/api/cron/reminders?token=<CRON_SECRET>` →
   `{ "ok": true, "results": [ {24h}, {2h}, {review_request} ] }`.
 
