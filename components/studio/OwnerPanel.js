@@ -3,6 +3,7 @@ import React from "react";
 import { Logo } from "@/components/brand/Logo";
 import { sendMagicLink } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
+import { billingStatus } from "@/lib/billing";
 import {
   getMyStudio, createDraftStudio, updateStudio,
   saveServices, saveStaff, saveHours, uploadPhoto, publishStudio,
@@ -220,7 +221,7 @@ export default function OwnerPanel() {
       {/* owner tabs — only once a studio exists */}
       {studio && (
         <div style={{ display: "flex", gap: 8, marginBottom: 22, borderBottom: "1px solid var(--line)" }}>
-          {[["bookings", "Bookings"], ["classes", "Classes"], ["setup", "Edit page"]].map(([v, lbl]) => (
+          {[["bookings", "Bookings"], ["classes", "Classes"], ["billing", "Billing"], ["setup", "Edit page"]].map(([v, lbl]) => (
             <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); if (v === "classes") loadClasses(studio.id); }}
               style={{ background: "none", border: "none", borderBottom: "2px solid " + (view === v ? "var(--clay)" : "transparent"), color: view === v ? "var(--cocoa)" : "var(--cocoa-60)", fontWeight: 600, fontSize: "var(--text-body)", padding: "8px 4px", marginBottom: -1, cursor: "pointer" }}>
               {lbl}
@@ -233,6 +234,8 @@ export default function OwnerPanel() {
         <Agenda bookings={bookings} onRefresh={() => loadBookings(studio.id)} onEdit={() => setView("setup")} publicUrl={publicUrl} live={live} />
       ) : view === "classes" && studio ? (
         <Classes studioId={studio.id} classes={classes} onRefresh={() => loadClasses(studio.id)} />
+      ) : view === "billing" && studio ? (
+        <Billing studio={studio} staffCount={f.staff.filter((s) => s.name && s.name.trim()).length} />
       ) : (
       <>
       {/* step nav */}
@@ -455,6 +458,55 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live }) {
       )}
     </div>
   );
+}
+
+function Billing({ studio, staffCount }) {
+  const b = billingStatus(studio, staffCount);
+  const fmtDate = (ms) => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+  const banners = {
+    trial: { bg: "var(--blush, #f6ece9)", title: `Free trial — ${Math.max(0, b.daysUntilDue)} days left`, sub: `Your first 3 months are on us. Billing starts ${fmtDate(b.dueAt)}.` },
+    active: { bg: "var(--blush, #f6ece9)", title: "Active", sub: `Paid through ${fmtDate(b.dueAt)}.` },
+    due: { bg: "#fff4e6", title: `Payment due — ${Math.max(0, b.daysUntilBlock)} days to pay`, sub: `Please settle by ${fmtDate(b.blockAt)} to keep your page live.` },
+    overdue: { bg: "#fdeceb", title: "Payment overdue", sub: `Your account will be suspended shortly. Pay now to stay live.` },
+    blocked: { bg: "#fdeceb", title: "Account suspended", sub: `Your page is hidden from clients until payment is received.` },
+  };
+  const bn = banners[b.state] || banners.trial;
+  const card = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "16px 18px" };
+
+  return (
+    <div style={{ maxWidth: 560 }}>
+      <div style={{ ...card, background: bn.bg, marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, color: "var(--cocoa)", fontSize: "var(--text-h3)" }}>{bn.title}</div>
+        <div style={{ color: "var(--cocoa-80)", marginTop: 4, fontSize: "var(--text-sm)" }}>{bn.sub}</div>
+      </div>
+
+      <div style={{ ...card, marginBottom: 16 }}>
+        <div style={{ fontWeight: 700, color: "var(--cocoa)", marginBottom: 10 }}>Your plan</div>
+        <div style={{ display: "grid", gap: 8, fontSize: "var(--text-sm)" }}>
+          <Row k="Team members billed" v={`${b.staffCount}`} />
+          <Row k="Rate" v={`${b.perStaff} SCR / team member`} />
+          <Row k="Estimated per cycle" v={<b>{b.amount} SCR</b>} />
+          <Row k={b.state === "trial" ? "Free until" : "Next due"} v={fmtDate(b.dueAt)} />
+          <Row k="Grace period" v={`${b.graceDays} days`} />
+        </div>
+      </div>
+
+      <div style={card}>
+        <div style={{ fontWeight: 700, color: "var(--cocoa)", marginBottom: 6 }}>Payment</div>
+        <p style={{ color: "var(--cocoa-60)", fontSize: "var(--text-sm)", margin: "0 0 12px" }}>
+          Card payments (Stripe) are coming soon. You'll be able to add a card here before your trial ends — nothing is charged during the free period.
+        </p>
+        <button disabled title="Stripe integration coming soon"
+          style={{ background: "var(--line-strong, #d9d4cf)", color: "var(--surface)", border: "none", borderRadius: "var(--radius-pill)", padding: "12px 22px", fontFamily: "var(--font-body)", fontWeight: 600, cursor: "not-allowed", opacity: 0.8 }}>
+          Set up payment — coming soon
+        </button>
+      </div>
+    </div>
+  );
+}
+function Row({ k, v }) {
+  return <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><span style={{ color: "var(--cocoa-60)" }}>{k}</span><span style={{ color: "var(--cocoa)", fontWeight: 600 }}>{v}</span></div>;
 }
 
 function Classes({ studioId, classes, onRefresh }) {

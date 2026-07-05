@@ -9,8 +9,10 @@
 // public.due_reminders(kind) (SECURITY DEFINER — resolves the customer email).
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendBrevoEmail, bookingReminderEmail, reviewRequestEmail } from "@/lib/email";
+import { sendBrevoEmail, bookingReminderEmail, reviewRequestEmail, billingBlockedEmail } from "@/lib/email";
 import { signReviewToken } from "@/lib/reviewToken";
+
+const GRACE_MS = 14 * 24 * 3600 * 1000;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,6 +85,32 @@ async function processReviewRequests(supabase, origin) {
   return { kind: "review_request", due: due.length, sent: sentIds.length };
 }
 
+// Suspend studios whose free/paid period + 14-day grace has lapsed without payment.
+async function processBilling(supabase) {
+  const { data, error } = await supabase
+    .from("studios")
+    .select("id, name, owner_email, trial_ends_at, paid_until")
+    .eq("billing_blocked", false);
+  if (error) return { kind: "billing", error: error.message };
+  const now = Date.now();
+  const overdue = (data || []).filter((s) => {
+    const due = s.paid_until ? new Date(s.paid_until).getTime() : (s.trial_ends_at ? new Date(s.trial_ends_at).getTime() : null);
+    return due != null && due + GRACE_MS < now;
+  });
+  let blocked = 0;
+  for (const s of overdue) {
+    const { error: upErr } = await supabase.from("studios").update({ billing_blocked: true }).eq("id", s.id);
+    if (upErr) { console.error("[cron] billing block failed:", upErr.message); continue; }
+    blocked++;
+    if (s.owner_email) {
+      const { subject, html } = billingBlockedEmail({ studioName: s.name || "" });
+      const mail = await sendBrevoEmail({ to: s.owner_email, subject, html });
+      if (mail.error) console.error(`[cron] billing email failed for ${s.id}:`, mail.error);
+    }
+  }
+  return { kind: "billing", checked: (data || []).length, blocked };
+}
+
 export async function GET(req) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -107,6 +135,7 @@ export async function GET(req) {
   results.push(await processKind(supabase, "24h"));
   results.push(await processKind(supabase, "2h"));
   results.push(await processReviewRequests(supabase, origin));
+  results.push(await processBilling(supabase));
 
   return NextResponse.json({ ok: true, results });
 }

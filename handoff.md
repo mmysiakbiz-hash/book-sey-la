@@ -55,7 +55,9 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 **I. Staff selection at booking** — ✅ DONE. Web `BookNow` and PWA `BookFlow` let the customer pick a team member (or "Any professional"); `staff_id` flows through `createBooking`/`/api/book`. `getStudioBySlug`/`live.js` now carry `staff(id,name,role)`; PWA staff cards fall back to an initial circle when there's no photo. Owner agenda (F) shows the chosen staff. Verified vs live DB (customer booking with staff_id inserts under RLS). REMAINING: per-staff availability/calendar filtering (all staff currently show all slots).
 
-**J. Payments / deposits** — `bookings.price_eur / commission_due`; deposit + no-show (Stripe?).
+**J. Payments / billing** — ✅ placeholder DONE (state machine live; real Stripe later). Model: 3 months free from registration (`trial_ends_at` set on create), then **400 SCR per linked staff member**, 14-day grace, then block. Added `studios.paid_until` + `billing_blocked`; `studio_public()` now hides blocked studios. `/panel → Billing` tab shows trial/due/amount + a **disabled "Stripe coming soon"** button (`lib/billing.js`). Daily cron blocks overdue studios + emails owner (`billingBlockedEmail`). "Paid" is set manually for now (`update studios set paid_until=…, billing_blocked=false`). Verified vs live DB (blocked studio hidden from public). TODO: real Stripe (`STRIPE_SECRET_KEY`/webhook → set `paid_until`/`stripe_*`, unblock); deposits/no-show.
+
+**M. Custom domain book.sey.la via Cloudflare** — ⬜ ops runbook in `DEPLOY.md §9`. `sey.la` root is another project; proxy ONLY `book` subdomain (CNAME `book`→`cname.vercel-dns.com`, orange cloud, SSL **Full (strict)**), add domain in Vercel, and add `https://book.sey.la/**` to Supabase Auth redirect URLs. No code changes needed (origin-relative redirects).
 
 **K. Favourites, wallet/referrals** — tables exist (`favourites`, `wallet_transactions`, `referrals`), wire.
 

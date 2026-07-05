@@ -110,6 +110,38 @@ service-role. Zdjęcia lądują w publicznym buckecie `studio-photos`.
   (magic-link działa przez `/api/auth/magic-link` — patrz pkt 4c).
 - `verified` to teraz osobna odznaka (Twoja moderacja) — nie blokuje publikacji.
 
+## 8. Billing (na razie zaślepka Stripe)
+Model: **3 miesiące gratis** od rejestracji salonu (`studios.trial_ends_at`), potem
+**400 SCR za każdego pracownika** wpiętego do konta, **14 dni** na wpłatę, a po tym
+okresie konto zostaje **zablokowane** (`billing_blocked=true` → salon znika z
+publicznej strony; właściciel dalej ma dostęp do `/panel`).
+- Właściciel widzi status w `/panel → Billing` (trial/termin/kwota/grace). Przycisk
+  płatności to **placeholder** („coming soon") — realny Stripe dojdzie później.
+- Blokadę po przekroczeniu grace robi dzienny cron (`/api/cron/reminders`,
+  funkcja billing) + mail do właściciela. Bez Stripe „opłacenie" ustawia się na
+  razie ręcznie: `update studios set paid_until = now() + interval '1 month',
+  billing_blocked=false where id=…` (albo docelowo webhook Stripe).
+- Gdy dojdzie Stripe: `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` w Vercel,
+  webhook ustawia `paid_until`/`stripe_*` i zdejmuje `billing_blocked`.
+
+## 9. Domena book.sey.la przez Cloudflare
+`sey.la` (DNS w Cloudflare) hostuje inny projekt — pod Cloudflare wpinamy **tylko
+subdomenę `book.sey.la`**, nie ruszając rekordów roota.
+1. **Vercel** → projekt `book-sey-la` → Settings → Domains → **Add** `book.sey.la`.
+   Vercel poda cel CNAME (zwykle `cname.vercel-dns.com`).
+2. **Cloudflare** (strefa `sey.la`) → DNS → dodaj rekord:
+   - Type **CNAME**, Name **book**, Target **cname.vercel-dns.com**,
+     Proxy **ON** (pomarańczowa chmurka). Zostaw wszystkie inne rekordy roota bez zmian.
+3. **Cloudflare → SSL/TLS → Overview → tryb `Full (strict)`** (KONIECZNIE — przy
+   „Flexible" będzie pętla przekierowań z Vercelem).
+4. Poczekaj aż w Vercel przy `book.sey.la` będzie **„Valid Configuration"**.
+   (Opcjonalnie ustaw `book.sey.la` jako **Production domain** w Vercel.)
+5. **Supabase → Authentication → URL Configuration**: dodaj
+   `https://book.sey.la` (Site URL) i `https://book.sey.la/**` (Redirect URLs),
+   żeby magic-link wracał na nową domenę. Zostaw też adresy `*.vercel.app`.
+- Kod nie wymaga zmian: redirecty liczą się z `window.location.origin`, więc
+  działają automatycznie na `book.sey.la` po dodaniu do allow-listy w pkt 5.
+
 ## Kolejne sesje (żeby agent mógł pushować sam)
 Następną sesję Claude Code otwórz **na repo `book-sey-la`** (nie na paczce Design) —
 wtedy commity lecą prosto do repo, a Vercel deployuje automatycznie.
