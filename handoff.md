@@ -28,7 +28,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 - Booking WRITE: venue "Book" → date/time picker → `POST /api/book` (auth via bearer token, RLS binds customer_id=auth.uid(), `during` as tstzrange) → **Brevo confirmation email** from hello@sey.la. Best-effort email (booking saved even if email fails).
 
 ## KNOWN ISSUES (fix early)
-1. **Magic-link email not arriving.** Check: spam; Supabase → Auth → Logs (SMTP error?); Supabase → Auth → Emails → SMTP Settings (Custom SMTP enabled+saved); Brevo → Transactional Logs; Brevo sender/domain `hello@sey.la` verified (SPF/DKIM). Likely config, not code.
+1. **Magic-link / confirmation email not arriving.** Config, not code. Now diagnosable end-to-end (B): `GET /api/health/email` shows `brevoConfigured`; with `EMAIL_TEST_TOKEN` set, `?to=…&token=…` does a real Brevo test-send and returns the exact error (usually "sender not valid" → verify `hello@sey.la`/`sey.la` SPF+DKIM in Brevo). Booking-email failures now log server-side (`[book]`/`[email]`, visible in Vercel logs). **Full step-by-step in `DEPLOY.md §4`** (Brevo sender verify → test endpoint → Supabase Custom SMTP for magic-link).
 2. ~~**`{}` glitch on `/login`**~~ — FIXED (A). Moved `Input`'s inline `<style>` out of the flex row into `globals.css` (`.sey-input` scoped rules).
 3. ~~**No navigation between surfaces.**~~ — FIXED (A). Nav "For studios" → `/for-studios`; added prominent **"Open app" → `/pwa/`** (desktop + mobile menu); footer now links every surface (Open app, Explore, For studios, Business, My account, Log in, Privacy, Terms, Refunds, Support). Still open: no `/` → PWA auto-redirect on mobile widths (deferred).
 
@@ -38,7 +38,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 - ✅ Prominent **"Open app"** → `/pwa/` in nav + mobile menu + footer. (`/` → PWA redirect on mobile widths: deferred.)
 - ✅ Fixed the `{}` login glitch.
 
-**B. Email deliverability** — get magic link + booking confirmation actually landing (Brevo SMTP + sender verify + test end-to-end).
+**B. Email deliverability** — code side DONE (diagnostic endpoint `/api/health/email`, server logging, `DEPLOY.md §4` checklist, `.env.example`). REMAINING = dashboard config only: verify `hello@sey.la`/`sey.la` sender in Brevo (SPF+DKIM), set `BREVO_API_KEY` (+ optional `EMAIL_TEST_TOKEN`) in Vercel, enable Supabase Custom SMTP (Brevo relay) for magic-link. Then confirm with the test endpoint.
 
 **C. PWA booking → `/api/book`** (heart of product) — ✅ DONE (see DONE list). Wired: supabase-js UMD + `window.SEY_BOOK`, real email magic-link login, session shared from the site, `BookFlow` writes real bookings via `/api/book`. Depends on **B** for the confirmation/magic-link emails to actually land, and on prod Supabase reachability for studios to carry `dbId` (demo fallback when unreachable). Not yet: a dedicated in-PWA "email OTP code" entry (currently magic-link redirect back to `/pwa/`); staff/deposit not sent (staff_id null, pay handled as before).
 

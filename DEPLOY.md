@@ -34,6 +34,36 @@ Bez tego magic-link nie wróci do aplikacji.
 - Logowanie (magic-link, mail z `hello@sey.la` przez Brevo SMTP).
 - Rezerwacja na stronie lokalu → zapis do bazy + mail potwierdzający (Brevo API).
 
+## 4. Dostarczalność maili (KRYTYCZNE — bez tego nie przyjdzie ani magic-link, ani potwierdzenie)
+
+Są **dwie** ścieżki maili i obie zależą od **zweryfikowanego nadawcy w Brevo**:
+- **Magic-link (logowanie)** = Supabase Auth → wysyłka przez **Brevo SMTP**.
+- **Potwierdzenie rezerwacji** = nasz `/api/book` → **Brevo API** (`BREVO_API_KEY`).
+
+### 4a. Brevo — zweryfikuj nadawcę / domenę (robisz raz)
+Brevo → **Senders, Domains & Dedicated IPs**:
+- **Senders** → dodaj i potwierdź `hello@sey.la` (klik w mail potwierdzający), **albo**
+- **Domains** → dodaj `sey.la` i ustaw rekordy **SPF + DKIM** (i DMARC) w DNS. To najważniejszy krok — bez tego Brevo odrzuca wysyłkę ("sender not valid") i maile nie wychodzą.
+
+### 4b. Szybki test end-to-end (bez zgadywania)
+Po deployu i ustawieniu `BREVO_API_KEY`:
+1. Sprawdź konfigurację: otwórz `https://<adres>/api/health/email` — powinno być `"brevoConfigured": true`.
+2. Ustaw w Vercel zmienną `EMAIL_TEST_TOKEN` (dowolny sekret), redeploy.
+3. Wyślij testowy mail:
+   `https://<adres>/api/health/email?to=twoj@mail.com&token=<EMAIL_TEST_TOKEN>`
+   - `"sent": true` → API + nadawca OK (magic-link i potwierdzenia też zadziałają).
+   - `"result.error": "brevo_400: ... sender ..."` → wróć do **4a** (nadawca niezweryfikowany).
+   - `"brevoConfigured": false` → brak/zły `BREVO_API_KEY` w Vercel.
+
+### 4c. Supabase — Custom SMTP dla magic-link
+Supabase → **Authentication → Emails → SMTP Settings** → **Enable Custom SMTP**:
+- Host: `smtp-relay.brevo.com`, Port: `587`
+- User: login SMTP z Brevo (**SMTP & API → SMTP**), Password: klucz **SMTP** (nie API key)
+- Sender email: `hello@sey.la`, Sender name: `sey.la | book` → **Save**.
+- Sprawdź też **Authentication → Rate Limits** (domyślny limit maili bywa niski) i **Logs → Auth** (błędy SMTP).
+
+Diagnostyka: jeśli **4b** działa (Brevo API OK), a magic-link nadal nie przychodzi, problem jest w **4c** (Custom SMTP w Supabase) albo w limitach/URL-config (pkt 3), nie w kodzie.
+
 ## Kolejne sesje (żeby agent mógł pushować sam)
 Następną sesję Claude Code otwórz **na repo `book-sey-la`** (nie na paczce Design) —
 wtedy commity lecą prosto do repo, a Vercel deployuje automatycznie.

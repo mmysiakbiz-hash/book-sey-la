@@ -73,6 +73,7 @@ export async function POST(req) {
 
   // Email is best-effort — the booking is already saved either way.
   const mail = await sendBrevoEmail({ to: user.email, subject, html });
+  if (mail.error) console.error("[book] confirmation email failed:", mail.error);
 
   return NextResponse.json({ ok: true, booking, emailed: !mail.error, emailError: mail.error || null });
 }
