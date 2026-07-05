@@ -19,7 +19,9 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 ## DONE
 - Working Next.js app; `next build` clean; all routes render (verified headless).
 - SSR/hydration fixes (inline `<style>` → dangerouslySetInnerHTML).
-- PWA de-CDN'd: self-hosted React + pre-transpiled App.js (no unpkg/Babel); SW cache v8. Reads live studios via `public/pwa/live.js` (fallback to demo).
+- PWA de-CDN'd: self-hosted React + pre-transpiled App.js (no unpkg/Babel); SW cache v9. Reads live studios via `public/pwa/live.js` (fallback to demo).
+- **PWA transpile is now scripted**: edit `public/pwa/App.jsx` → `npm run build:pwa` (`scripts/build-pwa.cjs`, @babel/preset-react classic) regenerates `App.js`. Reproduces the committed output byte-for-byte — no more hand-maintaining App.js.
+- **PWA auth + real bookings (C)**: self-hosted `supabase-js` UMD (`public/pwa/vendor/supabase.js`) + `public/pwa/booking.js` (`window.SEY_BOOK`). Uses the DEFAULT storage key → **shares the session with the marketing site login on the same origin**. PWA `Login` is now real **email magic link** (falls back to the phone-OTP demo only if supabase-js is unavailable). `BookFlow` confirm now fires a real `POST /api/book` (studio+service UUIDs carried through `live.js`) when a studio has a live `dbId` and a session exists — otherwise keeps the local/demo booking so the UI never breaks. SW no longer caches `*.supabase.co` (was risking stale sessions/data).
 - Live reads wired: `/` recommended, `/search` (+ real category counts), `/studio/[slug]` (studio + grouped service menu). Demo fallback everywhere.
 - Venue: score/name/location/address live; reviews **hidden until real reviews exist** (from `studios.google_reviews`), layout self-adjusts.
 - Auth: email **magic link** (`/login`), session hook, `/account` shows signed-in user + their real bookings. Nav "Log in" → /login.
@@ -38,7 +40,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 **B. Email deliverability** — get magic link + booking confirmation actually landing (Brevo SMTP + sender verify + test end-to-end).
 
-**C. PWA booking → `/api/book`** (heart of product) — wire the mobile BookFlow to write real bookings + confirmation email (currently mock). Needs Supabase auth in the PWA (add supabase-js UMD to `public/pwa/` or call REST/auth endpoints directly).
+**C. PWA booking → `/api/book`** (heart of product) — ✅ DONE (see DONE list). Wired: supabase-js UMD + `window.SEY_BOOK`, real email magic-link login, session shared from the site, `BookFlow` writes real bookings via `/api/book`. Depends on **B** for the confirmation/magic-link emails to actually land, and on prod Supabase reachability for studios to carry `dbId` (demo fallback when unreachable). Not yet: a dedicated in-PWA "email OTP code" entry (currently magic-link redirect back to `/pwa/`); staff/deposit not sent (staff_id null, pay handled as before).
 
 **D. Reminders 24h/2h** — cron (Vercel Cron or Supabase Edge Function) using `bookings.reminded_24h/reminded_2h` + Brevo API.
 

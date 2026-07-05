@@ -15,6 +15,8 @@
 <!-- Self-hosted React (production UMD) — no CDN, works offline behind strict CSP. -->
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
+<!-- Self-hosted supabase-js (UMD) — auth + real bookings, no CDN. -->
+<script src="./vendor/supabase.js"></script>
 <script src="./_ds_bundle.js"></script>
 </head>
 <body>
@@ -24,6 +26,7 @@
 <!-- live.js fetches studios from Supabase, then injects App.js (demo fallback on timeout). -->
 <script src="data.js"></script>
 <script src="ui.js"></script>
+<script src="booking.js"></script>
 <script src="live.js"></script>
 
 <script>

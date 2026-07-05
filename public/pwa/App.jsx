@@ -309,6 +309,7 @@
     const TITLES = ["Choose services", "Choose professional", "Pick a time", "Payment"];
 
     function confirm() {
+      // Instant local booking — offline/demo fallback + drives the PWA "My bookings" list.
       addBooking({
         id: "bk" + Date.now(), studioId: s.id, studio: s.name, area: s.area,
         service: chosen.map((c) => c.name).join(", ") || "Appointment",
@@ -317,6 +318,24 @@
         price: total, status: "Confirmed", photo: s.photo, past: false,
       });
       setDone(true);
+      // Best-effort real write to Supabase (+ Brevo confirmation email) via /api/book.
+      // Needs a live session (shared from the site login); silently no-ops otherwise.
+      try {
+        if (window.SEY_BOOK && s.dbId) {
+          const first = chosen.find((c) => c.sid) || null;
+          const now = new Date();
+          const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
+          const parts = (slot || "09:00").split(":");
+          when.setHours(Number(parts[0]) || 9, Number(parts[1]) || 0, 0, 0);
+          window.SEY_BOOK.createBooking({
+            studioDbId: s.dbId,
+            serviceDbId: first ? first.sid : null,
+            startsAt: when.toISOString(),
+            durationMin: first ? first.durMin : 60,
+            priceEur: total,
+          });
+        }
+      } catch (e) { /* keep the local booking; never break the UI */ }
     }
 
     if (done) {
@@ -647,7 +666,7 @@
                 </span>
               </div>
             </div>
-            <button className="btn btn--soft btn--full" style={{ marginTop: 18 }} onClick={() => setUser(null)}>
+            <button className="btn btn--soft btn--full" style={{ marginTop: 18 }} onClick={() => { if (window.SEY_BOOK) window.SEY_BOOK.signOut(); setUser(null); }}>
               <Ic name="logout" size={18} /> Log out
             </button>
             <p className="tiny muted" style={{ textAlign: "center", marginTop: 20 }}>sey.la | book · always free for clients<br />Operated by Nexora Consulting LLC</p>
@@ -658,6 +677,23 @@
   }
 
   function Login({ onDone }) {
+    // Real Supabase magic-link auth when supabase-js is available; otherwise the
+    // demo phone-OTP mock so the app still works offline / without config.
+    const live = typeof window !== "undefined" && window.SEY_BOOK && window.SEY_BOOK.available();
+
+    // -- real email magic-link path --
+    const [email, setEmail] = useState("");
+    const [estate, setEstate] = useState("idle"); // idle | sending | sent | error
+    const [emsg, setEmsg] = useState("");
+    async function sendLink() {
+      if (!email) return;
+      setEstate("sending");
+      const res = await window.SEY_BOOK.sendMagicLink(email);
+      if (res && res.ok) { setEstate("sent"); }
+      else { setEstate("error"); setEmsg((res && res.error) || "error"); }
+    }
+
+    // -- demo phone-OTP path --
     const [step, setStep] = useState("phone");
     const [phone, setPhone] = useState("");
     const [code, setCode] = useState(["", "", "", ""]);
@@ -668,6 +704,34 @@
       if (v && i < 3) refs[i + 1].current && refs[i + 1].current.focus();
       if (next.every((d) => d) ) setTimeout(() => onDone({ name: "Amelia Rose", phone: "+248 " + (phone || "251 0000") }), 350);
     }
+
+    if (live) {
+      return (
+        <div className="app-scroll" style={{ paddingBottom: 24 }}>
+          <div className="screen" style={{ paddingTop: 40 }}>
+            <div className="brand" style={{ fontSize: "1.4rem", marginBottom: 28 }}><b>sey.la</b><span>|</span><i>book</i></div>
+            {estate === "sent" ? (
+              <>
+                <h1 className="h-lg">Check your email</h1>
+                <p className="muted" style={{ marginTop: 8 }}>We sent a magic link to <b>{email}</b>. Open it on this device to sign in — you'll come right back here.</p>
+              </>
+            ) : (
+              <>
+                <h1 className="h-lg">Log in or sign up</h1>
+                <p className="muted" style={{ marginTop: 8 }}>Enter your email — we'll send a magic link. No password, and booking is always free.</p>
+                <div className="field" style={{ marginTop: 22 }}>
+                  <input type="email" inputMode="email" autoComplete="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendLink(); }} />
+                </div>
+                <button className="btn btn--primary btn--full" style={{ marginTop: 18 }} disabled={estate === "sending" || !email} onClick={sendLink}>{estate === "sending" ? "Sending…" : "Send magic link"}</button>
+                {estate === "error" && <p className="tiny" style={{ color: "var(--clay)", marginTop: 12 }}>Couldn't send the link ({emsg}). Please try again.</p>}
+                <p className="tiny muted" style={{ marginTop: 16, lineHeight: 1.5 }}>By continuing you agree to the Terms and Privacy Policy.</p>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="app-scroll" style={{ paddingBottom: 24 }}>
         <div className="screen" style={{ paddingTop: 40 }}>
@@ -1105,6 +1169,20 @@
     useEffect(() => save("user", user), [user]);
     useEffect(() => save("notif", notif), [notif]);
     useEffect(() => { const t = setTimeout(() => setInstall(true), 2600); return () => clearTimeout(t); }, []);
+
+    // Reconcile with a real Supabase session (shared from the site login / magic-link
+    // return). Reflect a signed-in user; only clear on an explicit sign-out so a
+    // persisted/demo user is never wiped on load.
+    useEffect(() => {
+      if (!(window.SEY_BOOK && window.SEY_BOOK.available())) return;
+      const asUser = (u) => ({ name: u.email ? u.email.split("@")[0] : "Guest", phone: u.email || "", email: u.email || "", real: true });
+      window.SEY_BOOK.getUser().then((u) => { if (u) setUser(asUser(u)); });
+      const unsub = window.SEY_BOOK.onAuthChange((u, event) => {
+        if (u) setUser(asUser(u));
+        else if (event === "SIGNED_OUT") setUser(null);
+      });
+      return unsub;
+    }, []);
 
     const showToast = (m) => { setToast(m); setTimeout(() => setToast(null), 1800); };
     const nav = {

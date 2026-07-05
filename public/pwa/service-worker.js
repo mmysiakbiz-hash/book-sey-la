@@ -1,10 +1,11 @@
 /* sey.la | book PWA — service worker. Precache the self-hosted shell for offline. */
-const CACHE = "seyla-book-v8";
+const CACHE = "seyla-book-v9";
 const ASSETS = [
   "./index.html",
   "./app.css",
   "./App.js",
   "./live.js",
+  "./booking.js",
   "./ui.js",
   "./data.js",
   "./manifest.webmanifest",
@@ -19,6 +20,7 @@ const ASSETS = [
   "./_ds_bundle.js",
   "./vendor/react.production.min.js",
   "./vendor/react-dom.production.min.js",
+  "./vendor/supabase.js",
 ];
 
 self.addEventListener("install", (e) => {
@@ -39,6 +41,11 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const { request } = e;
   if (request.method !== "GET") return;
+  // Never intercept/cache Supabase API or auth calls — caching them would serve
+  // a stale session/user or stale studio data. Let them hit the network directly.
+  let host = "";
+  try { host = new URL(request.url).hostname; } catch (err) {}
+  if (host.endsWith(".supabase.co")) return;
   e.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;

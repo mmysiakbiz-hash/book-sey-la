@@ -27,10 +27,18 @@
     if (photo && photo.indexOf("?") === -1) photo += "?auto=format&fit=crop&w=600&q=70";
     var svc = (r.services || []).slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
     var items = svc.map(function (s, k) {
-      return { id: r.slug + "-s" + k, name: s.name, dur: (s.duration_min || 60) + " min", price: Number(s.price_eur) || 0 };
+      return {
+        id: r.slug + "-s" + k,
+        sid: s.id || null,            // real services.id (uuid) — enables a real booking write
+        name: s.name,
+        dur: (s.duration_min || 60) + " min",
+        durMin: s.duration_min || 60,
+        price: Number(s.price_eur) || 0,
+      };
     });
     return {
       id: r.slug,
+      dbId: r.id || null,             // real studios.id (uuid) — enables a real booking write
       name: r.name,
       cat: CAT[r.category] || "spa",
       area: r.address || r.island || "Seychelles",
@@ -62,7 +70,7 @@
   }
 
   var url = SUPABASE_URL + "/rest/v1/studios?select=" +
-    encodeURIComponent("slug,name,category,island,address,photos,google_rating,google_review_count,status,services(name,duration_min,price_eur,category,sort)") +
+    encodeURIComponent("id,slug,name,category,island,address,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort)") +
     "&status=in.(active,verified)&order=google_rating.desc";
 
   var fetchStudios = fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON } })
