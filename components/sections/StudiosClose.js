@@ -41,7 +41,7 @@ function StudiosClose() {
                 <li key={f}><Icon name="check" size={17} color="var(--eucalyptus)" /> {f}</li>
               ))}
             </ul>
-            <Button full size="lg">Create your studio account</Button>
+            <Button full size="lg" as="a" href="/panel">Create your studio account</Button>
           </div>
         </div>
       </section>
@@ -53,7 +53,7 @@ function StudiosClose() {
           <p className="st-final-lead">Join the studios booking through sey.la across the Seychelles.</p>
           <form className="st-final-form" onSubmit={(e) => e.preventDefault()}>
             <Input type="email" placeholder="Your studio email" aria-label="Studio email" containerStyle={{ flex: 1 }} />
-            <Button type="submit" size="md">Get started</Button>
+            <Button as="a" href="/panel" size="md">Get started</Button>
           </form>
         </div>
       </section>

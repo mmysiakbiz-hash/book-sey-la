@@ -21,8 +21,8 @@ function StudiosNav() {
           <a href="#how">How it works</a>
           <a href="#pricing">Pricing</a>
           <a className="st-nav-clients" href="../landing/index.html">For clients ↗</a>
-          <Button variant="ghost" size="sm">Log in</Button>
-          <Button size="sm">List your studio</Button>
+          <Button variant="ghost" size="sm" as="a" href="/panel">Log in</Button>
+          <Button size="sm" as="a" href="/panel">List your studio</Button>
         </nav>
         <button className="st-nav-burger" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(v => !v)}>
           <Icon name={open ? "close" : "menu"} />
@@ -34,7 +34,7 @@ function StudiosNav() {
           <a href="#how" onClick={() => setOpen(false)}>How it works</a>
           <a href="#pricing" onClick={() => setOpen(false)}>Pricing</a>
           <a href="../landing/index.html">For clients ↗</a>
-          <Button full>List your studio</Button>
+          <Button full as="a" href="/panel">List your studio</Button>
         </div>
       )}
     </header>

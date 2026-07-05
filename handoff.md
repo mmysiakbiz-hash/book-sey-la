@@ -49,7 +49,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 **F. Panels wired to Supabase** — `/panel` agenda from real `bookings`; services/team/hours config writes (`owns_studio` RLS); admin stats from real data.
 
-**G. Studio self-service page editor** — owner edits their public venue page → writes to `studios` (tagline, photos, etc.).
+**G. Studio self-service configurator** — ✅ DONE (core). `/panel` = login-gated (magic-link) multi-step wizard (`components/studio/OwnerPanel.js` + `lib/owner.js`): Basics → About → Location → Hours → Services → Team → Photos (upload to `studio-photos` bucket) → Contact/Social → Publish. Writes via RLS (`owns_studio`, `studios_insert/update`) on the user session — no service role. `gen_studio_slug()` makes a unique slug; **Publish sets status='active' → live immediately at `/studio/<slug>`** (migration broadened `studio_public`/`studios_read` to include 'active'; 'verified' is now a separate admin badge). Draft studios hidden from public. Added `studios.socials` (jsonb) + `staff.role`. `for-studios` CTAs point to `/panel`. Venue page now renders real hours + socials + team. Verified end-to-end against live DB as an authenticated user (create→services/staff/hours→publish→anon read; draft hidden) + cleaned up. Follow-ups: photo auto-crop/reorder, resume-step memory, owner can't yet create a 2nd studio (one per owner by design for now).
 
 **H. Classes** — `class_sessions` / `class_bookings`: join class + live spots.
 

@@ -1,2 +1,5 @@
-import SalonPanel from "@/components/sections/SalonPanel";
-export default function Page(){return <SalonPanel/>;}
+import OwnerPanel from "@/components/studio/OwnerPanel";
+
+export const dynamic = "force-dynamic";
+
+export default function Page(){ return <OwnerPanel/>; }

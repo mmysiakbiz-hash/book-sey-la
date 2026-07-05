@@ -46,6 +46,20 @@ function VenueClose({ studio }) {
     .filter((r) => r.text);
   const hasReviews = reviews.length > 0;
 
+  // Real opening hours when configured, otherwise the tasteful default.
+  const hours = (studio && Array.isArray(studio.hours) && studio.hours.length) ? studio.hours : HOURS;
+
+  // Social / contact links from the configurator.
+  const socials = (studio && studio.socials) || {};
+  const wa = (studio && studio.whatsapp) || "";
+  const socialLinks = [
+    socials.instagram && { label: "Instagram", href: socials.instagram },
+    socials.facebook && { label: "Facebook", href: socials.facebook },
+    socials.tiktok && { label: "TikTok", href: socials.tiktok },
+    socials.website && { label: "Website", href: socials.website },
+    wa && { label: "WhatsApp", href: wa.startsWith("http") ? wa : `https://wa.me/${wa.replace(/[^0-9]/g, "")}` },
+  ].filter(Boolean);
+
   return (
     <React.Fragment>
       {hasReviews && (
@@ -88,9 +102,16 @@ function VenueClose({ studio }) {
             <p className="vn-address"><Icon name="pin" size={18} color="var(--clay)" /> {location}, Seychelles</p>
             <table className="vn-hours">
               <tbody>
-                {HOURS.map(([d,h]) => (<tr key={d}><th>{d}</th><td>{h}</td></tr>))}
+                {hours.map(([d,h]) => (<tr key={d}><th>{d}</th><td>{h}</td></tr>))}
               </tbody>
             </table>
+            {socialLinks.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 14, margin: "4px 0 20px" }}>
+                {socialLinks.map((s) => (
+                  <a key={s.label} href={s.href} target="_blank" rel="noreferrer" style={{ color: "var(--clay)", fontWeight: 600, fontSize: "var(--text-sm)" }}>{s.label} ↗</a>
+                ))}
+              </div>
+            )}
             <Button size="lg" href="#services" as="a">Book a treatment</Button>
           </div>
           <div className="vn-map" aria-hidden="true">

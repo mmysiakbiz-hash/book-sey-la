@@ -26,7 +26,7 @@ function StudiosHero() {
           </p>
           <form className="st-hero-form" onSubmit={(e) => e.preventDefault()}>
             <Input type="email" placeholder="Your studio email" aria-label="Studio email" containerStyle={{ flex: 1 }} />
-            <Button type="submit" size="md">Create studio account</Button>
+            <Button as="a" href="/panel" size="md">Create studio account</Button>
           </form>
           <div className="st-hero-note">
             <Icon name="check" size={15} color="var(--eucalyptus)" /> Free to start · no card required · live the same day

@@ -98,6 +98,16 @@ INSERT dla klienta). Recenzje pokazują się na stronie lokalu (sekcja „review
   `REVIEW_SECRET` (albo `CRON_SECRET`, jeśli `REVIEW_SECRET` nie ustawisz).
 - Nic dodatkowego do klikania — działa razem z crona z pkt 5.
 
+## 7. Konfigurator salonu (self-service)
+Właściciel wchodzi na **`/panel`**, loguje się (magic-link) i przechodzi kreator:
+podstawy → opis → lokalizacja → godziny → usługi → zespół → zdjęcia → social →
+publikacja. „Publish" ustawia status `active` i strona jest **od razu live** pod
+`/studio/<slug>`. Zapisy idą na sesji właściciela (RLS `owns_studio`) — nie trzeba
+service-role. Zdjęcia lądują w publicznym buckecie `studio-photos`.
+- Wymaga tylko `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  (magic-link działa przez `/api/auth/magic-link` — patrz pkt 4c).
+- `verified` to teraz osobna odznaka (Twoja moderacja) — nie blokuje publikacji.
+
 ## Kolejne sesje (żeby agent mógł pushować sam)
 Następną sesję Claude Code otwórz **na repo `book-sey-la`** (nie na paczce Design) —
 wtedy commity lecą prosto do repo, a Vercel deployuje automatycznie.
