@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Logo } from "@/components/brand/Logo";
+import { downloadCSV } from "@/lib/csv";
 
 // Real admin console — ADMIN_TOKEN-gated. Tabs: Overview (BI), Studios, Bookings,
 // Users. All reads/writes go through /api/admin (service role).
@@ -138,7 +139,10 @@ function Studios({ rows, busy, onAction }) {
   const list = rows.filter((r) => !q || (r.name || "").toLowerCase().includes(q.toLowerCase()) || (r.owner_email || "").toLowerCase().includes(q.toLowerCase()));
   return (
     <>
-      <input style={{ ...INP, marginBottom: 12, maxWidth: 320 }} placeholder="Search name / email" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div style={{ display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+        <input style={{ ...INP, maxWidth: 320 }} placeholder="Search name / email" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button style={MINI} onClick={() => downloadCSV("studios.csv", rows, [{ label: "Name", key: "name" }, { label: "Slug", key: "slug" }, { label: "Status", key: "status" }, { label: "Owner", key: "owner_email" }, { label: "Created", key: "created_at" }, { label: "Blocked", key: "billing_blocked" }])}>Export CSV</button>
+      </div>
       <div style={CARD}>
         {list.map((r, i) => (
           <div key={r.id} style={{ padding: "12px 14px", borderTop: i ? "1px solid var(--line)" : "none", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -167,6 +171,10 @@ function Bookings({ rows, busy, onAction }) {
   if (rows == null) return <Loading />;
   const fmt = (iso) => iso ? new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : "—";
   return (
+    <>
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+      <button style={MINI} onClick={() => downloadCSV("bookings.csv", rows, [{ label: "When", key: "startsAt" }, { label: "Studio", key: "studio" }, { label: "Service", key: "service" }, { label: "Client", key: "client" }, { label: "Price", key: "price" }, { label: "Commission", key: "commission" }, { label: "New", key: "newClient" }, { label: "Status", key: "status" }])}>Export CSV</button>
+    </div>
     <div style={CARD}>
       {rows.map((b, i) => (
         <div key={b.id} style={{ padding: "12px 14px", borderTop: i ? "1px solid var(--line)" : "none", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -183,12 +191,17 @@ function Bookings({ rows, busy, onAction }) {
       ))}
       {rows.length === 0 && <div style={{ padding: 16, color: "var(--text-muted)" }}>No bookings.</div>}
     </div>
+    </>
   );
 }
 
 function Users({ rows }) {
   if (rows == null) return <Loading />;
   return (
+    <>
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+      <button style={MINI} onClick={() => downloadCSV("users.csv", rows, [{ label: "Email", key: "email" }, { label: "Created", key: "created_at" }, { label: "Bookings", key: "bookings" }, { label: "Wallet", key: "wallet" }, { label: "Owns", key: "owns" }])}>Export CSV</button>
+    </div>
     <div style={CARD}>
       {rows.map((u, i) => (
         <div key={u.email + i} style={{ padding: "12px 14px", borderTop: i ? "1px solid var(--line)" : "none", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -200,6 +213,7 @@ function Users({ rows }) {
       ))}
       {rows.length === 0 && <div style={{ padding: 16, color: "var(--text-muted)" }}>No users yet.</div>}
     </div>
+    </>
   );
 }
 

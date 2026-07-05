@@ -4,6 +4,7 @@ import { Logo } from "@/components/brand/Logo";
 import { sendMagicLink } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
 import { billingStatus } from "@/lib/billing";
+import { downloadCSV } from "@/lib/csv";
 import {
   getMyStudio, createDraftStudio, updateStudio,
   saveServices, saveStaff, saveHours, uploadPhoto, publishStudio,
@@ -465,7 +466,11 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        <button onClick={() => downloadCSV("bookings.csv", bookings, [
+          { label: "When", get: (b) => b.start ? b.start.toISOString() : "" }, { label: "Service", key: "service" }, { label: "Client", key: "client" },
+          { label: "Staff", key: "staff" }, { label: "Price", key: "price" }, { label: "Status", key: "status" }])}
+          style={{ ...softBtn, padding: "9px 16px", fontSize: "var(--text-sm)" }}>Export CSV</button>
         <button onClick={() => { setBlocking((v) => !v); setAdding(false); }} style={{ ...softBtn, padding: "9px 16px", fontSize: "var(--text-sm)" }}>{blocking ? "Close" : "Block time"}</button>
         <button onClick={() => { setAdding((v) => !v); setBlocking(false); }} style={{ ...primaryBtn, padding: "9px 18px", fontSize: "var(--text-sm)" }}>{adding ? "Close" : "+ Add appointment"}</button>
       </div>
@@ -864,6 +869,15 @@ function Clients2({ clients, loyalty, onSaveNote, onSaveLoyalty, onRedeem }) {
     <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
       <MarketingComposer count={clients.length} />
       <LoyaltyEditor loyalty={loyalty} onSave={onSaveLoyalty} />
+      {clients.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={() => downloadCSV("clients.csv", clients, [
+            { label: "Name", key: "name" }, { label: "Email", key: "email" }, { label: "Phone", key: "phone" },
+            { label: "Visits", key: "visits" }, { label: "Spent", key: "spent" },
+            { label: "Last visit", get: (c) => c.lastVisit ? c.lastVisit.toISOString().slice(0, 10) : "" }, { label: "Note", key: "note" }])}
+            style={{ border: "1px solid var(--border-strong)", background: "none", borderRadius: 999, padding: "6px 14px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--cocoa)" }}>Export CSV</button>
+        </div>
+      )}
       {clients.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No clients yet — they appear here after their first booking.</p>}
       {clients.map((c) => (
         <div key={c.key} style={card}>
