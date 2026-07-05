@@ -7,7 +7,7 @@ import { billingStatus } from "@/lib/billing";
 import { downloadCSV } from "@/lib/csv";
 import {
   getMyStudio, createDraftStudio, updateStudio,
-  saveServices, saveStaff, saveHours, uploadPhoto, publishStudio,
+  saveServices, saveStaff, saveHours, savePackages, uploadPhoto, publishStudio,
   getStudioBookings, setBookingStatus, rescheduleBooking,
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
@@ -24,7 +24,7 @@ const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 const minToHHMM = (m) => (m == null ? "" : `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
 const hhmmToMin = (s) => { if (!s) return null; const [h, m] = s.split(":").map(Number); return h * 60 + (m || 0); };
 
-const STEPS = ["Basics", "About", "Location", "Hours", "Services", "Team", "Photos", "Contact", "Publish"];
+const STEPS = ["Basics", "About", "Location", "Hours", "Services", "Team", "Photos", "Contact", "Packages", "Publish"];
 
 // ---- small style helpers (consistent with the site tokens) ----
 const field = { width: "100%", boxSizing: "border-box", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "12px 14px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" };
@@ -63,6 +63,7 @@ export default function OwnerPanel() {
       hours: DAYS.map((_, i) => ({ day_of_week: i, open: i < 6 ? "09:00" : "", close: i < 6 ? "18:00" : "" })),
       services: [{ name: "", duration_min: 60, price_eur: "" }],
       staff: [{ name: "", role: "" }],
+      packages: [],
       photos: [],
       socials: { instagram: "", facebook: "", tiktok: "", website: "" }, whatsapp: "",
     };
@@ -80,6 +81,7 @@ export default function OwnerPanel() {
       hours: hoursByDay,
       services: (s.services && s.services.length ? [...s.services].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", duration_min: x.duration_min || 60, price_eur: x.price_eur ?? "" })) : [{ name: "", duration_min: 60, price_eur: "" }]),
       staff: (s.staff && s.staff.length ? s.staff.map((x) => ({ name: x.name || "", role: x.role || "" })) : [{ name: "", role: "" }]),
+      packages: (s.packages && s.packages.length ? [...s.packages].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", kind: x.kind || "package", price_eur: x.price_eur ?? "", credits: x.credits ?? "", description: x.description || "" })) : []),
       photos: Array.isArray(s.photos) ? s.photos : [],
       socials: Object.assign({ instagram: "", facebook: "", tiktok: "", website: "" }, s.socials || {}),
       whatsapp: s.whatsapp || "",
@@ -158,6 +160,7 @@ export default function OwnerPanel() {
       else if (stepIndex === 5) r = await saveStaff(s.id, f.staff);
       else if (stepIndex === 6) r = await updateStudio(s.id, { photos: f.photos });
       else if (stepIndex === 7) r = await updateStudio(s.id, { socials: f.socials, whatsapp: f.whatsapp || null });
+      else if (stepIndex === 8) r = await savePackages(s.id, f.packages);
       if (r && r.error) { flash("Save failed: " + r.error); return false; }
       return true;
     } finally { setSaving(false); }
@@ -398,6 +401,23 @@ export default function OwnerPanel() {
         )}
 
         {step === 8 && (
+          <Section title="Memberships & packages" hint="Optional. Advertise multi-visit packages or memberships on your page. Redeemed in-studio (no online payment yet).">
+            <Rows items={f.packages} onChange={(packages) => set({ packages })} blank={{ name: "", kind: "package", price_eur: "", credits: "", description: "" }} render={(row, upd) => (
+              <>
+                <input style={{ ...field, flex: 2 }} placeholder="e.g. 5-visit pack" value={row.name} onChange={(e) => upd({ name: e.target.value })} />
+                <select style={{ ...field, width: 130 }} value={row.kind} onChange={(e) => upd({ kind: e.target.value })}>
+                  <option value="package">Package</option>
+                  <option value="membership">Membership</option>
+                </select>
+                <input style={{ ...field, width: 90 }} type="number" placeholder="€" value={row.price_eur} onChange={(e) => upd({ price_eur: e.target.value })} />
+                <input style={{ ...field, width: 90 }} type="number" placeholder="visits" value={row.credits} onChange={(e) => upd({ credits: e.target.value })} />
+                <input style={{ ...field, flex: 2, minWidth: 160 }} placeholder="Short description (optional)" value={row.description} onChange={(e) => upd({ description: e.target.value })} />
+              </>
+            )} addLabel="Add package / membership" />
+          </Section>
+        )}
+
+        {step === 9 && (
           <Section
             title={live ? "Your page is live" : justClaimed ? "Your page is ready 🎉" : "Ready to go live?"}
             hint={live ? "You can keep editing any step — changes save as you go."
@@ -418,14 +438,14 @@ export default function OwnerPanel() {
           </Section>
         )}
 
-        {step < 8 && (
+        {step < 9 && (
           <div style={{ display: "flex", gap: 10, marginTop: 22, alignItems: "center" }}>
             {step > 0 && <button style={softBtn} onClick={() => setStep((s) => s - 1)}>Back</button>}
             <button style={primaryBtn} onClick={next} disabled={saving}>{saving ? "Saving…" : "Continue"}</button>
             {msg && <span style={{ color: "var(--eucalyptus)", fontSize: "var(--text-sm)", fontWeight: 600 }}>{msg}</span>}
           </div>
         )}
-        {step === 8 && msg && <p style={{ color: "var(--eucalyptus)", fontSize: "var(--text-sm)", fontWeight: 600, marginTop: 14 }}>{msg}</p>}
+        {step === 9 && msg && <p style={{ color: "var(--eucalyptus)", fontSize: "var(--text-sm)", fontWeight: 600, marginTop: 14 }}>{msg}</p>}
       </div>
       </>
       )}

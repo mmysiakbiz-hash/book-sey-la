@@ -88,6 +88,28 @@ function VenueServices({ studio }) {
             </li>
           ))}
         </ul>
+        {studio && Array.isArray(studio.packages) && studio.packages.length > 0 && (
+          <div style={{ marginTop: 40 }}>
+            <div className="sey-eyebrow vn-eyebrow">Save more</div>
+            <h2 className="vn-sec-title" style={{ marginBottom: 18 }}>Memberships &amp; <em className="sey-accent-italic">packages</em></h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
+              {studio.packages.map((p) => (
+                <div key={p.id} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                    <h3 style={{ margin: 0, fontSize: "var(--text-body)", color: "var(--cocoa)" }}>{p.name}</h3>
+                    <Badge tone="brand">{p.kind === "membership" ? "Membership" : "Package"}</Badge>
+                  </div>
+                  {p.description && <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>{p.description}</p>}
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4 }}>
+                    {p.priceEur != null && <span className="vn-srv-price">€{Math.round(p.priceEur)}{p.kind === "membership" ? " / mo" : ""}</span>}
+                    {p.credits != null && <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>{p.credits} visits</span>}
+                  </div>
+                  <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)", marginTop: 2 }}>Ask in-studio to redeem</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {selected && !unclaimed && (
           <BookNow studioId={studioId} service={selected} team={studio && studio.team} onClose={() => setSelected(null)} />
         )}
