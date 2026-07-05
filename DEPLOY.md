@@ -55,14 +55,27 @@ Po deployu i ustawieniu `BREVO_API_KEY`:
    - `"result.error": "brevo_400: ... sender ..."` → wróć do **4a** (nadawca niezweryfikowany).
    - `"brevoConfigured": false` → brak/zły `BREVO_API_KEY` w Vercel.
 
-### 4c. Supabase — Custom SMTP dla magic-link
-Supabase → **Authentication → Emails → SMTP Settings** → **Enable Custom SMTP**:
+### 4c. Magic-link przez Brevo API (zalecane — bez Supabase SMTP)
+Magic-link logowania jest wysyłany przez **nasz** endpoint `/api/auth/magic-link`
+(generuje link Supabase Admin API i wysyła go **Brevo API** — tą samą działającą
+ścieżką co potwierdzenia). Dzięki temu **nie** trzeba konfigurować Supabase Custom SMTP.
+- W Vercel dodaj sekret **`SUPABASE_SERVICE_ROLE_KEY`** (Supabase → Project Settings →
+  API → `service_role`). Server-only, nigdy `NEXT_PUBLIC`. Redeploy.
+- Sprawdź `https://<adres>/api/health/email` → `"serviceRoleConfigured": true`.
+- Redirecty muszą być na liście (pkt 3): Supabase → Auth → URL Configuration.
+- Jeśli klucz nie jest ustawiony, kod **automatycznie** wraca do wbudowanego
+  Supabase signInWithOtp (patrz 4d), więc nic się nie psuje.
+
+### 4d. (Alternatywa) Supabase — Custom SMTP
+Tylko jeśli NIE chcesz używać `SUPABASE_SERVICE_ROLE_KEY`. Supabase →
+**Authentication → Emails → SMTP Settings** → **Enable Custom SMTP**:
 - Host: `smtp-relay.brevo.com`, Port: `587`
 - User: login SMTP z Brevo (**SMTP & API → SMTP**), Password: klucz **SMTP** (nie API key)
 - Sender email: `hello@sey.la`, Sender name: `sey.la | book` → **Save**.
-- Sprawdź też **Authentication → Rate Limits** (domyślny limit maili bywa niski) i **Logs → Auth** (błędy SMTP).
+- Sprawdź też **Authentication → Rate Limits** i **Logs → Auth** (błędy SMTP).
 
-Diagnostyka: jeśli **4b** działa (Brevo API OK), a magic-link nadal nie przychodzi, problem jest w **4c** (Custom SMTP w Supabase) albo w limitach/URL-config (pkt 3), nie w kodzie.
+Diagnostyka: jeśli **4b** działa (Brevo API OK), a magic-link nadal nie przychodzi,
+sprawdź czy `serviceRoleConfigured` = true (4c) oraz redirecty/URL-config (pkt 3).
 
 ## Kolejne sesje (żeby agent mógł pushować sam)
 Następną sesję Claude Code otwórz **na repo `book-sey-la`** (nie na paczce Design) —

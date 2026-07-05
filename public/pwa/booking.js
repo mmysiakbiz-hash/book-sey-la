@@ -40,13 +40,26 @@
   }
 
   // Email magic link. redirectTo must be allow-listed in Supabase Auth → URL Config.
+  // Primary path: /api/auth/magic-link (server generates link + sends via Brevo).
+  // Falls back to Supabase's own signInWithOtp if that route isn't configured (503).
   async function sendMagicLink(email) {
-    if (!client) return { error: "supabase_unavailable" };
     if (!email) return { error: "missing_email" };
     var redirectTo = window.location.origin + "/pwa/";
     try {
-      var res = await client.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectTo } });
-      return res.error ? { error: res.error.message } : { ok: true };
+      var res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: email, redirectTo: redirectTo }),
+      });
+      var json = await res.json().catch(function () { return {}; });
+      if (res.ok && json.ok) return { ok: true };
+      if (res.status !== 503) return { error: json.error || ("http_" + res.status) };
+    } catch (e) { /* fall through to Supabase */ }
+
+    if (!client) return { error: "supabase_unavailable" };
+    try {
+      var r = await client.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectTo } });
+      return r.error ? { error: r.error.message } : { ok: true };
     } catch (e) { return { error: "network_error" }; }
   }
 

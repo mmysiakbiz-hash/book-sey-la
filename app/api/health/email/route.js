@@ -22,6 +22,7 @@ export async function GET(req) {
   const status = {
     brevoConfigured: hasBrevo(),
     supabaseConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    serviceRoleConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY), // enables Brevo-sent magic links
     sender: SENDER,
     testEnabled: Boolean(process.env.EMAIL_TEST_TOKEN),
   };
