@@ -10,8 +10,9 @@ const fmtDay = (d) => d.toLocaleDateString("en-GB", { weekday: "short", day: "nu
 
 // BookNow — a compact date/time picker that writes a real booking to Supabase.
 // Login-gated (bookings RLS requires an authenticated customer).
-export function BookNow({ studioId, service, onClose }) {
+export function BookNow({ studioId, service, team = [], onClose }) {
   const { user, loading } = useUser();
+  const [staffId, setStaffId] = React.useState("any");
   const days = React.useMemo(() => {
     const base = new Date();
     base.setHours(0, 0, 0, 0);
@@ -34,6 +35,7 @@ export function BookNow({ studioId, service, onClose }) {
     const res = await createBooking({
       studioId,
       serviceId: service.id,
+      staffId: staffId === "any" ? null : staffId,
       startsAt: d.toISOString(),
       durationMin: service.durationMin || 60,
       priceEur: service.priceEur != null ? service.priceEur : null,
@@ -91,6 +93,18 @@ export function BookNow({ studioId, service, onClose }) {
               <button key={t} style={chip(t === time)} onClick={() => setTime(t)}>{t}</button>
             ))}
           </div>
+
+          {team && team.length > 0 && (
+            <>
+              <div style={{ marginTop: 12, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: ".04em", color: "var(--text-caption)" }}>With</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                <button style={chip(staffId === "any")} onClick={() => setStaffId("any")}>Any professional</button>
+                {team.map((p) => (
+                  <button key={p.id} style={chip(staffId === p.id)} onClick={() => setStaffId(p.id)}>{p.name}{p.role ? ` · ${p.role}` : ""}</button>
+                ))}
+              </div>
+            </>
+          )}
 
           <div style={{ marginTop: 18 }}>
             {loading ? (

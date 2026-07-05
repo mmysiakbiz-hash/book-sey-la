@@ -53,7 +53,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 **H. Classes** — ✅ DONE (web). Owner manages sessions in `/panel` → Classes tab (`class_sessions_write` RLS): add/list/delete with booked counts. Public studio page shows upcoming classes with **live spots left** (`class_sessions_public()` SECURITY DEFINER rpc → counts without exposing attendees) and inline **Join** → `POST /api/class-book` (service role insert — `class_bookings` has no client INSERT; capacity-checked, dedupe unique index per email/session, Brevo confirmation). Verified vs live DB (owner create → public spots → book → decrement → dedupe). REMAINING: wire the PWA Classes screen (currently mock demo) to the same rpc + `/api/class-book` (mirrors the PWA booking bridge).
 
-**I. Staff selection at booking** + staff calendar (staff table currently name/color/active only — extend if needed for photos/roles).
+**I. Staff selection at booking** — ✅ DONE. Web `BookNow` and PWA `BookFlow` let the customer pick a team member (or "Any professional"); `staff_id` flows through `createBooking`/`/api/book`. `getStudioBySlug`/`live.js` now carry `staff(id,name,role)`; PWA staff cards fall back to an initial circle when there's no photo. Owner agenda (F) shows the chosen staff. Verified vs live DB (customer booking with staff_id inserts under RLS). REMAINING: per-staff availability/calendar filtering (all staff currently show all slots).
 
 **J. Payments / deposits** — `bookings.price_eur / commission_due`; deposit + no-show (Stripe?).
 

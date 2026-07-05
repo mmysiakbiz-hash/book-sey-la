@@ -51,6 +51,9 @@
       y: 22 + ((i * 17) % 52),
       tag: r.status === "verified" ? "Verified" : "Popular",
       services: items.length ? [{ group: r.category || "Services", items: items }] : [],
+      staff: (r.staff || []).filter(function (p) { return p.active !== false; }).map(function (p) {
+        return { id: p.id, name: p.name, role: p.role || "", rating: null, av: "" };
+      }),
     };
   }
 
@@ -70,7 +73,7 @@
   }
 
   var url = SUPABASE_URL + "/rest/v1/studios?select=" +
-    encodeURIComponent("id,slug,name,category,island,address,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort)") +
+    encodeURIComponent("id,slug,name,category,island,address,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort),staff(id,name,role,active)") +
     "&status=in.(active,verified)&order=google_rating.desc";
 
   var fetchStudios = fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON } })

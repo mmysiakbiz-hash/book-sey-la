@@ -292,7 +292,7 @@
   function BookFlow({ id, serviceId, nav, addBooking, prefill }) {
     const s = D.STUDIOS.find((x) => x.id === id);
     const allItems = s.services.flatMap((g) => g.items);
-    const staffPool = D.STAFF.slice(0, 3);
+    const staffPool = (s.staff && s.staff.length) ? s.staff : D.STAFF.slice(0, 3);
     const [picked, setPicked] = useState(serviceId ? [serviceId] : (prefill ? prefill.picked : []));
     const [staff, setStaff] = useState("any");
     const [day, setDay] = useState(0);
@@ -327,9 +327,11 @@
           const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
           const parts = (slot || "09:00").split(":");
           when.setHours(Number(parts[0]) || 9, Number(parts[1]) || 0, 0, 0);
+          const realStaff = (staff !== "any" && s.staff && s.staff.some((p) => p.id === staff)) ? staff : null;
           window.SEY_BOOK.createBooking({
             studioDbId: s.dbId,
             serviceDbId: first ? first.sid : null,
+            staffId: realStaff,
             startsAt: when.toISOString(),
             durationMin: first ? first.durMin : 60,
             priceEur: total,
@@ -395,9 +397,9 @@
                 </button>
                 {staffPool.map((p) => (
                   <button key={p.id} className={"staffcard" + (staff === p.id ? " is-on" : "")} onClick={() => setStaff(p.id)}>
-                    <img src={p.av} alt="" />
-                    <div style={{ flex: 1 }}><div className="appt-name">{p.name}</div><div className="srv-meta">{p.role}</div></div>
-                    <span className="rating" style={{ marginRight: 6 }}><Ic name="star" size={13} fill="var(--ink)" color="var(--ink)" /> {p.rating}</span>
+                    {p.av ? <img src={p.av} alt="" /> : <span className="staff-any">{(p.name || "?").slice(0, 1).toUpperCase()}</span>}
+                    <div style={{ flex: 1 }}><div className="appt-name">{p.name}</div>{p.role && <div className="srv-meta">{p.role}</div>}</div>
+                    {p.rating ? <span className="rating" style={{ marginRight: 6 }}><Ic name="star" size={13} fill="var(--ink)" color="var(--ink)" /> {p.rating}</span> : null}
                     {staff === p.id && <Ic name="check" size={18} color="var(--ink)" />}
                   </button>
                 ))}

@@ -639,7 +639,7 @@
   }) {
     const s = D.STUDIOS.find(x => x.id === id);
     const allItems = s.services.flatMap(g => g.items);
-    const staffPool = D.STAFF.slice(0, 3);
+    const staffPool = s.staff && s.staff.length ? s.staff : D.STAFF.slice(0, 3);
     const [picked, setPicked] = useState(serviceId ? [serviceId] : prefill ? prefill.picked : []);
     const [staff, setStaff] = useState("any");
     const [day, setDay] = useState(0);
@@ -681,9 +681,11 @@
           const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
           const parts = (slot || "09:00").split(":");
           when.setHours(Number(parts[0]) || 9, Number(parts[1]) || 0, 0, 0);
+          const realStaff = staff !== "any" && s.staff && s.staff.some(p => p.id === staff) ? staff : null;
           window.SEY_BOOK.createBooking({
             studioDbId: s.dbId,
             serviceDbId: first ? first.sid : null,
+            staffId: realStaff,
             startsAt: when.toISOString(),
             durationMin: first ? first.durMin : 60,
             priceEur: total
@@ -828,18 +830,20 @@
       key: p.id,
       className: "staffcard" + (staff === p.id ? " is-on" : ""),
       onClick: () => setStaff(p.id)
-    }, /*#__PURE__*/React.createElement("img", {
+    }, p.av ? /*#__PURE__*/React.createElement("img", {
       src: p.av,
       alt: ""
-    }), /*#__PURE__*/React.createElement("div", {
+    }) : /*#__PURE__*/React.createElement("span", {
+      className: "staff-any"
+    }, (p.name || "?").slice(0, 1).toUpperCase()), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
     }, /*#__PURE__*/React.createElement("div", {
       className: "appt-name"
-    }, p.name), /*#__PURE__*/React.createElement("div", {
+    }, p.name), p.role && /*#__PURE__*/React.createElement("div", {
       className: "srv-meta"
-    }, p.role)), /*#__PURE__*/React.createElement("span", {
+    }, p.role)), p.rating ? /*#__PURE__*/React.createElement("span", {
       className: "rating",
       style: {
         marginRight: 6
@@ -849,7 +853,7 @@
       size: 13,
       fill: "var(--ink)",
       color: "var(--ink)"
-    }), " ", p.rating), staff === p.id && /*#__PURE__*/React.createElement(Ic, {
+    }), " ", p.rating) : null, staff === p.id && /*#__PURE__*/React.createElement(Ic, {
       name: "check",
       size: 18,
       color: "var(--ink)"

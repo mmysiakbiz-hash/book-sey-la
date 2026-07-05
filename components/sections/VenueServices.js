@@ -77,7 +77,7 @@ function VenueServices({ studio }) {
           ))}
         </ul>
         {selected && (
-          <BookNow studioId={studioId} service={selected} onClose={() => setSelected(null)} />
+          <BookNow studioId={studioId} service={selected} team={studio && studio.team} onClose={() => setSelected(null)} />
         )}
       </div>
     </section>
