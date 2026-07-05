@@ -7,7 +7,7 @@ import { billingStatus } from "@/lib/billing";
 import { downloadCSV } from "@/lib/csv";
 import {
   getMyStudio, createDraftStudio, updateStudio,
-  saveServices, saveStaff, saveHours, savePackages, uploadPhoto, publishStudio,
+  saveServices, saveStaff, saveHours, saveStaffHours, savePackages, uploadPhoto, publishStudio,
   getStudioBookings, setBookingStatus, rescheduleBooking,
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
@@ -72,7 +72,7 @@ export default function OwnerPanel() {
   function hydrate(s) {
     if (!s) return;
     const hoursByDay = DAYS.map((_, i) => {
-      const row = (s.business_hours || []).find((h) => h.day_of_week === i);
+      const row = (s.business_hours || []).find((h) => h.day_of_week === i && !h.staff_id);
       return row ? { day_of_week: i, open: minToHHMM(row.open_min), close: minToHHMM(row.close_min) } : { day_of_week: i, open: "", close: "" };
     });
     setF({
@@ -368,6 +368,18 @@ export default function OwnerPanel() {
                 <input style={{ ...field, flex: 2 }} placeholder="Role (e.g. Barber)" value={row.role} onChange={(e) => upd({ role: e.target.value })} />
               </>
             )} addLabel="Add team member" />
+            {studio && (studio.staff || []).filter((s) => s.active !== false).length > 0 && (
+              <div style={{ marginTop: 24, borderTop: "1px solid var(--line)", paddingTop: 18 }}>
+                <h4 style={{ margin: "0 0 4px", fontSize: "var(--text-body)", color: "var(--cocoa)" }}>Individual working hours</h4>
+                <p style={{ margin: "0 0 12px", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>Optional — override the studio hours for a specific person. Save the team first to see new members here.</p>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {(studio.staff || []).filter((s) => s.active !== false).map((st) => (
+                    <StaffHours key={st.id} studioId={studio.id} staff={st} studioHours={f.hours}
+                      initial={(studio.business_hours || []).filter((h) => h.staff_id === st.id)} flash={flash} />
+                  ))}
+                </div>
+              </div>
+            )}
           </Section>
         )}
 
@@ -986,6 +998,58 @@ function Check({ ok, children }) {
     <span style={{ width: 18, height: 18, borderRadius: "50%", display: "grid", placeItems: "center", background: ok ? "var(--eucalyptus)" : "var(--line-strong)", color: "#fff", fontSize: 12 }}>{ok ? "✓" : ""}</span>{children}
   </li>;
 }
+// Per-staff working-hours override, seeded from the studio default. Toggle off
+// (and save) to clear the override so the member follows studio hours again.
+function StaffHours({ studioId, staff, studioHours, initial, flash }) {
+  const seeded = DAYS.map((_, i) => {
+    const row = (initial || []).find((h) => h.day_of_week === i);
+    if (row) return { open: minToHHMM(row.open_min), close: minToHHMM(row.close_min) };
+    const sh = (studioHours || [])[i] || {};
+    return { open: sh.open || "", close: sh.close || "" };
+  });
+  const [on, setOn] = React.useState((initial || []).length > 0);
+  const [days, setDays] = React.useState(seeded);
+  const [open, setOpen] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+
+  async function save() {
+    setBusy(true);
+    const rows = days
+      .map((d, i) => ({ day_of_week: i, open_min: hhmmToMin(d.open), close_min: hhmmToMin(d.close) }))
+      .filter((r) => r.open_min != null && r.close_min != null && r.close_min > r.open_min);
+    const r = await saveStaffHours(studioId, staff.id, on ? rows : []);
+    setBusy(false);
+    flash(r && r.error ? "Save failed: " + r.error : "Saved");
+  }
+
+  return (
+    <div style={{ border: "1px solid var(--line)", borderRadius: 12, padding: "12px 14px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontWeight: 600, color: "var(--cocoa)", flex: 1, minWidth: 120 }}>{staff.name}{staff.role ? ` · ${staff.role}` : ""}</span>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-sm)", color: "var(--cocoa-80)" }}>
+          <input type="checkbox" checked={on} onChange={(e) => { setOn(e.target.checked); setOpen(e.target.checked); }} />
+          Custom hours
+        </label>
+        {on && <button style={{ ...softBtn, padding: "6px 12px", fontSize: "var(--text-sm)" }} onClick={() => setOpen((v) => !v)}>{open ? "Hide" : "Edit"}</button>}
+        <button style={{ ...primaryBtn, padding: "6px 14px", fontSize: "var(--text-sm)" }} onClick={save} disabled={busy}>{busy ? "…" : "Save"}</button>
+      </div>
+      {!on && <p style={{ margin: "8px 0 0", color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>Follows studio hours.</p>}
+      {on && open && (
+        <div style={{ display: "grid", gap: 6, marginTop: 12 }}>
+          {days.map((h, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ width: 84, fontSize: "var(--text-xs)", color: "var(--cocoa-80)" }}>{DAYS[i]}</span>
+              <input style={{ ...field, padding: "7px 9px" }} type="time" value={h.open} onChange={(e) => { const d = days.slice(); d[i] = { ...d[i], open: e.target.value }; setDays(d); }} />
+              <span style={{ color: "var(--cocoa-40)" }}>–</span>
+              <input style={{ ...field, padding: "7px 9px" }} type="time" value={h.close} onChange={(e) => { const d = days.slice(); d[i] = { ...d[i], close: e.target.value }; setDays(d); }} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Rows({ items, onChange, render, blank, addLabel }) {
   const upd = (i, patch) => { const next = items.map((r, j) => (j === i ? { ...r, ...patch } : r)); onChange(next); };
   const remove = (i) => onChange(items.length > 1 ? items.filter((_, j) => j !== i) : [{ ...blank }]);

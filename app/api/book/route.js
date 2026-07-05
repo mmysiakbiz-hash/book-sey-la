@@ -47,6 +47,13 @@ export async function POST(req) {
     if (blocked) return NextResponse.json({ error: "studio_unavailable" }, { status: 409 });
   } catch (e) { /* non-fatal */ }
 
+  // Reject slots outside opening hours (per-staff hours win; studio default
+  // otherwise; studios with no hours configured are treated as always open).
+  try {
+    const { data: open } = await supabase.rpc("within_hours", { sid: body.studioId, staff: body.staffId || null, p: during });
+    if (open === false) return NextResponse.json({ error: "outside_hours" }, { status: 409 });
+  } catch (e) { /* non-fatal */ }
+
   // A client "acquired" via sey.la = one with no prior booking at this studio.
   // Their first booking carries a 20% commission; regulars a studio imported
   // itself already have history, so they don't. (RLS lets the user read their
