@@ -145,6 +145,17 @@ subdomenę `book.sey.la`**, nie ruszając rekordów roota.
 - Kod nie wymaga zmian: redirecty liczą się z `window.location.origin`, więc
   działają automatycznie na `book.sey.la` po dodaniu do allow-listy w pkt 5.
 
+## 10. Generator stron pod prospekta (`/admin/prospect`)
+Szybkie tworzenie gotowej strony `unclaimed` pod jeden salon (do wysłania w
+sprzedaży). Wymaga sekretu **`ADMIN_TOKEN`** w Vercel.
+- Wejdź na `https://<adres>/admin/prospect`, wklej `ADMIN_TOKEN` (zapamięta się),
+  podaj nazwę + kategorię (reszta z presetów: zdjęcia, opis, menu, godziny),
+  opcjonalnie miasto/mail/usługi/zdjęcia → dostajesz **link publiczny** (podgląd)
+  i **link do przejęcia** (`/claim/<slug>`) do wysłania właścicielowi.
+- Właściciel podaje mail zbieżny z tym, który wpiszesz → link logujący → ląduje
+  na „Twoja strona gotowa → Opublikuj" (jedno kliknięcie), albo „Usuń — nie jestem
+  zainteresowany". Booking działa dopiero po przejęciu.
+
 ## Kolejne sesje (żeby agent mógł pushować sam)
 Następną sesję Claude Code otwórz **na repo `book-sey-la`** (nie na paczce Design) —
 wtedy commity lecą prosto do repo, a Vercel deployuje automatycznie.
