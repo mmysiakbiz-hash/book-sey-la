@@ -42,9 +42,19 @@ function VenueServices({ studio }) {
   const group = groups.find(g => g.name === active) || groups[0];
   const [selected, setSelected] = React.useState(null);
   const studioId = studio && studio.id;
+  const unclaimed = !!(studio && studio.unclaimed);
+  const claimHref = studio && studio.slug ? `/claim/${studio.slug}` : "/for-studios";
   return (
     <section className="vn-section" id="services">
       <div className="sey-container">
+        {unclaimed && (
+          <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "14px 18px", marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <span style={{ color: "var(--cocoa)", fontSize: "var(--text-sm)" }}>
+              <b>This studio hasn’t joined sey.la yet</b> — online booking isn’t available. Is it yours?
+            </span>
+            <Button size="sm" as="a" href={claimHref}>Claim this studio</Button>
+          </div>
+        )}
         <div className="vn-sec-head">
           <div>
             <div className="sey-eyebrow vn-eyebrow">The menu</div>
@@ -71,12 +81,14 @@ function VenueServices({ studio }) {
               </div>
               <div className="vn-srv-end">
                 <span className="vn-srv-price">{s.price}</span>
-                <Button size="sm" variant="secondary" onClick={() => setSelected(s)}>Book</Button>
+                {unclaimed
+                  ? <Button size="sm" variant="secondary" as="a" href={claimHref}>Claim to book</Button>
+                  : <Button size="sm" variant="secondary" onClick={() => setSelected(s)}>Book</Button>}
               </div>
             </li>
           ))}
         </ul>
-        {selected && (
+        {selected && !unclaimed && (
           <BookNow studioId={studioId} service={selected} team={studio && studio.team} onClose={() => setSelected(null)} />
         )}
       </div>

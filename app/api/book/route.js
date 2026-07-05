@@ -30,6 +30,13 @@ export async function POST(req) {
   const user = userData && userData.user;
   if (!user) return NextResponse.json({ error: "auth_invalid" }, { status: 401 });
 
+  // Pre-listed (unclaimed) studios aren't bookable until an owner claims them.
+  const { data: studioRow } = await supabase
+    .from("studios").select("status, owner_id").eq("id", body.studioId).maybeSingle();
+  if (studioRow && (studioRow.status === "unclaimed" || !studioRow.owner_id)) {
+    return NextResponse.json({ error: "studio_unclaimed" }, { status: 409 });
+  }
+
   const start = new Date(body.startsAt);
   const end = new Date(start.getTime() + (body.durationMin || 60) * 60000);
   const during = `[${start.toISOString()},${end.toISOString()})`;

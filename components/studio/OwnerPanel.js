@@ -9,6 +9,7 @@ import {
   saveServices, saveStaff, saveHours, uploadPhoto, publishStudio,
   getStudioBookings, setBookingStatus,
   getOwnerClasses, createClassSession, deleteClassSession,
+  claimUnclaimedForMe, rejectListing,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -36,6 +37,7 @@ export default function OwnerPanel() {
   const [view, setView] = React.useState(null); // 'bookings' | 'classes' | 'setup'
   const [bookings, setBookings] = React.useState(null);
   const [classes, setClasses] = React.useState(null);
+  const [justClaimed, setJustClaimed] = React.useState(false);
 
   // login form
   const [email, setEmail] = React.useState("");
@@ -75,9 +77,14 @@ export default function OwnerPanel() {
   }
 
   async function load() {
-    const res = await getMyStudio();
+    let res = await getMyStudio();
     if (res && res.error === "supabase_not_configured") { setPhase("nosupabase"); return; }
     if (!res || !res.user) { setPhase("login"); return; }
+    // If they own nothing yet, see if there's a pre-listed studio to claim by email.
+    if (!res.studio) {
+      const claim = await claimUnclaimedForMe();
+      if (claim && claim.claimed) { setJustClaimed(true); res = await getMyStudio(); }
+    }
     setUser(res.user);
     setStudio(res.studio || null);
     if (res.studio) {
@@ -177,6 +184,17 @@ export default function OwnerPanel() {
     flash("Published — your page is live 🎉");
   }
 
+  async function deleteListing() {
+    if (!studio) return;
+    if (typeof window !== "undefined" && !window.confirm("Remove this listing? Your page will be hidden from clients. You can’t undo this here.")) return;
+    setSaving(true);
+    const r = await rejectListing(studio.id);
+    setSaving(false);
+    if (r.error) { flash("Couldn't remove: " + r.error); return; }
+    setStudio(null); setJustClaimed(false); setView("setup"); setF(blankForm());
+    flash("Listing removed");
+  }
+
   // ---------- render ----------
   if (phase === "loading") return <Shell><p style={{ color: "var(--text-muted)" }}>Loading…</p></Shell>;
 
@@ -217,6 +235,17 @@ export default function OwnerPanel() {
           {view === "setup" && <button style={softBtn} onClick={saveExit} disabled={saving}>Save &amp; exit</button>}
         </div>
       </div>
+
+      {justClaimed && (
+        <div style={{ background: "var(--blush, #f6ece9)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 16px", marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <span style={{ color: "var(--cocoa)", fontSize: "var(--text-sm)" }}>
+            <b>This is your pre-filled listing.</b> Review &amp; finish it to go live — or remove it if you're not interested.
+          </span>
+          <button onClick={deleteListing} disabled={saving} style={{ background: "none", border: "1px solid var(--border-strong)", borderRadius: "var(--radius-pill)", padding: "7px 14px", color: "var(--clay)", fontWeight: 600, fontSize: "var(--text-sm)", cursor: "pointer" }}>
+            Delete — not interested
+          </button>
+        </div>
+      )}
 
       {/* owner tabs — only once a studio exists */}
       {studio && (
