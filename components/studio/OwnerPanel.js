@@ -83,7 +83,7 @@ export default function OwnerPanel() {
     // If they own nothing yet, see if there's a pre-listed studio to claim by email.
     if (!res.studio) {
       const claim = await claimUnclaimedForMe();
-      if (claim && claim.claimed) { setJustClaimed(true); res = await getMyStudio(); }
+      if (claim && claim.claimed) { setJustClaimed(true); setStep(STEPS.length - 1); res = await getMyStudio(); }
     }
     setUser(res.user);
     setStudio(res.studio || null);
@@ -371,7 +371,11 @@ export default function OwnerPanel() {
         )}
 
         {step === 8 && (
-          <Section title={live ? "Your page is live" : "Ready to go live?"} hint={live ? "You can keep editing any step — changes save as you go." : "Publishing makes your page public with its own URL. You can edit anytime."}>
+          <Section
+            title={live ? "Your page is live" : justClaimed ? "Your page is ready 🎉" : "Ready to go live?"}
+            hint={live ? "You can keep editing any step — changes save as you go."
+              : justClaimed ? "We pre-filled everything from public info. Preview it, then publish to go live — or tweak any section first."
+              : "Publishing makes your page public with its own URL. You can edit anytime."}>
             <ul style={{ margin: "0 0 18px", padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
               <Check ok={!!f.name}>Studio name</Check>
               <Check ok={!!f.category}>Category</Check>
