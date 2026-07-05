@@ -1544,108 +1544,24 @@
   function Login({
     onDone
   }) {
-    // Real Supabase magic-link auth when supabase-js is available; otherwise the
-    // demo phone-OTP mock so the app still works offline / without config.
-    const live = typeof window !== "undefined" && window.SEY_BOOK && window.SEY_BOOK.available();
-
-    // -- real email magic-link path --
+    // Email magic-link login (Supabase). No phone/SMS — we're email-only.
     const [email, setEmail] = useState("");
     const [estate, setEstate] = useState("idle"); // idle | sending | sent | error
     const [emsg, setEmsg] = useState("");
     async function sendLink() {
-      if (!email) return;
+      const addr = email.trim();
+      if (!addr) return;
       setEstate("sending");
-      const res = await window.SEY_BOOK.sendMagicLink(email);
+      const api = typeof window !== "undefined" && window.SEY_BOOK;
+      const res = api ? await window.SEY_BOOK.sendMagicLink(addr) : {
+        error: "supabase_unavailable"
+      };
       if (res && res.ok) {
         setEstate("sent");
       } else {
         setEstate("error");
         setEmsg(res && res.error || "error");
       }
-    }
-
-    // -- demo phone-OTP path --
-    const [step, setStep] = useState("phone");
-    const [phone, setPhone] = useState("");
-    const [code, setCode] = useState(["", "", "", ""]);
-    const refs = [useRef(), useRef(), useRef(), useRef()];
-    function setDigit(i, v) {
-      if (!/^\d?$/.test(v)) return;
-      const next = code.slice();
-      next[i] = v;
-      setCode(next);
-      if (v && i < 3) refs[i + 1].current && refs[i + 1].current.focus();
-      if (next.every(d => d)) setTimeout(() => onDone({
-        name: "Amelia Rose",
-        phone: "+248 " + (phone || "251 0000")
-      }), 350);
-    }
-    if (live) {
-      return /*#__PURE__*/React.createElement("div", {
-        className: "app-scroll",
-        style: {
-          paddingBottom: 24
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "screen",
-        style: {
-          paddingTop: 40
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "brand",
-        style: {
-          fontSize: "1.4rem",
-          marginBottom: 28
-        }
-      }, /*#__PURE__*/React.createElement("b", null, "sey.la"), /*#__PURE__*/React.createElement("span", null, "|"), /*#__PURE__*/React.createElement("i", null, "book")), estate === "sent" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h1", {
-        className: "h-lg"
-      }, "Check your email"), /*#__PURE__*/React.createElement("p", {
-        className: "muted",
-        style: {
-          marginTop: 8
-        }
-      }, "We sent a magic link to ", /*#__PURE__*/React.createElement("b", null, email), ". Open it on this device to sign in \u2014 you'll come right back here.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h1", {
-        className: "h-lg"
-      }, "Log in or sign up"), /*#__PURE__*/React.createElement("p", {
-        className: "muted",
-        style: {
-          marginTop: 8
-        }
-      }, "Enter your email \u2014 we'll send a magic link. No password, and booking is always free."), /*#__PURE__*/React.createElement("div", {
-        className: "field",
-        style: {
-          marginTop: 22
-        }
-      }, /*#__PURE__*/React.createElement("input", {
-        type: "email",
-        inputMode: "email",
-        autoComplete: "email",
-        placeholder: "you@email.com",
-        value: email,
-        onChange: e => setEmail(e.target.value),
-        onKeyDown: e => {
-          if (e.key === "Enter") sendLink();
-        }
-      })), /*#__PURE__*/React.createElement("button", {
-        className: "btn btn--primary btn--full",
-        style: {
-          marginTop: 18
-        },
-        disabled: estate === "sending" || !email,
-        onClick: sendLink
-      }, estate === "sending" ? "Sending…" : "Send magic link"), estate === "error" && /*#__PURE__*/React.createElement("p", {
-        className: "tiny",
-        style: {
-          color: "var(--clay)",
-          marginTop: 12
-        }
-      }, "Couldn't send the link (", emsg, "). Please try again."), /*#__PURE__*/React.createElement("p", {
-        className: "tiny muted",
-        style: {
-          marginTop: 16,
-          lineHeight: 1.5
-        }
-      }, "By continuing you agree to the Terms and Privacy Policy."))));
     }
     return /*#__PURE__*/React.createElement("div", {
       className: "app-scroll",
@@ -1663,80 +1579,61 @@
         fontSize: "1.4rem",
         marginBottom: 28
       }
-    }, /*#__PURE__*/React.createElement("b", null, "sey.la"), /*#__PURE__*/React.createElement("span", null, "|"), /*#__PURE__*/React.createElement("i", null, "book")), step === "phone" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h1", {
+    }, /*#__PURE__*/React.createElement("b", null, "sey.la"), /*#__PURE__*/React.createElement("span", null, "|"), /*#__PURE__*/React.createElement("i", null, "book")), estate === "sent" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h1", {
+      className: "h-lg"
+    }, "Check your email"), /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        marginTop: 8
+      }
+    }, "We sent a magic link to ", /*#__PURE__*/React.createElement("b", null, email.trim()), ". Open it on this device to sign in \u2014 you'll come right back here."), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--soft btn--full",
+      style: {
+        marginTop: 22
+      },
+      onClick: () => setEstate("idle")
+    }, "Use a different email")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h1", {
       className: "h-lg"
     }, "Log in or sign up"), /*#__PURE__*/React.createElement("p", {
       className: "muted",
       style: {
         marginTop: 8
       }
-    }, "Enter your phone number \u2014 we'll text a one-time code. Booking is always free."), /*#__PURE__*/React.createElement("div", {
+    }, "Enter your email \u2014 we'll send a magic link. No password, and booking is always free."), /*#__PURE__*/React.createElement("div", {
       className: "field",
       style: {
         marginTop: 22
       }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "field-prefix"
-    }, "\uD83C\uDDF8\uD83C\uDDE8 +248"), /*#__PURE__*/React.createElement("input", {
-      inputMode: "numeric",
-      placeholder: "251 0000",
-      value: phone,
-      onChange: e => setPhone(e.target.value)
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "email",
+      inputMode: "email",
+      autoComplete: "email",
+      placeholder: "you@email.com",
+      value: email,
+      onChange: e => setEmail(e.target.value),
+      onKeyDown: e => {
+        if (e.key === "Enter") sendLink();
+      }
     })), /*#__PURE__*/React.createElement("button", {
       className: "btn btn--primary btn--full",
       style: {
         marginTop: 18
       },
-      disabled: phone.length < 6,
-      onClick: () => setStep("otp")
-    }, "Continue"), /*#__PURE__*/React.createElement("p", {
+      disabled: estate === "sending" || !email.trim(),
+      onClick: sendLink
+    }, estate === "sending" ? "Sending…" : "Send magic link"), estate === "error" && /*#__PURE__*/React.createElement("p", {
+      className: "tiny",
+      style: {
+        color: "var(--clay)",
+        marginTop: 12
+      }
+    }, "Couldn't send the link (", emsg, "). Please try again."), /*#__PURE__*/React.createElement("p", {
       className: "tiny muted",
       style: {
         marginTop: 16,
         lineHeight: 1.5
       }
-    }, "By continuing you agree to the Terms and Privacy Policy.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-      className: "iconbtn iconbtn--plain",
-      style: {
-        marginLeft: -6,
-        marginBottom: 6
-      },
-      onClick: () => setStep("phone"),
-      "aria-label": "Back"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "back"
-    })), /*#__PURE__*/React.createElement("h1", {
-      className: "h-lg"
-    }, "Enter the code"), /*#__PURE__*/React.createElement("p", {
-      className: "muted",
-      style: {
-        marginTop: 8
-      }
-    }, "Sent to +248 ", phone || "251 0000", ". ", /*#__PURE__*/React.createElement("a", {
-      style: {
-        color: "var(--ink)",
-        fontWeight: 600
-      },
-      onClick: () => {}
-    }, "Resend")), /*#__PURE__*/React.createElement("div", {
-      className: "otp"
-    }, code.map((d, i) => /*#__PURE__*/React.createElement("input", {
-      key: i,
-      ref: refs[i],
-      inputMode: "numeric",
-      maxLength: 1,
-      value: d,
-      autoFocus: i === 0,
-      onChange: e => setDigit(i, e.target.value),
-      onKeyDown: e => {
-        if (e.key === "Backspace" && !d && i > 0) refs[i - 1].current.focus();
-      }
-    }))), /*#__PURE__*/React.createElement("p", {
-      className: "tiny muted",
-      style: {
-        textAlign: "center"
-      }
-    }, "Tip: type any 4 digits to continue."))));
+    }, "By continuing you agree to the Terms and Privacy Policy."))));
   }
 
   // ---------- LOYALTY / REWARDS ----------

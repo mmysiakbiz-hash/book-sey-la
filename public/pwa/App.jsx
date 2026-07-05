@@ -677,90 +677,42 @@
   }
 
   function Login({ onDone }) {
-    // Real Supabase magic-link auth when supabase-js is available; otherwise the
-    // demo phone-OTP mock so the app still works offline / without config.
-    const live = typeof window !== "undefined" && window.SEY_BOOK && window.SEY_BOOK.available();
-
-    // -- real email magic-link path --
+    // Email magic-link login (Supabase). No phone/SMS — we're email-only.
     const [email, setEmail] = useState("");
     const [estate, setEstate] = useState("idle"); // idle | sending | sent | error
     const [emsg, setEmsg] = useState("");
     async function sendLink() {
-      if (!email) return;
+      const addr = email.trim();
+      if (!addr) return;
       setEstate("sending");
-      const res = await window.SEY_BOOK.sendMagicLink(email);
+      const api = typeof window !== "undefined" && window.SEY_BOOK;
+      const res = api ? await window.SEY_BOOK.sendMagicLink(addr) : { error: "supabase_unavailable" };
       if (res && res.ok) { setEstate("sent"); }
       else { setEstate("error"); setEmsg((res && res.error) || "error"); }
-    }
-
-    // -- demo phone-OTP path --
-    const [step, setStep] = useState("phone");
-    const [phone, setPhone] = useState("");
-    const [code, setCode] = useState(["", "", "", ""]);
-    const refs = [useRef(), useRef(), useRef(), useRef()];
-    function setDigit(i, v) {
-      if (!/^\d?$/.test(v)) return;
-      const next = code.slice(); next[i] = v; setCode(next);
-      if (v && i < 3) refs[i + 1].current && refs[i + 1].current.focus();
-      if (next.every((d) => d) ) setTimeout(() => onDone({ name: "Amelia Rose", phone: "+248 " + (phone || "251 0000") }), 350);
-    }
-
-    if (live) {
-      return (
-        <div className="app-scroll" style={{ paddingBottom: 24 }}>
-          <div className="screen" style={{ paddingTop: 40 }}>
-            <div className="brand" style={{ fontSize: "1.4rem", marginBottom: 28 }}><b>sey.la</b><span>|</span><i>book</i></div>
-            {estate === "sent" ? (
-              <>
-                <h1 className="h-lg">Check your email</h1>
-                <p className="muted" style={{ marginTop: 8 }}>We sent a magic link to <b>{email}</b>. Open it on this device to sign in — you'll come right back here.</p>
-              </>
-            ) : (
-              <>
-                <h1 className="h-lg">Log in or sign up</h1>
-                <p className="muted" style={{ marginTop: 8 }}>Enter your email — we'll send a magic link. No password, and booking is always free.</p>
-                <div className="field" style={{ marginTop: 22 }}>
-                  <input type="email" inputMode="email" autoComplete="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendLink(); }} />
-                </div>
-                <button className="btn btn--primary btn--full" style={{ marginTop: 18 }} disabled={estate === "sending" || !email} onClick={sendLink}>{estate === "sending" ? "Sending…" : "Send magic link"}</button>
-                {estate === "error" && <p className="tiny" style={{ color: "var(--clay)", marginTop: 12 }}>Couldn't send the link ({emsg}). Please try again.</p>}
-                <p className="tiny muted" style={{ marginTop: 16, lineHeight: 1.5 }}>By continuing you agree to the Terms and Privacy Policy.</p>
-              </>
-            )}
-          </div>
-        </div>
-      );
     }
 
     return (
       <div className="app-scroll" style={{ paddingBottom: 24 }}>
         <div className="screen" style={{ paddingTop: 40 }}>
           <div className="brand" style={{ fontSize: "1.4rem", marginBottom: 28 }}><b>sey.la</b><span>|</span><i>book</i></div>
-          {step === "phone" ? (
+          {estate === "sent" ? (
             <>
-              <h1 className="h-lg">Log in or sign up</h1>
-              <p className="muted" style={{ marginTop: 8 }}>Enter your phone number — we'll text a one-time code. Booking is always free.</p>
-              <div className="field" style={{ marginTop: 22 }}>
-                <span className="field-prefix">🇸🇨 +248</span>
-                <input inputMode="numeric" placeholder="251 0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              </div>
-              <button className="btn btn--primary btn--full" style={{ marginTop: 18 }} disabled={phone.length < 6} onClick={() => setStep("otp")}>Continue</button>
-              <p className="tiny muted" style={{ marginTop: 16, lineHeight: 1.5 }}>By continuing you agree to the Terms and Privacy Policy.</p>
+              <h1 className="h-lg">Check your email</h1>
+              <p className="muted" style={{ marginTop: 8 }}>We sent a magic link to <b>{email.trim()}</b>. Open it on this device to sign in — you'll come right back here.</p>
+              <button className="btn btn--soft btn--full" style={{ marginTop: 22 }} onClick={() => setEstate("idle")}>Use a different email</button>
             </>
           ) : (
             <>
-              <button className="iconbtn iconbtn--plain" style={{ marginLeft: -6, marginBottom: 6 }} onClick={() => setStep("phone")} aria-label="Back"><Ic name="back" /></button>
-              <h1 className="h-lg">Enter the code</h1>
-              <p className="muted" style={{ marginTop: 8 }}>Sent to +248 {phone || "251 0000"}. <a style={{ color: "var(--ink)", fontWeight: 600 }} onClick={() => {}}>Resend</a></p>
-              <div className="otp">
-                {code.map((d, i) => (
-                  <input key={i} ref={refs[i]} inputMode="numeric" maxLength={1} value={d}
-                    autoFocus={i === 0}
-                    onChange={(e) => setDigit(i, e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Backspace" && !d && i > 0) refs[i - 1].current.focus(); }} />
-                ))}
+              <h1 className="h-lg">Log in or sign up</h1>
+              <p className="muted" style={{ marginTop: 8 }}>Enter your email — we'll send a magic link. No password, and booking is always free.</p>
+              <div className="field" style={{ marginTop: 22 }}>
+                <input type="email" inputMode="email" autoComplete="email" placeholder="you@email.com" value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") sendLink(); }} />
               </div>
-              <p className="tiny muted" style={{ textAlign: "center" }}>Tip: type any 4 digits to continue.</p>
+              <button className="btn btn--primary btn--full" style={{ marginTop: 18 }} disabled={estate === "sending" || !email.trim()} onClick={sendLink}>{estate === "sending" ? "Sending…" : "Send magic link"}</button>
+              {estate === "error" && <p className="tiny" style={{ color: "var(--clay)", marginTop: 12 }}>Couldn't send the link ({emsg}). Please try again.</p>}
+              <p className="tiny muted" style={{ marginTop: 16, lineHeight: 1.5 }}>By continuing you agree to the Terms and Privacy Policy.</p>
             </>
           )}
         </div>
