@@ -52,7 +52,14 @@ Living status + TODO for the sey.la | book platform. Update as things land.
   - **Studios:** search + per-row actions — change status, **Mark paid** (paid_until +30d, unblock), **Block/Unblock** billing, **Delete** (cascades children).
   - **Bookings:** recent bookings (studio/client/price/commission/new-client) with **Cancel/Complete**.
   - **Users:** `admin_users()` SQL fn (auth.users needs SECURITY DEFINER) — email, #bookings, wallet €, owner flag.
-  (Old demo `AdminPanel` + `/api/admin/stats` retired.) Verified `admin_bi`/`admin_users` on live DB. REMAINING: reschedule; per-staff calendar filtering; date-range filters on BI.
+  (Old demo `AdminPanel` + `/api/admin/stats` retired.) Verified `admin_bi`/`admin_users` on live DB.
+
+**Fresha/Booksy parity added:**
+- **Owner manual booking** (walk-in / phone): `/panel → Bookings → + Add appointment` (client, service, staff, date/time) → `createOwnerBooking` (RLS `bookings_owner_insert` = `owns_studio`; `source='owner'`, no commission). No customer login needed.
+- **Clients (CRM) tab**: aggregates the studio's clients from bookings (name, contact, #visits, total spent, last visit) + private per-client **notes** (`client_notes` table, RLS `owns_studio`, upsert). `lib/owner.js` `getStudioClients`/`saveClientNote`.
+- Verified both RLS paths on live DB.
+
+**Still missing vs Fresha/Booksy (roadmap, most need a provider):** no-show protection / deposits + POS + tips (needs **Stripe**, J); SMS reminders + message blasts / marketing campaigns (needs **SMS provider**); waitlist (feasible now — table + join-when-full); loyalty points/memberships/gift cards/packages (PWA has mocks); per-staff working hours + calendar; blocked time / time off; client tags & segments; intake/consultation forms; multi-location. REMAINING (F): reschedule; per-staff calendar; BI date filters.
 
 **G. Studio self-service configurator** — ✅ DONE (core). `/panel` = login-gated (magic-link) multi-step wizard (`components/studio/OwnerPanel.js` + `lib/owner.js`): Basics → About → Location → Hours → Services → Team → Photos (upload to `studio-photos` bucket) → Contact/Social → Publish. Writes via RLS (`owns_studio`, `studios_insert/update`) on the user session — no service role. `gen_studio_slug()` makes a unique slug; **Publish sets status='active' → live immediately at `/studio/<slug>`** (migration broadened `studio_public`/`studios_read` to include 'active'; 'verified' is now a separate admin badge). Draft studios hidden from public. Added `studios.socials` (jsonb) + `staff.role`. `for-studios` CTAs point to `/panel`. Venue page now renders real hours + socials + team. Verified end-to-end against live DB as an authenticated user (create→services/staff/hours→publish→anon read; draft hidden) + cleaned up. Follow-ups: photo auto-crop/reorder, resume-step memory, owner can't yet create a 2nd studio (one per owner by design for now).
 

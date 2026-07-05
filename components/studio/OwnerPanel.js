@@ -10,6 +10,7 @@ import {
   getStudioBookings, setBookingStatus,
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
+  createOwnerBooking, getStudioClients, saveClientNote,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -37,6 +38,8 @@ export default function OwnerPanel() {
   const [view, setView] = React.useState(null); // 'bookings' | 'classes' | 'setup'
   const [bookings, setBookings] = React.useState(null);
   const [classes, setClasses] = React.useState(null);
+  const [clients, setClients] = React.useState(null);
+  const [catalog, setCatalog] = React.useState({ services: [], staff: [] });
   const [justClaimed, setJustClaimed] = React.useState(false);
 
   // login form
@@ -89,6 +92,7 @@ export default function OwnerPanel() {
     setStudio(res.studio || null);
     if (res.studio) {
       hydrate(res.studio);
+      setCatalog({ services: res.studio.services || [], staff: res.studio.staff || [] });
       setView((v) => v || (res.studio.status === "active" ? "bookings" : "setup"));
       loadBookings(res.studio.id);
     } else {
@@ -104,6 +108,10 @@ export default function OwnerPanel() {
   async function loadClasses(studioId) {
     const rows = await getOwnerClasses(studioId);
     setClasses(rows);
+  }
+  async function loadClients(studioId) {
+    const rows = await getStudioClients(studioId);
+    setClients(rows);
   }
 
   React.useEffect(() => {
@@ -250,8 +258,8 @@ export default function OwnerPanel() {
       {/* owner tabs — only once a studio exists */}
       {studio && (
         <div style={{ display: "flex", gap: 8, marginBottom: 22, borderBottom: "1px solid var(--line)" }}>
-          {[["bookings", "Bookings"], ["classes", "Classes"], ["billing", "Billing"], ["setup", "Edit page"]].map(([v, lbl]) => (
-            <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); if (v === "classes") loadClasses(studio.id); }}
+          {[["bookings", "Bookings"], ["clients", "Clients"], ["classes", "Classes"], ["billing", "Billing"], ["setup", "Edit page"]].map(([v, lbl]) => (
+            <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); if (v === "classes") loadClasses(studio.id); if (v === "clients") loadClients(studio.id); }}
               style={{ background: "none", border: "none", borderBottom: "2px solid " + (view === v ? "var(--clay)" : "transparent"), color: view === v ? "var(--cocoa)" : "var(--cocoa-60)", fontWeight: 600, fontSize: "var(--text-body)", padding: "8px 4px", marginBottom: -1, cursor: "pointer" }}>
               {lbl}
             </button>
@@ -260,7 +268,10 @@ export default function OwnerPanel() {
       )}
 
       {view === "bookings" && studio ? (
-        <Agenda bookings={bookings} onRefresh={() => loadBookings(studio.id)} onEdit={() => setView("setup")} publicUrl={publicUrl} live={live} />
+        <Agenda bookings={bookings} onRefresh={() => loadBookings(studio.id)} onEdit={() => setView("setup")} publicUrl={publicUrl} live={live}
+          catalog={catalog} onAdd={(p) => createOwnerBooking(studio.id, p)} />
+      ) : view === "clients" && studio ? (
+        <Clients2 clients={clients} onSaveNote={(email, note) => saveClientNote(studio.id, email, note)} />
       ) : view === "classes" && studio ? (
         <Classes studioId={studio.id} classes={classes} onRefresh={() => loadClasses(studio.id)} />
       ) : view === "billing" && studio ? (
@@ -406,8 +417,9 @@ export default function OwnerPanel() {
   );
 }
 
-function Agenda({ bookings, onRefresh, onEdit, publicUrl, live }) {
+function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd }) {
   const [busy, setBusy] = React.useState(null);
+  const [adding, setAdding] = React.useState(false);
   if (bookings == null) return <p style={{ color: "var(--text-muted)" }}>Loading bookings…</p>;
 
   const now = Date.now();
@@ -437,6 +449,11 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live }) {
 
   return (
     <div style={{ maxWidth: 640 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+        <button onClick={() => setAdding((v) => !v)} style={{ ...primaryBtn, padding: "9px 18px", fontSize: "var(--text-sm)" }}>{adding ? "Close" : "+ Add appointment"}</button>
+      </div>
+      {adding && <AddAppointment catalog={catalog} onAdd={onAdd} onDone={() => { setAdding(false); onRefresh(); }} />}
+
       {!live && (
         <div style={{ background: "var(--blush, #f6ece9)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px", marginBottom: 18, fontSize: "var(--text-sm)", color: "var(--cocoa)" }}>
           Your page isn't published yet — clients can't book. <a onClick={onEdit} style={{ color: "var(--clay)", fontWeight: 600, cursor: "pointer" }}>Finish setup →</a>
@@ -603,6 +620,105 @@ function Classes({ studioId, classes, onRefresh }) {
             ))}
           </div>
         )}
+    </div>
+  );
+}
+
+function AddAppointment({ catalog, onAdd, onDone }) {
+  const services = (catalog && catalog.services) || [];
+  const staff = (catalog && catalog.staff) || [];
+  const [f, setF] = React.useState({ name: "", phone: "", serviceId: services[0] ? services[0].id : "", staffId: "", date: "", time: "" });
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState("");
+  const set = (p) => setF((v) => ({ ...v, ...p }));
+  const inp = { boxSizing: "border-box", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" };
+
+  async function add() {
+    setErr("");
+    if (!f.name.trim() || !f.date || !f.time) { setErr("Add a client name, date and time."); return; }
+    const svc = services.find((s) => s.id === f.serviceId);
+    setBusy(true);
+    const r = await onAdd({
+      name: f.name, phone: f.phone,
+      serviceId: f.serviceId || null, staffId: f.staffId || null,
+      startISO: new Date(`${f.date}T${f.time}`).toISOString(),
+      durationMin: svc ? svc.duration_min : 60,
+      priceEur: svc && svc.price_eur != null ? svc.price_eur : null,
+    });
+    setBusy(false);
+    if (r && r.error) { setErr("Couldn't add: " + r.error); return; }
+    onDone();
+  }
+
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", padding: 16, marginBottom: 18 }}>
+      <div style={{ fontWeight: 700, color: "var(--cocoa)", marginBottom: 12 }}>New appointment (walk-in / phone)</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        <input style={inp} placeholder="Client name" value={f.name} onChange={(e) => set({ name: e.target.value })} />
+        <input style={inp} placeholder="Phone (optional)" value={f.phone} onChange={(e) => set({ phone: e.target.value })} />
+        {services.length > 0 && (
+          <select style={inp} value={f.serviceId} onChange={(e) => set({ serviceId: e.target.value })}>
+            {services.map((s) => <option key={s.id} value={s.id}>{s.name}{s.price_eur != null ? ` · €${Math.round(s.price_eur)}` : ""}</option>)}
+          </select>
+        )}
+        {staff.length > 0 && (
+          <select style={inp} value={f.staffId} onChange={(e) => set({ staffId: e.target.value })}>
+            <option value="">Any professional</option>
+            {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          <input style={{ ...inp, flex: 1 }} type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} />
+          <input style={{ ...inp, flex: 1 }} type="time" value={f.time} onChange={(e) => set({ time: e.target.value })} />
+        </div>
+        <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Adding…" : "Add appointment"}</button>
+        {err && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</span>}
+      </div>
+    </div>
+  );
+}
+
+function Clients2({ clients, onSaveNote }) {
+  const [open, setOpen] = React.useState(null); // client key with note editor open
+  const [draft, setDraft] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  if (clients == null) return <p style={{ color: "var(--text-muted)" }}>Loading clients…</p>;
+  if (clients.length === 0) return <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", maxWidth: 640 }}>No clients yet — they appear here after their first booking.</p>;
+
+  async function saveNote(c) {
+    setBusy(true);
+    await onSaveNote(c.email || c.name, draft);
+    setBusy(false); setOpen(null);
+    c.note = draft;
+  }
+  const card = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px" };
+
+  return (
+    <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
+      {clients.map((c) => (
+        <div key={c.key} style={card}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <span style={{ flex: 1, minWidth: 160 }}>
+              <span style={{ fontWeight: 600, color: "var(--cocoa)" }}>{c.name}</span>
+              <span style={{ display: "block", color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>{c.email || c.phone || "—"}</span>
+            </span>
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{c.visits} visit{c.visits === 1 ? "" : "s"}</span>
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>€{Math.round(c.spent)}</span>
+            <button onClick={() => { setOpen(open === c.key ? null : c.key); setDraft(c.note || ""); }}
+              style={{ border: "1px solid var(--line)", background: "var(--surface)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--cocoa)" }}>
+              {c.note ? "Note ✓" : "Add note"}
+            </button>
+          </div>
+          {open === c.key && (
+            <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+              <textarea rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Private note (allergies, preferences…)"
+                style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" }} />
+              <button style={{ ...primaryBtn, justifySelf: "start", padding: "8px 16px", fontSize: "var(--text-sm)" }} onClick={() => saveNote(c)} disabled={busy || !(c.email)}>{busy ? "Saving…" : "Save note"}</button>
+              {!c.email && <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>Notes need an email on the client.</span>}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
