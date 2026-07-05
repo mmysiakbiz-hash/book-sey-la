@@ -27,14 +27,14 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 ## KNOWN ISSUES (fix early)
 1. **Magic-link email not arriving.** Check: spam; Supabase → Auth → Logs (SMTP error?); Supabase → Auth → Emails → SMTP Settings (Custom SMTP enabled+saved); Brevo → Transactional Logs; Brevo sender/domain `hello@sey.la` verified (SPF/DKIM). Likely config, not code.
-2. **`{}` glitch on `/login`** — the `Input` component renders a `<style>` as a flex child (`components/core/Input.js`); it leaks as visible text in the login layout. Fix: move the `<style>` out of the flex row / mark display:none, or scope CSS in globals.css.
-3. **No navigation between surfaces.** Landing doesn't link to `/for-studios`, `/panel`, `/admin`, `/business`, `/account`, or the PWA. Nav "For studios" points to `#studios` (dead anchor). **PWA has no entry point** — users can't find the mobile app.
+2. ~~**`{}` glitch on `/login`**~~ — FIXED (A). Moved `Input`'s inline `<style>` out of the flex row into `globals.css` (`.sey-input` scoped rules).
+3. ~~**No navigation between surfaces.**~~ — FIXED (A). Nav "For studios" → `/for-studios`; added prominent **"Open app" → `/pwa/`** (desktop + mobile menu); footer now links every surface (Open app, Explore, For studios, Business, My account, Log in, Privacy, Terms, Refunds, Support). Still open: no `/` → PWA auto-redirect on mobile widths (deferred).
 
 ## TODO (prioritised)
-**A. Navigation & discoverability (do first — cheap, high impact)**
-- Real nav + footer links to every surface; fix "For studios" (`#studios` → `/for-studios`).
-- Prominent **"Open app"** → `/pwa/` (consider `/` → PWA redirect on mobile widths).
-- Fix the `{}` login glitch.
+**A. Navigation & discoverability (do first — cheap, high impact)** — ✅ DONE
+- ✅ Real nav + footer links to every surface; "For studios" now `/for-studios`.
+- ✅ Prominent **"Open app"** → `/pwa/` in nav + mobile menu + footer. (`/` → PWA redirect on mobile widths: deferred.)
+- ✅ Fixed the `{}` login glitch.
 
 **B. Email deliverability** — get magic link + booking confirmation actually landing (Brevo SMTP + sender verify + test end-to-end).
 
