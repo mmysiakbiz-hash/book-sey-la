@@ -5,6 +5,7 @@ import { Button } from "@/components/core/Button";
 import { useUser } from "@/lib/useUser";
 import { getMyBookings } from "@/lib/bookings";
 import { getFavouriteStudios } from "@/lib/favourites";
+import { getWallet } from "@/lib/wallet";
 import { signOut } from "@/lib/auth";
 
 function fmtRange(during) {
@@ -20,10 +21,11 @@ export default function AccountPage() {
   const { user, loading } = useUser();
   const [bookings, setBookings] = React.useState(null);
   const [faves, setFaves] = React.useState(null);
+  const [wallet, setWallet] = React.useState(null);
 
   React.useEffect(() => {
-    if (user) { getMyBookings().then(setBookings); getFavouriteStudios().then(setFaves); }
-    else { setBookings(null); setFaves(null); }
+    if (user) { getMyBookings().then(setBookings); getFavouriteStudios().then(setFaves); getWallet().then(setWallet); }
+    else { setBookings(null); setFaves(null); setWallet(null); }
   }, [user]);
 
   return (
@@ -80,6 +82,32 @@ export default function AccountPage() {
                   <span style={{ color: "var(--accent-link)", fontSize: "var(--text-sm)", fontWeight: 600 }}>View →</span>
                 </a>
               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {user && wallet && (
+        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
+          <div className="sey-container" style={{ padding: "20px 0" }}>
+            <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Wallet</h2>
+            <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>Balance</span>
+                <span style={{ fontSize: "var(--text-h2)", fontWeight: 700 }}>€{wallet.balance.toFixed(0)}</span>
+              </div>
+              {wallet.transactions.length === 0 ? (
+                <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", margin: "10px 0 0" }}>No credit yet — invite a studio to earn €15 toward your bookings.</p>
+              ) : (
+                <div style={{ display: "grid", gap: 8, marginTop: 12, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                  {wallet.transactions.map((t) => (
+                    <div key={t.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: "var(--text-sm)" }}>
+                      <span style={{ color: "var(--cocoa)" }}>{t.note || t.kind || "Credit"}</span>
+                      <span style={{ fontWeight: 600, color: t.amount >= 0 ? "var(--confirmed)" : "var(--clay)" }}>{t.amount >= 0 ? "+" : ""}€{t.amount.toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
