@@ -12,6 +12,7 @@ import {
   claimUnclaimedForMe, rejectListing,
   createOwnerBooking, getStudioClients, saveClientNote,
   getTimeOff, addTimeOff, deleteTimeOff,
+  getLoyalty, saveLoyalty, redeemLoyalty,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -40,6 +41,7 @@ export default function OwnerPanel() {
   const [bookings, setBookings] = React.useState(null);
   const [classes, setClasses] = React.useState(null);
   const [clients, setClients] = React.useState(null);
+  const [loyalty, setLoyalty] = React.useState(null);
   const [timeOff, setTimeOff] = React.useState(null);
   const [catalog, setCatalog] = React.useState({ services: [], staff: [] });
   const [justClaimed, setJustClaimed] = React.useState(false);
@@ -112,8 +114,8 @@ export default function OwnerPanel() {
     setClasses(rows);
   }
   async function loadClients(studioId) {
-    const rows = await getStudioClients(studioId);
-    setClients(rows);
+    const [rows, lp] = await Promise.all([getStudioClients(studioId), getLoyalty(studioId)]);
+    setClients(rows); setLoyalty(lp);
   }
 
   React.useEffect(() => {
@@ -274,7 +276,10 @@ export default function OwnerPanel() {
           catalog={catalog} onAdd={(p) => createOwnerBooking(studio.id, p)}
           timeOff={timeOff} onAddTimeOff={(p) => addTimeOff(studio.id, p)} onDeleteTimeOff={deleteTimeOff} />
       ) : view === "clients" && studio ? (
-        <Clients2 clients={clients} onSaveNote={(email, note) => saveClientNote(studio.id, email, note)} />
+        <Clients2 clients={clients} loyalty={loyalty}
+          onSaveNote={(email, note) => saveClientNote(studio.id, email, note)}
+          onSaveLoyalty={async (p) => { const r = await saveLoyalty(studio.id, p); loadClients(studio.id); return r; }}
+          onRedeem={async (email) => { await redeemLoyalty(studio.id, email); loadClients(studio.id); }} />
       ) : view === "classes" && studio ? (
         <Classes studioId={studio.id} classes={classes} onRefresh={() => loadClasses(studio.id)} />
       ) : view === "billing" && studio ? (
@@ -701,6 +706,36 @@ function AddAppointment({ catalog, onAdd, onDone }) {
   );
 }
 
+function LoyaltyEditor({ loyalty, onSave }) {
+  const [open, setOpen] = React.useState(false);
+  const [f, setF] = React.useState({ stamps_required: (loyalty && loyalty.stamps_required) || 6, reward: (loyalty && loyalty.reward) || "", active: !!(loyalty && loyalty.active) });
+  const [busy, setBusy] = React.useState(false);
+  React.useEffect(() => { setF({ stamps_required: (loyalty && loyalty.stamps_required) || 6, reward: (loyalty && loyalty.reward) || "", active: !!(loyalty && loyalty.active) }); }, [loyalty]);
+  const inp = { boxSizing: "border-box", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "9px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" };
+  async function save() { setBusy(true); await onSave(f); setBusy(false); setOpen(false); }
+  const summary = loyalty && loyalty.active ? `Active — ${loyalty.stamps_required} visits → ${loyalty.reward || "reward"}` : "Off — reward repeat clients with a stamp card";
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontSize: "var(--text-sm)" }}><b style={{ color: "var(--cocoa)" }}>Loyalty</b> <span style={{ color: "var(--text-muted)" }}>· {summary}</span></span>
+        <button onClick={() => setOpen((v) => !v)} style={{ border: "1px solid var(--border-strong)", background: "none", borderRadius: 999, padding: "6px 14px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--cocoa)" }}>{open ? "Close" : "Edit"}</button>
+      </div>
+      {open && (
+        <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-sm)" }}>
+            Visits needed <input style={{ ...inp, width: 80 }} type="number" value={f.stamps_required} onChange={(e) => setF((v) => ({ ...v, stamps_required: e.target.value }))} />
+          </label>
+          <input style={inp} placeholder="Reward (e.g. 6th visit 50% off)" value={f.reward} onChange={(e) => setF((v) => ({ ...v, reward: e.target.value }))} />
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-sm)", color: "var(--cocoa)" }}>
+            <input type="checkbox" checked={f.active} onChange={(e) => setF((v) => ({ ...v, active: e.target.checked }))} /> Active (show on your page)
+          </label>
+          <button style={{ ...primaryBtn, justifySelf: "start", padding: "8px 16px", fontSize: "var(--text-sm)" }} onClick={save} disabled={busy}>{busy ? "Saving…" : "Save loyalty"}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BlockTime({ onAdd, onDone }) {
   const [f, setF] = React.useState({ date: "", from: "", to: "", reason: "" });
   const [busy, setBusy] = React.useState(false);
@@ -733,12 +768,16 @@ function BlockTime({ onAdd, onDone }) {
   );
 }
 
-function Clients2({ clients, onSaveNote }) {
+function Clients2({ clients, loyalty, onSaveNote, onSaveLoyalty, onRedeem }) {
   const [open, setOpen] = React.useState(null); // client key with note editor open
   const [draft, setDraft] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+
+  const req = loyalty && loyalty.stamps_required ? loyalty.stamps_required : 0;
+  const active = !!(loyalty && loyalty.active && req);
+  const stampsOf = (c) => Math.max(0, (c.visits || 0) - (c.redemptions || 0) * req);
+
   if (clients == null) return <p style={{ color: "var(--text-muted)" }}>Loading clients…</p>;
-  if (clients.length === 0) return <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", maxWidth: 640 }}>No clients yet — they appear here after their first booking.</p>;
 
   async function saveNote(c) {
     setBusy(true);
@@ -750,6 +789,8 @@ function Clients2({ clients, onSaveNote }) {
 
   return (
     <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
+      <LoyaltyEditor loyalty={loyalty} onSave={onSaveLoyalty} />
+      {clients.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No clients yet — they appear here after their first booking.</p>}
       {clients.map((c) => (
         <div key={c.key} style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -759,6 +800,10 @@ function Clients2({ clients, onSaveNote }) {
             </span>
             <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{c.visits} visit{c.visits === 1 ? "" : "s"}</span>
             <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>€{Math.round(c.spent)}</span>
+            {active && <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: stampsOf(c) >= req ? "var(--eucalyptus)" : "var(--cocoa-40)" }}>{Math.min(stampsOf(c), req)}/{req} 🎁</span>}
+            {active && stampsOf(c) >= req && c.email && (
+              <button onClick={() => onRedeem(c.email)} style={{ border: "1px solid var(--eucalyptus)", background: "var(--surface)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 700, cursor: "pointer", color: "var(--eucalyptus)" }}>Redeem</button>
+            )}
             <button onClick={() => { setOpen(open === c.key ? null : c.key); setDraft(c.note || ""); }}
               style={{ border: "1px solid var(--line)", background: "var(--surface)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--cocoa)" }}>
               {c.note ? "Note ✓" : "Add note"}

@@ -64,6 +64,7 @@ function VenueHero({ studio, hasClasses }) {
             {hasReviews && <span className="vn-meta-pill"><Icon name="star" size={15} color="var(--brass)" /> <b>{rating}</b> · {reviewCount} reviews</span>}
             <span className="vn-meta-pill vn-open"><span className="vn-dot"></span> Open until 19:00</span>
             <span className="vn-meta-pill"><Icon name="heart" size={14} color="var(--clay)" /> Free to book</span>
+            {studio && studio.loyalty && <span className="vn-meta-pill"><Icon name="sparkle" size={14} color="var(--brass)" /> {studio.loyalty.stamps} visits → {studio.loyalty.reward || "reward"}</span>}
           </div>
           <div className="vn-hero-actions">
             <Button size="lg" href="#services" as="a">Book a treatment</Button>
