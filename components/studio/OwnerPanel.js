@@ -11,6 +11,7 @@ import {
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
   createOwnerBooking, getStudioClients, saveClientNote,
+  getTimeOff, addTimeOff, deleteTimeOff,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -39,6 +40,7 @@ export default function OwnerPanel() {
   const [bookings, setBookings] = React.useState(null);
   const [classes, setClasses] = React.useState(null);
   const [clients, setClients] = React.useState(null);
+  const [timeOff, setTimeOff] = React.useState(null);
   const [catalog, setCatalog] = React.useState({ services: [], staff: [] });
   const [justClaimed, setJustClaimed] = React.useState(false);
 
@@ -102,8 +104,8 @@ export default function OwnerPanel() {
   }
 
   async function loadBookings(studioId) {
-    const rows = await getStudioBookings(studioId);
-    setBookings(rows);
+    const [rows, off] = await Promise.all([getStudioBookings(studioId), getTimeOff(studioId)]);
+    setBookings(rows); setTimeOff(off);
   }
   async function loadClasses(studioId) {
     const rows = await getOwnerClasses(studioId);
@@ -269,7 +271,8 @@ export default function OwnerPanel() {
 
       {view === "bookings" && studio ? (
         <Agenda bookings={bookings} onRefresh={() => loadBookings(studio.id)} onEdit={() => setView("setup")} publicUrl={publicUrl} live={live}
-          catalog={catalog} onAdd={(p) => createOwnerBooking(studio.id, p)} />
+          catalog={catalog} onAdd={(p) => createOwnerBooking(studio.id, p)}
+          timeOff={timeOff} onAddTimeOff={(p) => addTimeOff(studio.id, p)} onDeleteTimeOff={deleteTimeOff} />
       ) : view === "clients" && studio ? (
         <Clients2 clients={clients} onSaveNote={(email, note) => saveClientNote(studio.id, email, note)} />
       ) : view === "classes" && studio ? (
@@ -417,9 +420,10 @@ export default function OwnerPanel() {
   );
 }
 
-function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd }) {
+function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, timeOff, onAddTimeOff, onDeleteTimeOff }) {
   const [busy, setBusy] = React.useState(null);
   const [adding, setAdding] = React.useState(false);
+  const [blocking, setBlocking] = React.useState(false);
   if (bookings == null) return <p style={{ color: "var(--text-muted)" }}>Loading bookings…</p>;
 
   const now = Date.now();
@@ -449,10 +453,29 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd }
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <button onClick={() => setAdding((v) => !v)} style={{ ...primaryBtn, padding: "9px 18px", fontSize: "var(--text-sm)" }}>{adding ? "Close" : "+ Add appointment"}</button>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
+        <button onClick={() => { setBlocking((v) => !v); setAdding(false); }} style={{ ...softBtn, padding: "9px 16px", fontSize: "var(--text-sm)" }}>{blocking ? "Close" : "Block time"}</button>
+        <button onClick={() => { setAdding((v) => !v); setBlocking(false); }} style={{ ...primaryBtn, padding: "9px 18px", fontSize: "var(--text-sm)" }}>{adding ? "Close" : "+ Add appointment"}</button>
       </div>
       {adding && <AddAppointment catalog={catalog} onAdd={onAdd} onDone={() => { setAdding(false); onRefresh(); }} />}
+      {blocking && <BlockTime onAdd={onAddTimeOff} onDone={() => { setBlocking(false); onRefresh(); }} />}
+      {Array.isArray(timeOff) && timeOff.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: ".04em", color: "var(--text-caption)", margin: "0 0 6px" }}>Blocked time</div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {timeOff.map((t) => (
+              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface)", border: "1px dashed var(--line-strong)", borderRadius: "var(--radius-md)", padding: "8px 12px" }}>
+                <span style={{ flex: 1, fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>
+                  {t.start ? t.start.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : "—"}
+                  {t.end ? " → " + t.end.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : ""}
+                  {t.reason ? ` · ${t.reason}` : ""}
+                </span>
+                <button onClick={async () => { await onDeleteTimeOff(t.id); onRefresh(); }} style={{ border: "none", background: "none", color: "var(--cocoa-40)", cursor: "pointer", fontSize: 18 }}>×</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!live && (
         <div style={{ background: "var(--blush, #f6ece9)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px", marginBottom: 18, fontSize: "var(--text-sm)", color: "var(--cocoa)" }}>
@@ -672,6 +695,38 @@ function AddAppointment({ catalog, onAdd, onDone }) {
           <input style={{ ...inp, flex: 1 }} type="time" value={f.time} onChange={(e) => set({ time: e.target.value })} />
         </div>
         <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Adding…" : "Add appointment"}</button>
+        {err && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</span>}
+      </div>
+    </div>
+  );
+}
+
+function BlockTime({ onAdd, onDone }) {
+  const [f, setF] = React.useState({ date: "", from: "", to: "", reason: "" });
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState("");
+  const set = (p) => setF((v) => ({ ...v, ...p }));
+  const inp = { boxSizing: "border-box", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" };
+  async function add() {
+    setErr("");
+    if (!f.date || !f.from || !f.to) { setErr("Pick a date and a from/to time."); return; }
+    setBusy(true);
+    const r = await onAdd({ startISO: new Date(`${f.date}T${f.from}`).toISOString(), endISO: new Date(`${f.date}T${f.to}`).toISOString(), reason: f.reason });
+    setBusy(false);
+    if (r && r.error) { setErr("Couldn't block: " + r.error); return; }
+    onDone();
+  }
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", padding: 16, marginBottom: 18 }}>
+      <div style={{ fontWeight: 700, color: "var(--cocoa)", marginBottom: 12 }}>Block time (day off / break)</div>
+      <div style={{ display: "grid", gap: 8 }}>
+        <input style={inp} type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} />
+        <div style={{ display: "flex", gap: 8 }}>
+          <input style={{ ...inp, flex: 1 }} type="time" value={f.from} onChange={(e) => set({ from: e.target.value })} />
+          <input style={{ ...inp, flex: 1 }} type="time" value={f.to} onChange={(e) => set({ to: e.target.value })} />
+        </div>
+        <input style={inp} placeholder="Reason (optional)" value={f.reason} onChange={(e) => set({ reason: e.target.value })} />
+        <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Blocking…" : "Block this time"}</button>
         {err && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</span>}
       </div>
     </div>

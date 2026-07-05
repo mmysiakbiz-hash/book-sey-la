@@ -41,6 +41,12 @@ export async function POST(req) {
   const end = new Date(start.getTime() + (body.durationMin || 60) * 60000);
   const during = `[${start.toISOString()},${end.toISOString()})`;
 
+  // Reject slots the studio has blocked off (time off / day off).
+  try {
+    const { data: blocked } = await supabase.rpc("is_blocked", { sid: body.studioId, p: during });
+    if (blocked) return NextResponse.json({ error: "studio_unavailable" }, { status: 409 });
+  } catch (e) { /* non-fatal */ }
+
   // A client "acquired" via sey.la = one with no prior booking at this studio.
   // Their first booking carries a 20% commission; regulars a studio imported
   // itself already have history, so they don't. (RLS lets the user read their
