@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/core/Button";
 import { Icon } from "@/components/brand/Icon";
+import { SaveStudioButton } from "@/components/booking/SaveStudioButton";
 // VenueHero — the studio's own header + full-bleed cover hero.
 
 
@@ -44,6 +45,7 @@ function VenueHero({ studio }) {
           </nav>
           <div className="vn-topbar-cta">
             <a className="vn-call" href="#visit"><Icon name="pin" size={16} color="var(--clay)" /> {shortLoc}</a>
+            {studio && studio.id && <SaveStudioButton studioId={studio.id} />}
             <Button size="sm" href="#services" as="a">Book now</Button>
           </div>
         </div>

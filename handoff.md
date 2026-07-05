@@ -59,7 +59,10 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 
 **M. Custom domain book.sey.la via Cloudflare** — ⬜ ops runbook in `DEPLOY.md §9`. `sey.la` root is another project; proxy ONLY `book` subdomain (CNAME `book`→`cname.vercel-dns.com`, orange cloud, SSL **Full (strict)**), add domain in Vercel, and add `https://book.sey.la/**` to Supabase Auth redirect URLs. No code changes needed (origin-relative redirects).
 
-**K. Favourites, wallet/referrals** — tables exist (`favourites`, `wallet_transactions`, `referrals`), wire.
+**K. Favourites, wallet/referrals** — 🚧 in progress (step by step).
+- ✅ **K1 Favourites**: `lib/favourites.js` (client, RLS `fav_self`), `SaveStudioButton` heart on the venue header, "Saved studios" list on `/account`. Verified vs live DB (insert/select/delete + per-user isolation).
+- ⬜ **K2 Wallet**: `wallet_transactions` is SELECT-only for the user (credits added server-side) — show balance + history in `/account`.
+- ⬜ **K3 Referrals**: `referrals` SELECT-only — needs a server route to create an invite (referrer = session email) + completion crediting both wallets when the referred studio goes live.
 
 **L. Auth polish** — optional phone OTP (needs SMS provider); proper account management, sign-out everywhere.
 
