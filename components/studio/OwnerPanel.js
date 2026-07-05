@@ -80,7 +80,7 @@ export default function OwnerPanel() {
       address: s.address || "", island: s.island || "", lat: s.lat ?? "", lng: s.lng ?? "",
       hours: hoursByDay,
       services: (s.services && s.services.length ? [...s.services].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", duration_min: x.duration_min || 60, price_eur: x.price_eur ?? "" })) : [{ name: "", duration_min: 60, price_eur: "" }]),
-      staff: (s.staff && s.staff.length ? s.staff.map((x) => ({ name: x.name || "", role: x.role || "" })) : [{ name: "", role: "" }]),
+      staff: (s.staff && s.staff.length ? s.staff.filter((x) => x.active !== false).map((x) => ({ id: x.id, name: x.name || "", role: x.role || "" })) : [{ name: "", role: "" }]),
       packages: (s.packages && s.packages.length ? [...s.packages].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", kind: x.kind || "package", price_eur: x.price_eur ?? "", credits: x.credits ?? "", description: x.description || "" })) : []),
       photos: Array.isArray(s.photos) ? s.photos : [],
       socials: Object.assign({ instagram: "", facebook: "", tiktok: "", website: "" }, s.socials || {}),
@@ -699,8 +699,8 @@ function Classes({ studioId, classes, onRefresh }) {
 }
 
 function AddAppointment({ catalog, onAdd, onDone }) {
-  const services = (catalog && catalog.services) || [];
-  const staff = (catalog && catalog.staff) || [];
+  const services = ((catalog && catalog.services) || []).filter((s) => s.active !== false);
+  const staff = ((catalog && catalog.staff) || []).filter((s) => s.active !== false);
   const [f, setF] = React.useState({ name: "", phone: "", serviceId: services[0] ? services[0].id : "", staffId: "", date: "", time: "" });
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState("");
