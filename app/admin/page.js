@@ -1,14 +1,30 @@
 "use client";
 import React from "react";
 import { Logo } from "@/components/brand/Logo";
+import { supabase } from "@/lib/supabaseClient";
 import { downloadCSV } from "@/lib/csv";
 
-// Real admin console — ADMIN_TOKEN-gated. Tabs: Overview (BI), Studios, Bookings,
-// Users. All reads/writes go through /api/admin (service role).
+// Real admin console. Sign in with your email (magic link — you must be an admin,
+// i.e. a row in `admins` or listed in ADMIN_EMAILS) or, as a fallback, paste the
+// ADMIN_TOKEN. Tabs: Overview (BI), Studios, Bookings, Users. All reads/writes go
+// through /api/admin (service role).
 const STATUS_OPTS = ["draft", "unclaimed", "active", "verified", "rejected"];
+
+// Low-level call with explicit auth so entry paths don't race React state.
+async function call(action, tok, sess, extra) {
+  const headers = { "content-type": "application/json" };
+  if (sess && sess.access_token) headers.Authorization = "Bearer " + sess.access_token;
+  const res = await fetch("/api/admin", { method: "POST", headers, body: JSON.stringify({ token: tok || "", action, ...(extra || {}) }) });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(j.error || "failed");
+  return j;
+}
 
 export default function AdminPage() {
   const [token, setToken] = React.useState("");
+  const [session, setSession] = React.useState(null); // supabase session (admin login)
+  const [email, setEmail] = React.useState("");
+  const [sent, setSent] = React.useState(false);
   const [ready, setReady] = React.useState(false);
   const [tab, setTab] = React.useState("overview");
   const [err, setErr] = React.useState("");
@@ -19,28 +35,64 @@ export default function AdminPage() {
   const [users, setUsers] = React.useState(null);
   const [busy, setBusy] = React.useState("");
 
-  const api = React.useCallback(async (action, extra) => {
-    const res = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, action, ...(extra || {}) }) });
-    const j = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(j.error || "failed");
-    return j;
-  }, [token]);
+  const api = React.useCallback((action, extra) => call(action, token, session, extra), [token, session]);
 
-  async function enter(tok) {
-    setToken(tok); setErr(""); setGateState("loading");
+  const gateError = (e) =>
+    e.message === "unauthorized" ? "Not authorized — this account isn't an admin." :
+    e.message === "admin_not_configured" ? "Set ADMIN_TOKEN or ADMIN_EMAILS in Vercel first." :
+    "Couldn't load.";
+
+  async function enter(tok, sess) {
+    setErr(""); setGateState("loading");
     try {
-      const res = await fetch("/api/admin", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token: tok, action: "bi" }) });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || "failed");
+      const j = await call("bi", tok, sess);
+      setToken(tok || ""); setSession(sess || null);
       setBi(j.bi); setReady(true);
-      try { localStorage.setItem("sey.admin.token", tok); } catch (e) {}
+      if (tok) { try { localStorage.setItem("sey.admin.token", tok); } catch (e) {} }
     } catch (e) {
       setGateState("gate");
-      setErr(e.message === "unauthorized" ? "Wrong token." : e.message === "admin_token_not_set" ? "Set ADMIN_TOKEN in Vercel first." : "Couldn't load.");
+      setErr(gateError(e));
     }
   }
 
-  React.useEffect(() => { let t = ""; try { t = localStorage.getItem("sey.admin.token") || ""; } catch (e) {} setToken(t); if (t) enter(t); }, []);
+  // On load: prefer an existing Supabase admin session; else a stored token.
+  React.useEffect(() => {
+    let stored = ""; try { stored = localStorage.getItem("sey.admin.token") || ""; } catch (e) {}
+    (async () => {
+      let sess = null;
+      if (supabase) { try { const { data } = await supabase.auth.getSession(); sess = data && data.session; } catch (e) {} }
+      if (sess) { enter("", sess); return; }
+      if (stored) { setToken(stored); enter(stored, null); }
+    })();
+  }, []);
+
+  // Magic-link return lands here with a fresh session — enter automatically.
+  React.useEffect(() => {
+    if (!supabase) return;
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
+      if (sess && !ready) enter("", sess);
+    });
+    return () => { try { sub.subscription.unsubscribe(); } catch (e) {} };
+  }, [ready]);
+
+  async function sendLink() {
+    setErr("");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setErr("Enter a valid email."); return; }
+    setGateState("loading");
+    try {
+      const res = await fetch("/api/auth/magic-link", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: email.trim(), redirectTo: window.location.origin + "/admin" }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.ok) throw new Error(j.error || "failed");
+      setSent(true);
+    } catch (e) { setErr("Couldn't send the link. Try again."); }
+    setGateState("gate");
+  }
+
+  async function signOut() {
+    try { if (supabase) await supabase.auth.signOut({ scope: "local" }); } catch (e) {}
+    try { localStorage.removeItem("sey.admin.token"); } catch (e) {}
+    setSession(null); setToken(""); setReady(false); setBi(null); setStudios(null); setBookings(null); setUsers(null); setSent(false);
+  }
 
   async function go(t) {
     setTab(t);
@@ -73,19 +125,33 @@ export default function AdminPage() {
       <Shell>
         <div style={{ maxWidth: 380 }}>
           <h1 style={{ fontSize: "var(--text-h2)", margin: "0 0 6px" }}>Admin</h1>
-          <p style={{ color: "var(--text-muted)", margin: "0 0 18px", fontSize: "var(--text-sm)" }}>Enter your admin token.</p>
-          <div style={{ display: "grid", gap: 12 }}>
-            <input style={INP} type="password" placeholder="ADMIN_TOKEN" value={token} onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") enter(token); }} />
-            <button style={BTN} onClick={() => enter(token)} disabled={gateState === "loading" || !token}>{gateState === "loading" ? "Loading…" : "Enter"}</button>
-            {err && <p style={{ color: "var(--clay)", fontSize: "var(--text-sm)", margin: 0 }}>{err}</p>}
-          </div>
+          <p style={{ color: "var(--text-muted)", margin: "0 0 18px", fontSize: "var(--text-sm)" }}>Sign in with your admin email.</p>
+          {sent ? (
+            <div style={{ ...CARD, padding: 16 }}>
+              <p style={{ margin: 0, fontSize: "var(--text-sm)" }}>Check <strong>{email}</strong> for a sign-in link. Open it on this device.</p>
+              <button style={{ ...MINI, marginTop: 12 }} onClick={() => setSent(false)}>Use a different email</button>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 12 }}>
+              <input style={INP} type="email" placeholder="you@sey.la" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendLink(); }} />
+              <button style={BTN} onClick={sendLink} disabled={gateState === "loading" || !email}>{gateState === "loading" ? "…" : "Email me a link"}</button>
+            </div>
+          )}
+          {err && <p style={{ color: "var(--clay)", fontSize: "var(--text-sm)", margin: "12px 0 0" }}>{err}</p>}
+          <details style={{ marginTop: 20 }}>
+            <summary style={{ cursor: "pointer", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>Or use admin token</summary>
+            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+              <input style={INP} type="password" placeholder="ADMIN_TOKEN" value={token} onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") enter(token, null); }} />
+              <button style={SOFT} onClick={() => enter(token, null)} disabled={gateState === "loading" || !token}>Enter</button>
+            </div>
+          </details>
         </div>
       </Shell>
     );
   }
 
   return (
-    <Shell wide right={<a style={SOFT} href="/admin/prospect">+ New prospect page</a>}>
+    <Shell wide right={<span style={{ display: "flex", gap: 10, alignItems: "center" }}><a style={SOFT} href="/admin/prospect">+ New prospect page</a><button style={MINI} onClick={signOut}>Sign out</button></span>}>
       <div style={{ display: "flex", gap: 6, marginBottom: 22, borderBottom: "1px solid var(--line)", flexWrap: "wrap" }}>
         {[["overview", "Overview"], ["studios", "Studios"], ["bookings", "Bookings"], ["users", "Users"]].map(([t, l]) => (
           <button key={t} onClick={() => go(t)} style={{ background: "none", border: "none", borderBottom: "2px solid " + (tab === t ? "var(--clay)" : "transparent"), color: tab === t ? "var(--cocoa)" : "var(--cocoa-60)", fontWeight: 600, fontSize: "var(--text-body)", padding: "8px 10px", marginBottom: -1, cursor: "pointer" }}>{l}</button>

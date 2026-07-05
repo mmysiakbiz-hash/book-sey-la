@@ -1,4 +1,9 @@
-// POST /api/admin — admin data + actions. ADMIN_TOKEN-gated, service role.
+// POST /api/admin — admin data + actions. Service role.
+// Two ways to authenticate (either is sufficient):
+//   1. Static token   — body.token === ADMIN_TOKEN (fallback / break-glass).
+//   2. Admin login     — Authorization: Bearer <supabase session> where the user
+//      is a row in `admins`. A first login by an email listed in ADMIN_EMAILS
+//      auto-enrols that user into `admins` (bootstrap), so no manual seeding.
 //   { token, action, ... }
 //     action "bi"           → { bi }
 //     action "studios"      → { studios: [...] }
@@ -19,17 +24,46 @@ function startOf(during) {
   return m ? m[1] : null;
 }
 
+// Returns an auth context ({ via, user? }) if the caller is an admin, else null.
+async function authorize(req, body, { url, anon, service, db }) {
+  const adminToken = process.env.ADMIN_TOKEN;
+  if (adminToken && body && typeof body.token === "string" && body.token && body.token === adminToken) {
+    return { via: "token" };
+  }
+  const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  if (bearer && anon) {
+    const asUser = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data } = await asUser.auth.getUser(bearer);
+    const user = data && data.user;
+    if (user) {
+      const { data: row } = await db.from("admins").select("user_id").eq("user_id", user.id).maybeSingle();
+      if (row) return { via: "session", user };
+      const allow = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+      if (user.email && allow.includes(user.email.toLowerCase())) {
+        await db.from("admins").upsert({ user_id: user.id }, { onConflict: "user_id" });
+        return { via: "bootstrap", user };
+      }
+    }
+  }
+  return null;
+}
+
 export async function POST(req) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const adminToken = process.env.ADMIN_TOKEN;
   if (!url || !service) return NextResponse.json({ error: "not_configured" }, { status: 503 });
-  if (!adminToken) return NextResponse.json({ error: "admin_token_not_set" }, { status: 503 });
   const body = await req.json().catch(() => null);
-  if (!body || body.token !== adminToken) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const db = createClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } });
-  const action = body.action;
+  const auth = await authorize(req, body || {}, { url, anon, service, db });
+  if (!auth) {
+    if (!process.env.ADMIN_TOKEN && !process.env.ADMIN_EMAILS) {
+      return NextResponse.json({ error: "admin_not_configured" }, { status: 503 });
+    }
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const action = body && body.action;
 
   if (action === "bi") {
     const { data, error } = await db.rpc("admin_bi");
