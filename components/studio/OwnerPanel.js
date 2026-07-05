@@ -12,7 +12,7 @@ import {
   claimUnclaimedForMe, rejectListing,
   createOwnerBooking, getStudioClients, saveClientNote,
   getTimeOff, addTimeOff, deleteTimeOff,
-  getLoyalty, saveLoyalty, redeemLoyalty,
+  getLoyalty, saveLoyalty, redeemLoyalty, sendMarketing,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -706,6 +706,38 @@ function AddAppointment({ catalog, onAdd, onDone }) {
   );
 }
 
+function MarketingComposer({ count }) {
+  const [open, setOpen] = React.useState(false);
+  const [msg, setMsg] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [result, setResult] = React.useState("");
+  async function send() {
+    if (!msg.trim()) return;
+    if (typeof window !== "undefined" && !window.confirm(`Email this to your clients (up to ${count})?`)) return;
+    setBusy(true); setResult("");
+    const r = await sendMarketing(msg);
+    setBusy(false);
+    if (r && r.ok) { setResult(`Sent to ${r.sent}/${r.recipients} clients.`); setMsg(""); }
+    else setResult("Couldn't send" + (r && r.error ? ` (${r.error})` : "") + ".");
+  }
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontSize: "var(--text-sm)" }}><b style={{ color: "var(--cocoa)" }}>Message clients</b> <span style={{ color: "var(--text-muted)" }}>· email a promo or announcement</span></span>
+        <button onClick={() => setOpen((v) => !v)} style={{ border: "1px solid var(--border-strong)", background: "none", borderRadius: 999, padding: "6px 14px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--cocoa)" }}>{open ? "Close" : "Compose"}</button>
+      </div>
+      {open && (
+        <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+          <textarea rows={4} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={"e.g. 20% off cuts this week — book your slot!"}
+            style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" }} />
+          <button style={{ ...primaryBtn, justifySelf: "start", padding: "9px 18px", fontSize: "var(--text-sm)" }} onClick={send} disabled={busy || !msg.trim()}>{busy ? "Sending…" : "Send to clients"}</button>
+          {result && <span style={{ fontSize: "var(--text-sm)", color: "var(--eucalyptus)", fontWeight: 600 }}>{result}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LoyaltyEditor({ loyalty, onSave }) {
   const [open, setOpen] = React.useState(false);
   const [f, setF] = React.useState({ stamps_required: (loyalty && loyalty.stamps_required) || 6, reward: (loyalty && loyalty.reward) || "", active: !!(loyalty && loyalty.active) });
@@ -789,6 +821,7 @@ function Clients2({ clients, loyalty, onSaveNote, onSaveLoyalty, onRedeem }) {
 
   return (
     <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
+      <MarketingComposer count={clients.length} />
       <LoyaltyEditor loyalty={loyalty} onSave={onSaveLoyalty} />
       {clients.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No clients yet — they appear here after their first booking.</p>}
       {clients.map((c) => (
