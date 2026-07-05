@@ -470,10 +470,12 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
   const [adding, setAdding] = React.useState(false);
   const [blocking, setBlocking] = React.useState(false);
   const [moving, setMoving] = React.useState(null); // { id, date, time, durationMin }
+  const [staffFilter, setStaffFilter] = React.useState("");
   if (bookings == null) return <p style={{ color: "var(--text-muted)" }}>Loading bookings…</p>;
 
   const now = Date.now();
-  const active = bookings.filter((b) => b.status !== "cancelled");
+  const staffNames = Array.from(new Set(bookings.map((b) => b.staff).filter(Boolean))).sort();
+  const active = bookings.filter((b) => b.status !== "cancelled" && (!staffFilter || b.staff === staffFilter));
   const upcoming = active.filter((b) => b.start && b.start.getTime() >= now - 3600000).sort((a, b) => a.start - b.start);
   const past = active.filter((b) => !b.start || b.start.getTime() < now - 3600000).sort((a, b) => (b.start || 0) - (a.start || 0));
 
@@ -499,7 +501,13 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
+        {staffNames.length > 1 && (
+          <select value={staffFilter} onChange={(e) => setStaffFilter(e.target.value)} style={{ ...field, width: "auto", padding: "8px 10px", fontSize: "var(--text-sm)", marginRight: "auto" }}>
+            <option value="">All staff</option>
+            {staffNames.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        )}
         <button onClick={() => downloadCSV("bookings.csv", bookings, [
           { label: "When", get: (b) => b.start ? b.start.toISOString() : "" }, { label: "Service", key: "service" }, { label: "Client", key: "client" },
           { label: "Staff", key: "staff" }, { label: "Price", key: "price" }, { label: "Status", key: "status" }])}
