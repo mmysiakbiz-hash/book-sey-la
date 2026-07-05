@@ -54,6 +54,10 @@ export async function POST(req) {
   const price = body.priceEur != null ? Number(body.priceEur) : null;
   const commissionDue = isNewClient && price != null ? Math.round(price * 0.20 * 100) / 100 : 0;
 
+  // Carry a display name/email so the studio owner sees who's coming (owners
+  // can't read auth.users). The customer sharing this with the studio is expected.
+  const displayName = (user.user_metadata && user.user_metadata.name) || null;
+
   const { data: booking, error } = await supabase
     .from("bookings")
     .insert({
@@ -67,6 +71,8 @@ export async function POST(req) {
       source: "web",
       is_new_client: isNewClient,
       commission_due: commissionDue,
+      guest_name: displayName,
+      guest_email: user.email || null,
       notes: body.notes || null,
     })
     .select("id, during, status, price_eur")

@@ -64,7 +64,7 @@
   }
 
   async function signOut() {
-    if (client) { try { await client.auth.signOut(); } catch (e) {} }
+    if (client) { try { await client.auth.signOut({ scope: "global" }); } catch (e) {} }
   }
 
   // Notify listeners when auth state changes (magic-link return, sign-out).

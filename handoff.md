@@ -66,7 +66,7 @@ Living status + TODO for the sey.la | book platform. Update as things land.
 - ✅ **K2 Wallet**: `lib/wallet.js` (read-only, RLS `wallet_self` by email) + Wallet section on `/account` (balance + history, empty-state hint). Verified vs live DB (owner reads own, isolation by email).
 - ✅ **K3 Referrals**: invite a studio → both get €15 when it goes live. `POST /api/refer` (service role; referrer email from the verified session, dedupe unique index, no self-refer). Completion is a DB trigger on `studios` (`complete_referrals_for_studio`): when a studio with a matching `owner_email` goes active, it marks the referral completed and inserts two `wallet_transactions` — so credit can't be gamed (only real go-lives pay out). `/account` "Invite a studio" section (`ReferStudio` + `lib/referrals.js`) with pending/completed list. Verified vs live DB (pending → studio go-live → both credited €15, idempotent). **K fully done.**
 
-**L. Auth polish** — optional phone OTP (needs SMS provider); proper account management, sign-out everywhere.
+**L. Auth polish** — ✅ DONE. Global sign-out (`signOut({ scope: 'global' })`) on web + PWA (invalidates every device). "Your details" name field on `/account` (`updateMyName` → `user_metadata.name`); `/api/book` now stores the customer's name + email as `guest_name`/`guest_email` so the studio owner sees who's coming in the agenda. Phone OTP deferred (needs an SMS provider like Twilio/MessageBird).
 
 ## Notes for the agent
 - This session can push directly (started from the repo) — commit + push; Vercel auto-deploys. (The bootstrap session couldn't push and handed off via zip/bundle.)
