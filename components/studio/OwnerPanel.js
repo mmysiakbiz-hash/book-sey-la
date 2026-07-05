@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import {
   getMyStudio, createDraftStudio, updateStudio,
   saveServices, saveStaff, saveHours, uploadPhoto, publishStudio,
+  getStudioBookings, setBookingStatus,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -30,6 +31,8 @@ export default function OwnerPanel() {
   const [step, setStep] = React.useState(0);
   const [saving, setSaving] = React.useState(false);
   const [msg, setMsg] = React.useState("");
+  const [view, setView] = React.useState(null); // 'bookings' | 'setup' (owner home tab)
+  const [bookings, setBookings] = React.useState(null);
 
   // login form
   const [email, setEmail] = React.useState("");
@@ -74,8 +77,19 @@ export default function OwnerPanel() {
     if (!res || !res.user) { setPhase("login"); return; }
     setUser(res.user);
     setStudio(res.studio || null);
-    if (res.studio) hydrate(res.studio);
+    if (res.studio) {
+      hydrate(res.studio);
+      setView((v) => v || (res.studio.status === "active" ? "bookings" : "setup"));
+      loadBookings(res.studio.id);
+    } else {
+      setView("setup");
+    }
     setPhase("wizard");
+  }
+
+  async function loadBookings(studioId) {
+    const rows = await getStudioBookings(studioId);
+    setBookings(rows);
   }
 
   React.useEffect(() => {
@@ -193,10 +207,26 @@ export default function OwnerPanel() {
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           {publicUrl && <a style={softBtn} href={publicUrl} target="_blank" rel="noreferrer">Preview</a>}
-          <button style={softBtn} onClick={saveExit} disabled={saving}>Save &amp; exit</button>
+          {view === "setup" && <button style={softBtn} onClick={saveExit} disabled={saving}>Save &amp; exit</button>}
         </div>
       </div>
 
+      {/* owner tabs — only once a studio exists */}
+      {studio && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 22, borderBottom: "1px solid var(--line)" }}>
+          {[["bookings", "Bookings"], ["setup", "Edit page"]].map(([v, lbl]) => (
+            <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); }}
+              style={{ background: "none", border: "none", borderBottom: "2px solid " + (view === v ? "var(--clay)" : "transparent"), color: view === v ? "var(--cocoa)" : "var(--cocoa-60)", fontWeight: 600, fontSize: "var(--text-body)", padding: "8px 4px", marginBottom: -1, cursor: "pointer" }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {view === "bookings" && studio ? (
+        <Agenda bookings={bookings} onRefresh={() => loadBookings(studio.id)} onEdit={() => setView("setup")} publicUrl={publicUrl} live={live} />
+      ) : (
+      <>
       {/* step nav */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22 }}>
         {STEPS.map((s, i) => (
@@ -326,7 +356,96 @@ export default function OwnerPanel() {
         )}
         {step === 8 && msg && <p style={{ color: "var(--eucalyptus)", fontSize: "var(--text-sm)", fontWeight: 600, marginTop: 14 }}>{msg}</p>}
       </div>
+      </>
+      )}
     </Shell>
+  );
+}
+
+function Agenda({ bookings, onRefresh, onEdit, publicUrl, live }) {
+  const [busy, setBusy] = React.useState(null);
+  if (bookings == null) return <p style={{ color: "var(--text-muted)" }}>Loading bookings…</p>;
+
+  const now = Date.now();
+  const active = bookings.filter((b) => b.status !== "cancelled");
+  const upcoming = active.filter((b) => b.start && b.start.getTime() >= now - 3600000).sort((a, b) => a.start - b.start);
+  const past = active.filter((b) => !b.start || b.start.getTime() < now - 3600000).sort((a, b) => (b.start || 0) - (a.start || 0));
+
+  const dayLabel = (d) => d ? d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Indian/Mahe" }) : "—";
+  const timeLabel = (d) => d ? d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : "";
+
+  async function act(id, status) {
+    setBusy(id);
+    await setBookingStatus(id, status);
+    await onRefresh();
+    setBusy(null);
+  }
+
+  const groups = [];
+  let curr = null;
+  upcoming.forEach((b) => {
+    const key = b.start ? b.start.toDateString() : "none";
+    if (!curr || curr.key !== key) { curr = { key, label: dayLabel(b.start), items: [] }; groups.push(curr); }
+    curr.items.push(b);
+  });
+
+  const card = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 };
+
+  return (
+    <div style={{ maxWidth: 640 }}>
+      {!live && (
+        <div style={{ background: "var(--blush, #f6ece9)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px", marginBottom: 18, fontSize: "var(--text-sm)", color: "var(--cocoa)" }}>
+          Your page isn't published yet — clients can't book. <a onClick={onEdit} style={{ color: "var(--clay)", fontWeight: 600, cursor: "pointer" }}>Finish setup →</a>
+        </div>
+      )}
+
+      {upcoming.length === 0 && past.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
+          <p style={{ margin: "0 0 6px", fontWeight: 600, color: "var(--cocoa)" }}>No bookings yet</p>
+          <p style={{ margin: 0, fontSize: "var(--text-sm)" }}>When clients book {publicUrl ? "your page" : ""}, they'll show up here.</p>
+        </div>
+      ) : (
+        <>
+          {groups.map((g) => (
+            <div key={g.key} style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--cocoa)", margin: "0 0 10px" }}>{g.label}</div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {g.items.map((b) => (
+                  <div key={b.id} style={card}>
+                    <div style={{ width: 58, fontWeight: 700, color: "var(--clay)", fontSize: "var(--text-sm)" }}>{timeLabel(b.start)}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{b.service}</div>
+                      <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{b.client}{b.staff ? ` · ${b.staff}` : ""}{b.price != null ? ` · €${Math.round(b.price)}` : ""}</div>
+                    </div>
+                    <button onClick={() => act(b.id, "cancelled")} disabled={busy === b.id}
+                      style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>
+                      {busy === b.id ? "…" : "Cancel"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {past.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--cocoa-60)", margin: "0 0 10px" }}>Past</div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {past.slice(0, 20).map((b) => (
+                  <div key={b.id} style={{ ...card, opacity: 0.72 }}>
+                    <div style={{ width: 58, fontSize: "var(--text-xs)", color: "var(--cocoa-40)" }}>{b.start ? b.start.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{b.service}</div>
+                      <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{b.client}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
