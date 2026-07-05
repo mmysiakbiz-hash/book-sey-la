@@ -1,0 +1,38 @@
+/* sey.la | book — Shadows, gradients, motion, texture (ascetic)
+   Flat, quiet UI. Shadows are barely-there; decorative gradients removed.
+   Depth comes from hairline borders, not glow. */
+
+:root {
+  /* Shadows — minimal, neutral, low. */
+  --shadow-xs: 0 1px 1px rgba(35, 32, 30, 0.04);
+  --shadow-sm: 0 1px 2px rgba(35, 32, 30, 0.05);
+  --shadow-md: 0 4px 14px rgba(35, 32, 30, 0.06);
+  --shadow-lg: 0 10px 30px rgba(35, 32, 30, 0.08);
+  --shadow-float: 0 14px 36px -14px rgba(35, 32, 30, 0.16);
+  --shadow-focus: 0 0 0 3px rgba(35, 32, 30, 0.18);
+
+  /* Legacy decorative gradients — neutralised (kept as tokens for back-compat,
+     but now transparent / flat so nothing candle-like renders). */
+  --grad-candle: none; /* @kind other */
+  --grad-candle-soft: none; /* @kind other */
+  --grad-eucalyptus: linear-gradient(160deg, #6B7F63 0%, #536049 100%); /* @kind other */
+
+  /* Background blooms — off. */
+  --bloom-clay: none; /* @kind other */
+  --bloom-brass: none; /* @kind other */
+  --bloom-eucalyptus: none; /* @kind other */
+
+  /* Photo treatment — near-neutral now; let studio photos speak. */
+  --photo-filter: saturate(1.02) contrast(1.01); /* @kind other */
+  --photo-overlay: linear-gradient(180deg, rgba(20,18,17,0) 46%, rgba(20,18,17,0.42) 100%); /* @kind other */
+  --photo-warm: none; /* @kind other */
+
+  /* Motion — calm, quick, functional. */
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);  /* @kind other */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);       /* @kind other */
+  --dur-fast: 150ms;   /* @kind other */
+  --dur-med: 260ms;    /* @kind other */
+  --dur-slow: 460ms;   /* @kind other */
+  --dur-drift: 22s;    /* @kind other */
+  --dur-float: 6s;     /* @kind other */
+}

@@ -1,0 +1,117 @@
+"use client";
+import React from "react";
+import { Button } from "@/components/core/Button";
+import { Icon } from "@/components/brand/Icon";
+// VenueClose — reviews, visit info (hours + map), booking CTA, powered-by footer.
+
+
+const U = "https://images.unsplash.com/photo-";
+
+const REVIEWS = [
+  { name: "Sofia", when: "2 days ago", img: U + "1632765866070-3fadf25d3d5b", text: "The frangipani massage was the highlight of our trip. Booked the night before and everything was ready." },
+  { name: "James", when: "1 week ago", img: U + "1699641975121-5c3f55a553e5", text: "Deep-tissue with Denis sorted out my surfing shoulders. Calm room, warm welcome." },
+  { name: "Nadia", when: "2 weeks ago", img: U + "1713845784497-fe3d7ed176d8", text: "A proper island spa. Tea after the facial, no rushing. I'll be back before I fly home." },
+];
+
+const HOURS = [
+  ["Mon – Fri", "9:00 – 19:00"],
+  ["Saturday", "9:00 – 17:00"],
+  ["Sunday", "10:00 – 15:00"],
+];
+
+const avatar = (u) =>
+  u && u.includes("images.unsplash") && !u.includes("?")
+    ? u + "?auto=format&fit=crop&w=100&h=100&q=70"
+    : u;
+
+function VenueClose({ studio }) {
+  const name = (studio && studio.name) || "Kreol Spa";
+  const parts = name.trim().split(" ");
+  const mark = parts.length > 1 ? parts.slice(0, -1).join(" ") : name;
+  const word = parts.length > 1 ? parts[parts.length - 1] : "";
+  const location = (studio && studio.location) || "Beau Vallon, Mahé";
+  const rating = studio && studio.rating != null ? studio.rating : 4.9;
+  const reviewCount = studio && studio.reviewCount != null ? studio.reviewCount : 214;
+
+  // Live Google reviews (defensive shape). No demo fallback: when a studio has
+  // no published reviews we hide the whole section rather than show fake ones.
+  const reviews = (studio && Array.isArray(studio.reviews) ? studio.reviews : [])
+    .map((r) => ({
+      name: r.author_name || r.author || r.name || "Guest",
+      when: r.relative_time_description || r.when || r.time || "",
+      text: r.text || r.comment || r.review || "",
+      img: r.profile_photo_url || r.img || r.avatar || "",
+    }))
+    .filter((r) => r.text);
+  const hasReviews = reviews.length > 0;
+
+  return (
+    <React.Fragment>
+      {hasReviews && (
+      <section className="vn-section" id="reviews">
+        <div className="sey-container">
+          <div className="vn-reviews-head">
+            <div>
+              <div className="sey-eyebrow vn-eyebrow">Loved by guests</div>
+              <h2 className="vn-sec-title">What people <em className="sey-accent-italic">say.</em></h2>
+            </div>
+            <div className="vn-score">
+              <span className="vn-score-num">{rating}</span>
+              <span className="vn-score-stars">{[0,1,2,3,4].map(i=><Icon key={i} name="star" size={16} color="var(--brass)" />)}</span>
+              <span className="vn-score-count">{reviewCount} reviews</span>
+            </div>
+          </div>
+          <div className="vn-reviews">
+            {reviews.map((r, i) => (
+              <figure className="vn-review" key={r.name + i}>
+                <div className="vn-quote-rating">{[0,1,2,3,4].map(j=><Icon key={j} name="star" size={14} color="var(--brass)" />)}</div>
+                <blockquote>{r.text}</blockquote>
+                <figcaption className="vn-review-by">
+                  {r.img
+                    ? <img src={avatar(r.img)} alt="" loading="lazy" />
+                    : <span className="vn-review-ava" aria-hidden="true" style={{ width: 40, height: 40, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--blush)", color: "var(--clay)", fontWeight: 700, flex: "none" }}>{(r.name || "G")[0]}</span>}
+                  <span><span className="vn-member-name">{r.name}</span><span className="vn-member-role">{r.when}</span></span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+      )}
+
+      <section className={"vn-section" + (hasReviews ? " vn-alt" : "")} id="visit">
+        <div className="sey-container vn-visit">
+          <div className="vn-visit-info">
+            <div className="sey-eyebrow vn-eyebrow">Visit us</div>
+            <h2 className="vn-sec-title">{location.split(",")[0]}, <em className="sey-accent-italic">{(location.split(",")[1] || "Mahé").trim()}.</em></h2>
+            <p className="vn-address"><Icon name="pin" size={18} color="var(--clay)" /> {location}, Seychelles</p>
+            <table className="vn-hours">
+              <tbody>
+                {HOURS.map(([d,h]) => (<tr key={d}><th>{d}</th><td>{h}</td></tr>))}
+              </tbody>
+            </table>
+            <Button size="lg" href="#services" as="a">Book a treatment</Button>
+          </div>
+          <div className="vn-map" aria-hidden="true">
+            <span className="vn-map-pin"><Icon name="pin" size={20} color="var(--surface)" /></span>
+            <span className="vn-map-label">{location.split(",")[0]}</span>
+          </div>
+        </div>
+      </section>
+
+      <footer className="vn-footer">
+        <div className="sey-container vn-footer-inner">
+          <div>
+            <div className="vn-brand vn-brand--foot"><span className="vn-brand-mark">{mark}</span>{word && <span className="vn-brand-word">{word}</span>}</div>
+            <p>{location} · powered by sey.la | book</p>
+          </div>
+          <a className="vn-powered" href="/">
+            Bookings powered by <b>sey.la&nbsp;|&nbsp;book</b>
+          </a>
+        </div>
+      </footer>
+    </React.Fragment>
+  );
+}
+
+export default VenueClose;

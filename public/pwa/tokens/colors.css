@@ -1,0 +1,65 @@
+/* sey.la | book — Color tokens
+   Ascetic Fresha-like base: off-white neutrals, graphite action colour.
+   Colour comes from studio photography, not the chrome. A whisper of warmth
+   remains in the neutrals so the brand never reads clinical. */
+
+:root {
+  /* ---- Base neutrals (off-white, faintly warm) ---- */
+  --shell: #FBFAF8;        /* primary background — near-white */
+  --shell-alt: #F5F4F1;    /* alternate section background */
+  --surface: #FFFFFF;      /* cards / raised surfaces */
+
+  /* ---- Ink (graphite, faintly warm — the action + text colour) ---- */
+  --ink: #23201E;          /* near-black — primary text & CTA */
+  --ink-hover: #100E0D;    /* pressed/hover on dark actions */
+  --cocoa: #23201E;        /* back-compat alias → ink */
+
+  /* ---- Retained brand hues (repointed to graphite for the ascetic direction:
+     every CTA / accent that referenced clay or brass now reads neutral) ---- */
+  --clay: #23201E;         /* was warm clay → now ink (CTAs, accents) */
+  --clay-hover: #100E0D;
+  --eucalyptus: #5E7256;   /* botanical green — confirmed states only */
+  --blush: #F2E8E0;        /* soft warm tint for rare soft fills */
+  --brass: #23201E;        /* was brass → now ink (rating stars, step numbers) */
+
+  /* ---- Derived neutrals ---- */
+  --cocoa-80: #47423F;     /* body text */
+  --cocoa-60: #6E6863;     /* muted / secondary text */
+  --cocoa-40: #9A938D;     /* captions, disabled text */
+  --line: #E9E5E0;         /* hairline borders */
+  --line-strong: #DBD5CE;  /* stronger dividers */
+
+  /* On-dark neutrals for ink sections */
+  --cream: #FBFAF8;        /* primary text on ink */
+  --cream-70: #B7B1AB;     /* secondary text on ink */
+  --cocoa-line: #3A3633;   /* dividers on ink */
+
+  /* ---- Semantic aliases ---- */
+  --bg-page: var(--shell);
+  --bg-alt: var(--shell-alt);
+  --bg-soft: var(--shell-alt);
+  --bg-dark: var(--ink);
+  --surface-card: var(--surface);
+
+  --text-heading: var(--ink);
+  --text-body: var(--cocoa-80);
+  --text-muted: var(--cocoa-60);
+  --text-caption: var(--cocoa-40);
+  --text-on-dark: var(--cream);
+  --text-on-dark-muted: var(--cream-70);
+
+  --brand: var(--ink);          /* CTA / primary action → graphite */
+  --brand-hover: var(--ink-hover);
+  --accent-botanical: var(--eucalyptus);
+  --accent-brass: var(--brass);
+  --accent-link: var(--ink);   /* links read as graphite in the ascetic scheme */
+
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+
+  --focus-ring: var(--ink);
+
+  /* Success/confirmed states lean botanical */
+  --confirmed: var(--eucalyptus);
+  --confirmed-soft: #E7ECE3;
+}
