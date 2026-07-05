@@ -7,6 +7,7 @@ import {
   getMyStudio, createDraftStudio, updateStudio,
   saveServices, saveStaff, saveHours, uploadPhoto, publishStudio,
   getStudioBookings, setBookingStatus,
+  getOwnerClasses, createClassSession, deleteClassSession,
 } from "@/lib/owner";
 
 const CATEGORIES = ["Hair", "Nails", "Spa & massage", "Barber", "Brows & lashes", "Makeup", "Skin & facial", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer"];
@@ -31,8 +32,9 @@ export default function OwnerPanel() {
   const [step, setStep] = React.useState(0);
   const [saving, setSaving] = React.useState(false);
   const [msg, setMsg] = React.useState("");
-  const [view, setView] = React.useState(null); // 'bookings' | 'setup' (owner home tab)
+  const [view, setView] = React.useState(null); // 'bookings' | 'classes' | 'setup'
   const [bookings, setBookings] = React.useState(null);
+  const [classes, setClasses] = React.useState(null);
 
   // login form
   const [email, setEmail] = React.useState("");
@@ -90,6 +92,10 @@ export default function OwnerPanel() {
   async function loadBookings(studioId) {
     const rows = await getStudioBookings(studioId);
     setBookings(rows);
+  }
+  async function loadClasses(studioId) {
+    const rows = await getOwnerClasses(studioId);
+    setClasses(rows);
   }
 
   React.useEffect(() => {
@@ -214,8 +220,8 @@ export default function OwnerPanel() {
       {/* owner tabs — only once a studio exists */}
       {studio && (
         <div style={{ display: "flex", gap: 8, marginBottom: 22, borderBottom: "1px solid var(--line)" }}>
-          {[["bookings", "Bookings"], ["setup", "Edit page"]].map(([v, lbl]) => (
-            <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); }}
+          {[["bookings", "Bookings"], ["classes", "Classes"], ["setup", "Edit page"]].map(([v, lbl]) => (
+            <button key={v} onClick={() => { setView(v); if (v === "bookings") loadBookings(studio.id); if (v === "classes") loadClasses(studio.id); }}
               style={{ background: "none", border: "none", borderBottom: "2px solid " + (view === v ? "var(--clay)" : "transparent"), color: view === v ? "var(--cocoa)" : "var(--cocoa-60)", fontWeight: 600, fontSize: "var(--text-body)", padding: "8px 4px", marginBottom: -1, cursor: "pointer" }}>
               {lbl}
             </button>
@@ -225,6 +231,8 @@ export default function OwnerPanel() {
 
       {view === "bookings" && studio ? (
         <Agenda bookings={bookings} onRefresh={() => loadBookings(studio.id)} onEdit={() => setView("setup")} publicUrl={publicUrl} live={live} />
+      ) : view === "classes" && studio ? (
+        <Classes studioId={studio.id} classes={classes} onRefresh={() => loadClasses(studio.id)} />
       ) : (
       <>
       {/* step nav */}
@@ -445,6 +453,70 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live }) {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function Classes({ studioId, classes, onRefresh }) {
+  const [form, setForm] = React.useState({ name: "", date: "", time: "", durationMin: 60, capacity: 10, price: "" });
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState("");
+  const upd = (patch) => setForm((v) => ({ ...v, ...patch }));
+
+  async function add() {
+    setErr("");
+    if (!form.name.trim() || !form.date || !form.time) { setErr("Add a name, date and time."); return; }
+    setBusy(true);
+    const startISO = new Date(`${form.date}T${form.time}`).toISOString();
+    const r = await createClassSession(studioId, { name: form.name, startISO, durationMin: form.durationMin, capacity: form.capacity, price: form.price });
+    setBusy(false);
+    if (r.error) { setErr("Couldn't add: " + r.error); return; }
+    setForm({ name: "", date: "", time: "", durationMin: 60, capacity: 10, price: "" });
+    onRefresh();
+  }
+  async function del(id) { setBusy(true); await deleteClassSession(id); setBusy(false); onRefresh(); }
+
+  const inp = { boxSizing: "border-box", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" };
+  const card = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 };
+
+  return (
+    <div style={{ maxWidth: 640 }}>
+      <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", padding: 18, marginBottom: 22 }}>
+        <div style={{ fontWeight: 700, color: "var(--cocoa)", marginBottom: 12 }}>Add a class</div>
+        <div style={{ display: "grid", gap: 8 }}>
+          <input style={inp} placeholder="Class name (e.g. Sunrise beach yoga)" value={form.name} onChange={(e) => upd({ name: e.target.value })} />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <input style={{ ...inp, flex: 1 }} type="date" value={form.date} onChange={(e) => upd({ date: e.target.value })} />
+            <input style={{ ...inp, flex: 1 }} type="time" value={form.time} onChange={(e) => upd({ time: e.target.value })} />
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Minutes</span><input style={{ ...inp, width: "100%" }} type="number" value={form.durationMin} onChange={(e) => upd({ durationMin: e.target.value })} /></label>
+            <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Capacity</span><input style={{ ...inp, width: "100%" }} type="number" value={form.capacity} onChange={(e) => upd({ capacity: e.target.value })} /></label>
+            <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Price €</span><input style={{ ...inp, width: "100%" }} type="number" value={form.price} onChange={(e) => upd({ price: e.target.value })} /></label>
+          </div>
+          <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Saving…" : "Add class"}</button>
+          {err && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</span>}
+        </div>
+      </div>
+
+      {classes == null ? <p style={{ color: "var(--text-muted)" }}>Loading…</p>
+        : classes.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No classes yet. Add one above — it shows on your public page with live spots.</p>
+        : (
+          <div style={{ display: "grid", gap: 8 }}>
+            {classes.map((c) => (
+              <div key={c.id} style={card}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{c.name}</div>
+                  <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>
+                    {c.start ? c.start.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : "—"}
+                    {c.price != null ? ` · €${Math.round(c.price)}` : ""} · {c.booked}/{c.capacity != null ? c.capacity : "∞"} booked
+                  </div>
+                </div>
+                <button onClick={() => del(c.id)} disabled={busy} style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
     </div>
   );
 }
