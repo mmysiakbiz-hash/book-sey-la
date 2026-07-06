@@ -8,7 +8,7 @@
  *  - Everything else (vendor libs, CSS, tokens, icons, remote images) =
  *    CACHE-FIRST for speed/offline — these change only with a version bump.
  */
-const CACHE = "seyla-book-v10";
+const CACHE = "seyla-book-v11";
 const ASSETS = [
   "./index.html",
   "./app.css",

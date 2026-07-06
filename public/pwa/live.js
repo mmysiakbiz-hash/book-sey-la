@@ -21,10 +21,13 @@
     return min < 30 ? "€" : min < 55 ? "€€" : "€€€";
   }
 
+  var DAYLBL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]; // day_of_week 0..6
+  function hm(m) { return Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0"); }
+  function withSuffix(u) { return u && u.indexOf("?") === -1 ? u + "?auto=format&fit=crop&w=600&q=70" : (u || ""); }
+
   function mapStudio(r, i) {
     var photos = Array.isArray(r.photos) ? r.photos : [];
-    var photo = photos[0] || "";
-    if (photo && photo.indexOf("?") === -1) photo += "?auto=format&fit=crop&w=600&q=70";
+    var photo = withSuffix(photos[0] || "");
     var svc = (r.services || []).slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
     var items = svc.map(function (s, k) {
       return {
@@ -36,21 +39,33 @@
         price: Number(s.price_eur) || 0,
       };
     });
+    // Opening hours — App reads s.hours as [[label, "9:00 – 18:00"], …] and s.todayIdx.
+    var openRows = (r.business_hours || [])
+      .filter(function (h) { return h && h.open_min != null && h.close_min != null && h.close_min > h.open_min; })
+      .sort(function (a, b) { return a.day_of_week - b.day_of_week; });
+    var hours = openRows.map(function (h) { return [DAYLBL[h.day_of_week] || "", hm(h.open_min) + " – " + hm(h.close_min)]; });
+    var todayDow = (new Date().getDay() + 6) % 7; // JS Sun=0..Sat=6 → Mon=0..Sun=6
+    var todayIdx = openRows.map(function (h) { return h.day_of_week; }).indexOf(todayDow);
     return {
       id: r.slug,
       dbId: r.id || null,             // real studios.id (uuid) — enables a real booking write
       name: r.name,
       cat: CAT[r.category] || "spa",
       area: r.address || r.island || "Seychelles",
+      about: r.bio || r.tagline || "",
       rating: r.google_rating != null ? Number(r.google_rating) : 4.8,
       reviews: r.google_review_count || 0,
       distance: "",
       price: priceLevel(r.services),
       photo: photo,
+      gallery: photos.map(withSuffix),
+      hours: hours,
+      todayIdx: todayIdx,
       x: 28 + ((i * 13) % 48),
       y: 22 + ((i * 17) % 52),
       tag: r.status === "verified" ? "Verified" : "Popular",
-      services: items.length ? [{ group: r.category || "Services", items: items }] : [],
+      // App reads the group label as g.g, so use the `g` key (matches the demo shape).
+      services: items.length ? [{ g: r.category || "Services", items: items }] : [],
       staff: (r.staff || []).filter(function (p) { return p.active !== false; }).map(function (p) {
         return { id: p.id, name: p.name, role: p.role || "", rating: null, av: "" };
       }),
@@ -73,7 +88,7 @@
   }
 
   var url = SUPABASE_URL + "/rest/v1/studios?select=" +
-    encodeURIComponent("id,slug,name,category,island,address,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort),staff(id,name,role,active)") +
+    encodeURIComponent("id,slug,name,category,island,address,bio,tagline,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort),staff(id,name,role,active),business_hours(day_of_week,open_min,close_min)") +
     "&status=in.(active,verified)&order=google_rating.desc";
 
   var fetchStudios = fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON } })
