@@ -41,8 +41,8 @@ const STUDIOS = [
 
 const SORTS = ["Recommended", "Top rated", "Nearest", "Price: low to high"];
 
-function SearchPage({ studios }) {
-  const [cat, setCat] = React.useState("All");
+function SearchPage({ studios, initialCat }) {
+  const [cat, setCat] = React.useState(initialCat && CHIPS.includes(initialCat) ? initialCat : "All");
   const [sort, setSort] = React.useState("Recommended");
   const [mapOpen, setMapOpen] = React.useState(false);
   const isClasses = cat === "Classes";

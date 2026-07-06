@@ -12,5 +12,5 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage(){
   const studios = await getStudios();
-  return(<><Nav/><main><Hero/><Categories/><PhotoStrip caption="Island studios, real calm"/><FeaturedStudios studios={studios}/><HowItWorks/><Trust/><FinalCTA/></main></>);
+  return(<><Nav/><main><Hero/><Categories studios={studios}/><PhotoStrip caption="Island studios, real calm"/><FeaturedStudios studios={studios}/><HowItWorks/><Trust/><FinalCTA/></main></>);
 }

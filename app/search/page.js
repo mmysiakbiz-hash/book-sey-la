@@ -3,7 +3,8 @@ import { getStudios } from "@/lib/studios";
 
 export const dynamic = "force-dynamic";
 
-export default async function Page(){
+export default async function Page({ searchParams }){
   const studios = await getStudios();
-  return <SearchPage studios={studios}/>;
+  const initialCat = searchParams && typeof searchParams.cat === "string" ? searchParams.cat : "";
+  return <SearchPage studios={studios} initialCat={initialCat}/>;
 }

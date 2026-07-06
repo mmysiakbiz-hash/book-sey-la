@@ -57,7 +57,7 @@ export function CategoryTile({ icon, label, count, as = "a", style = {}, ...rest
         </span>
         {count != null && (
           <span style={{ display: "block", fontSize: "var(--text-xs)", color: "var(--cocoa-60)", marginTop: 5 }}>
-            {count} studios
+            {count} studio{count !== 1 ? "s" : ""}
           </span>
         )}
       </span>
