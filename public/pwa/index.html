@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<!-- Vercel serves this at /pwa (it strips the trailing slash of /pwa/), which would
+     make relative asset paths resolve against the site root (/vendor/… → 404) and
+     leave the app blank. Pin the base so every relative URL resolves under /pwa/. -->
+<base href="/pwa/" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <meta name="theme-color" content="#FBFAF8" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
