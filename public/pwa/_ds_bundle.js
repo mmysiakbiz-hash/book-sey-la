@@ -2042,7 +2042,7 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
     }, /*#__PURE__*/React.createElement(Logo, null), /*#__PURE__*/React.createElement("div", {
       className: "ca-nav-right"
     }, /*#__PURE__*/React.createElement("a", {
-      href: "../search/index.html"
+      href: "/search"
     }, "Browse"), /*#__PURE__*/React.createElement("span", {
       className: "ca-avatar"
     }, "S")))), /*#__PURE__*/React.createElement("section", {
@@ -2059,7 +2059,7 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
       className: "sey-accent-italic"
     }, "Sofia"))), /*#__PURE__*/React.createElement(Button, {
       as: "a",
-      href: "../search/index.html"
+      href: "/search"
     }, "Book something new")), /*#__PURE__*/React.createElement("div", {
       className: "ca-tabs",
       role: "tablist"
@@ -6248,7 +6248,7 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
       className: "pp-actions"
     }, /*#__PURE__*/React.createElement(Button, {
       as: "a",
-      href: "../venue/index.html"
+      href: "/search"
     }, "Preview full page \u2197"), /*#__PURE__*/React.createElement(Button, {
       variant: "secondary"
     }, "Save & publish"))), /*#__PURE__*/React.createElement("div", {
@@ -6427,7 +6427,7 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
       color: tab === n.key ? "var(--clay)" : "var(--cocoa-60)"
     }), " ", n.label))), /*#__PURE__*/React.createElement("a", {
       className: "pp-viewpublic",
-      href: "../venue/index.html"
+      href: "/search"
     }, /*#__PURE__*/React.createElement(Icon, {
       name: "arrowRight",
       size: 16,
@@ -7687,7 +7687,7 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
     }, /*#__PURE__*/React.createElement(Logo, null), /*#__PURE__*/React.createElement("div", {
       className: "sr-nav-right"
     }, /*#__PURE__*/React.createElement("a", {
-      href: "../studios/index.html"
+      href: "/for-studios"
     }, "For studios"), /*#__PURE__*/React.createElement(Button, {
       variant: "ghost",
       size: "sm"
@@ -7771,13 +7771,13 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
     }, /*#__PURE__*/React.createElement(Logo, null), /*#__PURE__*/React.createElement("nav", {
       className: "sr-footer-nav"
     }, /*#__PURE__*/React.createElement("a", {
-      href: "../landing/index.html"
+      href: "/"
     }, "Home"), /*#__PURE__*/React.createElement("a", {
-      href: "../studios/index.html"
+      href: "/for-studios"
     }, "For studios"), /*#__PURE__*/React.createElement("a", {
-      href: "../pages/about.html"
+      href: "/about"
     }, "About"), /*#__PURE__*/React.createElement("a", {
-      href: "../pages/contact.html"
+      href: "/contact"
     }, "Contact")), /*#__PURE__*/React.createElement("span", {
       className: "sr-footer-copy"
     }, "\xA9 2026 sey.la \xB7 Always free for clients"))));
@@ -7876,7 +7876,7 @@ try { (() => {
     }, "How it works"), /*#__PURE__*/React.createElement("a", {
       href: "#pricing"
     }, "Pricing"), /*#__PURE__*/React.createElement("a", {
-      href: "../landing/index.html"
+      href: "/"
     }, "For clients \u2197"))), /*#__PURE__*/React.createElement("div", {
       className: "sey-container st-footer-bottom"
     }, /*#__PURE__*/React.createElement("span", null, "\xA9 2026 sey.la"), /*#__PURE__*/React.createElement("div", {
@@ -8036,7 +8036,7 @@ try { (() => {
       href: "#pricing"
     }, "Pricing"), /*#__PURE__*/React.createElement("a", {
       className: "st-nav-clients",
-      href: "../landing/index.html"
+      href: "/"
     }, "For clients \u2197"), /*#__PURE__*/React.createElement(Button, {
       variant: "ghost",
       size: "sm"
@@ -8061,7 +8061,7 @@ try { (() => {
       href: "#pricing",
       onClick: () => setOpen(false)
     }, "Pricing"), /*#__PURE__*/React.createElement("a", {
-      href: "../landing/index.html"
+      href: "/"
     }, "For clients \u2197"), /*#__PURE__*/React.createElement(Button, {
       full: true
     }, "List your studio")));
@@ -8363,7 +8363,7 @@ try { (() => {
       className: "vn-brand-word"
     }, "Spa")), /*#__PURE__*/React.createElement("p", null, "Beach Road, Beau Vallon \xB7 +248 4 000 000 \xB7 hello@kreolspa.sc")), /*#__PURE__*/React.createElement("a", {
       className: "vn-powered",
-      href: "../landing/index.html"
+      href: "/"
     }, "Bookings powered by ", /*#__PURE__*/React.createElement("b", null, "sey.la\xA0|\xA0book")))));
   }
   window.VenueClose = VenueClose;
