@@ -82,6 +82,7 @@
   function Home({ nav, favs, toggleFav, setTab, notif }) {
     const near = D.STUDIOS;
     const rec = D.STUDIOS.slice().sort((a, b) => b.rating - a.rating);
+    const hasStudios = D.STUDIOS.length > 0;
     return (
       <>
         <TopBar brand right={
@@ -113,17 +114,12 @@
               </div>
             </div>
 
+            {hasStudios ? (
+            <>
             <div className="block">
               <div className="sec-title"><h2 className="h-md">Recommended</h2><a onClick={() => setTab("search")}>See all</a></div>
               <div className="hscroll">
                 {rec.map((s) => <StudioCard key={s.id} s={s} wide onOpen={() => nav.push("studio", { id: s.id })} fav={favs.includes(s.id)} onFav={toggleFav} />)}
-              </div>
-            </div>
-
-            <div className="block">
-              <div className="sec-title"><h2 className="h-md">Group classes</h2><a onClick={() => nav.push("classes")}>See all</a></div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {D.CLASSES.slice(0, 2).map((c) => <ClassCard key={c.id} c={c} joined={false} onJoin={(cl) => nav.push("classJoin", { id: cl.id })} />)}
               </div>
             </div>
 
@@ -133,6 +129,16 @@
                 {near.map((s) => <StudioCard key={s.id} s={s} onOpen={() => nav.push("studio", { id: s.id })} fav={favs.includes(s.id)} onFav={toggleFav} />)}
               </div>
             </div>
+            </>
+            ) : (
+            <div className="block">
+              <div className="empty">
+                <div className="empty-ic"><Ic name="spa" size={26} /></div>
+                <div className="h-md">No studios yet</div>
+                <p className="muted" style={{ margin: "6px 0 0" }}>We're onboarding salons across Mahé, Praslin &amp; La Digue. Check back soon.</p>
+              </div>
+            </div>
+            )}
           </div>
         </div>
       </>

@@ -96,11 +96,13 @@
 
   withTimeout(fetchStudios, TIMEOUT_MS).then(function (rows) {
     try {
-      if (rows && rows.length && window.SEY_DATA) {
-        // The app reads SEY_DATA.STUDIOS (uppercase).
+      if (window.SEY_DATA && Array.isArray(rows)) {
+        // Fetch succeeded → use REAL studios only (even if empty → empty state).
+        // Only a hard fetch failure (rows === null) keeps the bundled demo so a
+        // network blip doesn't blank the app.
         window.SEY_DATA.STUDIOS = rows.map(mapStudio);
       }
-    } catch (e) { /* keep demo data */ }
+    } catch (e) { /* keep demo data on error */ }
     loadApp();
   });
 })();

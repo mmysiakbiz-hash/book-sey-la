@@ -156,6 +156,7 @@
   }) {
     const near = D.STUDIOS;
     const rec = D.STUDIOS.slice().sort((a, b) => b.rating - a.rating);
+    const hasStudios = D.STUDIOS.length > 0;
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(TopBar, {
       brand: true,
       right: /*#__PURE__*/React.createElement("button", {
@@ -206,7 +207,7 @@
       size: 26
     })), /*#__PURE__*/React.createElement("span", {
       className: "cat-lb"
-    }, c.label))))), /*#__PURE__*/React.createElement("div", {
+    }, c.label))))), hasStudios ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "block"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sec-title"
@@ -231,27 +232,6 @@
       className: "sec-title"
     }, /*#__PURE__*/React.createElement("h2", {
       className: "h-md"
-    }, "Group classes"), /*#__PURE__*/React.createElement("a", {
-      onClick: () => nav.push("classes")
-    }, "See all")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 12
-      }
-    }, D.CLASSES.slice(0, 2).map(c => /*#__PURE__*/React.createElement(ClassCard, {
-      key: c.id,
-      c: c,
-      joined: false,
-      onJoin: cl => nav.push("classJoin", {
-        id: cl.id
-      })
-    })))), /*#__PURE__*/React.createElement("div", {
-      className: "block"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "sec-title"
-    }, /*#__PURE__*/React.createElement("h2", {
-      className: "h-md"
     }, "Near you"), /*#__PURE__*/React.createElement("a", {
       onClick: () => setTab("search")
     }, "Map")), /*#__PURE__*/React.createElement("div", {
@@ -264,7 +244,23 @@
       }),
       fav: favs.includes(s.id),
       onFav: toggleFav
-    })))))));
+    }))))) : /*#__PURE__*/React.createElement("div", {
+      className: "block"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "empty"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "empty-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "spa",
+      size: 26
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "h-md"
+    }, "No studios yet"), /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        margin: "6px 0 0"
+      }
+    }, "We're onboarding salons across Mah\xE9, Praslin & La Digue. Check back soon."))))));
   }
 
   // ---------- SEARCH (+ filters + map) ----------
