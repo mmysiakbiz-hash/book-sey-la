@@ -55,11 +55,16 @@
 <script src="live.js"></script>
 
 <script>
-  // Register the service worker (offline + installable). Path-relative so it works on any host.
+  // No service worker is registered anymore (a cache-first SW kept wedging devices
+  // on a stale build). We still clean up any SW an older visit left behind, so the
+  // app always loads fresh from the network.
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("service-worker.js").catch(function () {});
-    });
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      regs.forEach(function (r) { r.unregister().catch(function () {}); });
+    }).catch(function () {});
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (keys) { keys.forEach(function (k) { caches.delete(k).catch(function () {}); }); }).catch(function () {});
+    }
   }
 </script>
 </body>
