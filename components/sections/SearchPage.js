@@ -47,6 +47,7 @@ function SearchPage({ studios }) {
   const [mapOpen, setMapOpen] = React.useState(false);
   const isClasses = cat === "Classes";
   // Real studios only — no demo fallback here (the empty state handles none).
+  // (rev2 — force recompile)
   const SOURCE = Array.isArray(studios) ? studios : [];
   const priceOf = (s) => parseInt((s.services && s.services[0] ? s.services[0].price : "€0").slice(1), 10) || 0;
   let results = SOURCE.filter(s => cat === "All" || s.category === cat);

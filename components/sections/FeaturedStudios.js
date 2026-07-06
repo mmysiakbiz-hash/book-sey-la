@@ -22,6 +22,7 @@ const DEMO = [
 
 function FeaturedStudios({ studios }) {
   // Real studios from Supabase when available; otherwise the 3 badged demos.
+  // (rev2 — force recompile)
   const hasReal = !!(studios && studios.length);
   const list = hasReal ? studios.slice(0, 8) : DEMO;
   return (
