@@ -12,6 +12,31 @@
 <link rel="apple-touch-icon" href="icon.svg" />
 <link rel="stylesheet" href="./styles.css" />
 <link rel="stylesheet" href="app.css" />
+<!-- Fatal-error guard: turn a blank white screen into a readable message. If any
+     script throws before/while mounting and #root stays empty, show the error +
+     a reload button instead of nothing. Never clobbers a mounted app. -->
+<script>
+(function () {
+  function fatal(msg) {
+    try {
+      var el = document.getElementById("root");
+      if (!el || el.childElementCount > 0) return; // app rendered — leave it alone
+      el.innerHTML = '<div style="padding:26px 22px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif;color:#23201E">'
+        + '<div style="font-weight:700;font-size:17px;margin-bottom:8px">sey.la — something got stuck</div>'
+        + '<div style="font-size:13px;color:#6E6863;white-space:pre-wrap;word-break:break-word">' + String(msg).slice(0, 400) + '</div>'
+        + '<button onclick="location.reload()" style="margin-top:18px;padding:11px 20px;border-radius:999px;border:none;background:#23201E;color:#fff;font-weight:600">Reload</button>'
+        + '</div>';
+    } catch (_) {}
+  }
+  window.addEventListener("error", function (e) {
+    // Ignore resource (img/script/css) load failures — only real script errors.
+    if (e && e.message && (e.error || e.target === window)) fatal(e.message + (e.lineno ? (" (line " + e.lineno + ")") : ""));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason; fatal("Promise: " + ((r && (r.message || r)) || "unknown"));
+  });
+})();
+</script>
 <!-- Self-hosted React (production UMD) — no CDN, works offline behind strict CSP. -->
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
