@@ -8,7 +8,29 @@ import { SaveStudioButton } from "@/components/booking/SaveStudioButton";
 
 const U = "https://images.unsplash.com/photo-";
 
+// Real "Open until HH:MM" from the studio's hours, evaluated in Mahé time.
+function computeOpen(studio) {
+  const hrs = studio && Array.isArray(studio.hours) ? studio.hours : [];
+  if (!hrs.length) return null;
+  try {
+    const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Indian/Mahe", weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
+    const get = (t) => (p.find((x) => x.type === t) || {}).value;
+    const nowMin = Number(get("hour")) * 60 + Number(get("minute"));
+    const row = hrs.find((r) => r[0] === get("weekday"));
+    if (!row) return { open: false };
+    const m = String(row[1]).match(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    const openMin = +m[1] * 60 + +m[2], closeMin = +m[3] * 60 + +m[4];
+    return { open: nowMin >= openMin && nowMin < closeMin, closeStr: m[3] + ":" + m[4] };
+  } catch (e) { return null; }
+}
+
 function VenueHero({ studio, hasClasses }) {
+  // Computed client-side (avoids SSR/client time mismatch).
+  const [openInfo, setOpenInfo] = React.useState(null);
+  React.useEffect(() => { setOpenInfo(computeOpen(studio)); }, [studio]);
+  const hasTeam = !!(studio && Array.isArray(studio.team) && studio.team.length);
+  const hasGallery = !!(studio && Array.isArray(studio.photos) && studio.photos.length >= 3);
   // Live studio from Supabase when available; demo (Kreol Spa) fallback otherwise.
   const name = (studio && studio.name) || "Kreol Spa";
   const parts = name.trim().split(" ");
@@ -38,8 +60,8 @@ function VenueHero({ studio, hasClasses }) {
           <nav className="vn-nav" aria-label="Sections">
             <a href="#services">Services</a>
             {hasClasses && <a href="#classes">Classes</a>}
-            <a href="#team">Team</a>
-            <a href="#gallery">Gallery</a>
+            {hasTeam && <a href="#team">Team</a>}
+            {hasGallery && <a href="#gallery">Gallery</a>}
             {hasReviews && <a href="#reviews">Reviews</a>}
             <a href="#visit">Visit</a>
           </nav>
@@ -62,7 +84,9 @@ function VenueHero({ studio, hasClasses }) {
           <p className="vn-hero-lead">{lead}</p>
           <div className="vn-hero-meta">
             {hasReviews && <span className="vn-meta-pill"><Icon name="star" size={15} color="var(--brass)" /> <b>{rating}</b> · {reviewCount} reviews</span>}
-            <span className="vn-meta-pill vn-open"><span className="vn-dot"></span> Open until 19:00</span>
+            {openInfo && (openInfo.open
+              ? <span className="vn-meta-pill vn-open"><span className="vn-dot"></span> Open until {openInfo.closeStr}</span>
+              : <span className="vn-meta-pill"><span className="vn-dot" style={{ background: "var(--cocoa-40)" }}></span> Closed now</span>)}
             <span className="vn-meta-pill"><Icon name="heart" size={14} color="var(--clay)" /> Free to book</span>
             {studio && studio.loyalty && <span className="vn-meta-pill"><Icon name="sparkle" size={14} color="var(--brass)" /> {studio.loyalty.stamps} visits → {studio.loyalty.reward || "reward"}</span>}
           </div>

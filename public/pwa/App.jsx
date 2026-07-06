@@ -329,16 +329,20 @@
       try {
         if (window.SEY_BOOK && s.dbId) {
           const first = chosen.find((c) => c.sid) || null;
+          // Interpret the picked day + slot as MAHÉ local time (UTC+4, no DST),
+          // not the visitor's browser timezone.
           const now = new Date();
           const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
           const parts = (slot || "09:00").split(":");
-          when.setHours(Number(parts[0]) || 9, Number(parts[1]) || 0, 0, 0);
+          const pad = (n) => String(n).padStart(2, "0");
+          const mahe = when.getFullYear() + "-" + pad(when.getMonth() + 1) + "-" + pad(when.getDate())
+            + "T" + pad(Number(parts[0]) || 9) + ":" + pad(Number(parts[1]) || 0) + ":00+04:00";
           const realStaff = (staff !== "any" && s.staff && s.staff.some((p) => p.id === staff)) ? staff : null;
           window.SEY_BOOK.createBooking({
             studioDbId: s.dbId,
             serviceDbId: first ? first.sid : null,
             staffId: realStaff,
-            startsAt: when.toISOString(),
+            startsAt: new Date(mahe).toISOString(),
             durationMin: first ? first.durMin : 60,
             priceEur: total,
           });

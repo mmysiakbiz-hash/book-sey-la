@@ -36,14 +36,17 @@ export function BookNow({ studioId, service, team = [], onClose }) {
 
   async function book() {
     setState("booking");
-    const d = new Date(days[dayIdx]);
+    // Interpret the picked day + time as MAHÉ local time (UTC+4, no DST) — not the
+    // visitor's browser timezone. Otherwise a client abroad books the wrong slot.
+    const d = days[dayIdx];
     const [h, m] = time.split(":").map(Number);
-    d.setHours(h, m, 0, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    const mahe = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(h)}:${pad(m)}:00+04:00`;
     const res = await createBooking({
       studioId,
       serviceId: service.id,
       staffId: staffId === "any" ? null : staffId,
-      startsAt: d.toISOString(),
+      startsAt: new Date(mahe).toISOString(),
       durationMin: service.durationMin || 60,
       priceEur: service.priceEur != null ? service.priceEur : null,
       phone: phone.trim() || null,
