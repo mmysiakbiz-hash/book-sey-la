@@ -14,13 +14,9 @@ const U = "https://images.unsplash.com/photo-";
 
 const CHIPS = ["All", "Hair", "Barber", "Nails", "Brows & lashes", "Spa & massage", "Skin & facial", "Makeup", "Waxing", "Tattoo", "Piercing", "Fitness & yoga", "Personal trainer", "Classes"];
 
-const CLASSES = [
-  { day: "Mon", time: "07:00", name: "Sunrise beach yoga", instructor: "Kreol Spa · with Aline", duration: "60 min", level: "All levels", price: "€18", spotsLeft: 6, capacity: 14 },
-  { day: "Tue", time: "18:30", name: "Personal training · small group", instructor: "North Shore Fitness · with Denis", duration: "45 min", level: "Intermediate", price: "€25", spotsLeft: 2, capacity: 6 },
-  { day: "Wed", time: "18:00", name: "Candlelight yin", instructor: "Zen Shore · with Marie", duration: "75 min", level: "Gentle", price: "€20", spotsLeft: 0, capacity: 10 },
-  { day: "Fri", time: "06:45", name: "Sunrise HIIT", instructor: "Anse Fit · with Kevin", duration: "40 min", level: "Advanced", price: "€22", spotsLeft: 9, capacity: 16 },
-  { day: "Sat", time: "09:00", name: "Flow & breath", instructor: "Kreol Spa · with Aline", duration: "60 min", level: "All levels", price: "€18", spotsLeft: 4, capacity: 14 },
-];
+// Real group classes aren't wired into the marketplace search yet — keep this
+// empty so the Classes tab shows a clean empty state instead of demo data.
+const CLASSES = [];
 
 const STUDIOS = [
   { name: "Kreol Spa", location: "Beau Vallon, Mahé", category: "Spa & massage", image: U+"1519823551278-64ac92734fb1", rating: 4.9, reviews: 214, badge: "Popular",
@@ -50,8 +46,8 @@ function SearchPage({ studios }) {
   const [sort, setSort] = React.useState("Recommended");
   const [mapOpen, setMapOpen] = React.useState(false);
   const isClasses = cat === "Classes";
-  // Live studios from Supabase when available; demo fallback otherwise.
-  const SOURCE = studios && studios.length ? studios : STUDIOS;
+  // Real studios only — no demo fallback here (the empty state handles none).
+  const SOURCE = Array.isArray(studios) ? studios : [];
   const priceOf = (s) => parseInt((s.services && s.services[0] ? s.services[0].price : "€0").slice(1), 10) || 0;
   let results = SOURCE.filter(s => cat === "All" || s.category === cat);
   if (sort === "Top rated") results = [...results].sort((a,b)=>(b.rating||0)-(a.rating||0));
@@ -105,9 +101,16 @@ function SearchPage({ studios }) {
 
           <div className={"sr-layout" + (mapOpen && !isClasses ? " sr-layout--map" : "")}>
             {isClasses ? (
+              CLASSES.length === 0 ? (
+                <div className="sr-empty">
+                  <h3>No classes yet</h3>
+                  <p>Group classes will appear here as studios add them.</p>
+                </div>
+              ) : (
               <div className="sr-classes">
                 {CLASSES.map((c,i) => <ClassCard key={i} {...c} />)}
               </div>
+              )
             ) : (
             <div className="sr-grid">
               {results.length === 0 ? (
@@ -115,7 +118,7 @@ function SearchPage({ studios }) {
                   <h3>No studios here yet</h3>
                   <p>We're onboarding {cat.toLowerCase()} studios across the islands. Check back soon.</p>
                 </div>
-              ) : results.map(s => <StudioCard key={s.slug || s.name} {...s} as="a" href={s.href || "#"} />)}
+              ) : results.map(s => <StudioCard key={s.slug || s.name} {...s} as="a" href={s.href || (s.slug ? "/studio/" + s.slug : "#")} />)}
             </div>
             )}
             {mapOpen && !isClasses && (
