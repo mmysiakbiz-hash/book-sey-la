@@ -318,9 +318,10 @@ a:hover { color: var(--brand-hover); }
 
 /* ---- Hero ---- */
 .lp-hero { position: relative; padding-block: clamp(2.5rem, 6vw, 6rem) clamp(3rem, 7vw, 7rem); overflow: hidden; }
-.lp-hero-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: clamp(2rem, 5vw, 5rem); align-items: center; position: relative; z-index: 2; }
+.lp-hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; position: relative; z-index: 2; }
+.lp-hero-copy { min-width: 0; }
 .lp-hero-eyebrow { margin-bottom: 20px; }
-.lp-hero-title { font-size: var(--text-display-xl); line-height: var(--lh-tight); letter-spacing: var(--ls-display); color: var(--cocoa); margin: 0 0 22px; }
+.lp-hero-title { font-size: var(--text-display-xl); line-height: var(--lh-tight); letter-spacing: var(--ls-display); color: var(--cocoa); margin: 0 0 22px; overflow-wrap: break-word; }
 .lp-hero-lead { font-size: var(--text-lead); color: var(--cocoa-80); line-height: var(--lh-normal); max-width: 46ch; margin: 0 0 32px; }
 .lp-hero-search { max-width: 640px; margin-bottom: 18px; }
 .lp-hero-popular { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
@@ -342,6 +343,9 @@ a:hover { color: var(--brand-hover); }
   .lp-hero-floatcard { left: 0; }
 }
 @media (max-width: 480px) {
+  /* Drop the forced min-height: with aspect-ratio it was pushing the montage
+     width past the viewport (height/0.82). Let it follow the container width. */
+  .lp-hero-montage { min-height: 0; }
   .lp-hero-floatcard { position: static; width: 100%; margin-top: 14px; }
 }
 
@@ -422,7 +426,7 @@ a:hover { color: var(--brand-hover); }
 
 /* ---- Responsive ---- */
 @media (max-width: 960px) {
-  .lp-hero-grid { grid-template-columns: 1fr; }
+  .lp-hero-grid { grid-template-columns: minmax(0, 1fr); }
   .lp-hero-montage { margin-top: 8px; }
   .lp-cats { grid-template-columns: repeat(2, 1fr); }
   .lp-steps { grid-template-columns: 1fr; gap: 32px; }
