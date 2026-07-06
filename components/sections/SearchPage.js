@@ -60,8 +60,8 @@ function SearchPage({ studios, initialCat }) {
         <div className="sey-container sr-nav-inner">
           <Logo />
           <div className="sr-nav-right">
-            <a href="../studios/index.html">For studios</a>
-            <Button variant="ghost" size="sm">Log in</Button>
+            <a href="/for-studios">For studios</a>
+            <Button variant="ghost" size="sm" as="a" href="/login">Log in</Button>
           </div>
         </div>
       </header>
@@ -142,10 +142,10 @@ function SearchPage({ studios, initialCat }) {
         <div className="sey-container sr-footer-inner">
           <Logo />
           <nav className="sr-footer-nav">
-            <a href="../landing/index.html">Home</a>
-            <a href="../studios/index.html">For studios</a>
-            <a href="../pages/about.html">About</a>
-            <a href="../pages/contact.html">Contact</a>
+            <a href="/">Home</a>
+            <a href="/for-studios">For studios</a>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
           </nav>
           <span className="sr-footer-copy">© 2026 sey.la · Always free for clients</span>
         </div>

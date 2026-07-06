@@ -127,7 +127,7 @@ function PageEditor() {
         </div>
 
         <div className="pp-actions">
-          <Button as="a" href="../venue/index.html">Preview full page ↗</Button>
+          <Button as="a" href="/search">Preview full page ↗</Button>
           <Button variant="secondary">Save &amp; publish</Button>
         </div>
       </div>
@@ -209,7 +209,7 @@ function ProviderPanel() {
             </button>
           ))}
         </nav>
-        <a className="pp-viewpublic" href="../venue/index.html"><Icon name="arrowRight" size={16} color="var(--cocoa-60)" /> View public page</a>
+        <a className="pp-viewpublic" href="/search"><Icon name="arrowRight" size={16} color="var(--cocoa-60)" /> View public page</a>
       </aside>
 
       <main className="pp-main">

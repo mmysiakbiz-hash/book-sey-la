@@ -20,7 +20,7 @@ function StudiosNav() {
           <a href="#features">Features</a>
           <a href="#how">How it works</a>
           <a href="#pricing">Pricing</a>
-          <a className="st-nav-clients" href="../landing/index.html">For clients ↗</a>
+          <a className="st-nav-clients" href="/">For clients ↗</a>
           <Button variant="ghost" size="sm" as="a" href="/panel">Log in</Button>
           <Button size="sm" as="a" href="/panel">List your studio</Button>
         </nav>
@@ -33,7 +33,7 @@ function StudiosNav() {
           <a href="#features" onClick={() => setOpen(false)}>Features</a>
           <a href="#how" onClick={() => setOpen(false)}>How it works</a>
           <a href="#pricing" onClick={() => setOpen(false)}>Pricing</a>
-          <a href="../landing/index.html">For clients ↗</a>
+          <a href="/">For clients ↗</a>
           <Button full as="a" href="/panel">List your studio</Button>
         </div>
       )}

@@ -68,7 +68,7 @@ function StudiosClose() {
             <a href="#features">Features</a>
             <a href="#how">How it works</a>
             <a href="#pricing">Pricing</a>
-            <a href="../landing/index.html">For clients ↗</a>
+            <a href="/">For clients ↗</a>
           </nav>
         </div>
         <div className="sey-container st-footer-bottom">

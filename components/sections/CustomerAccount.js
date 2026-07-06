@@ -47,7 +47,7 @@ function CustomerAccount() {
         <div className="sey-container ca-nav-inner">
           <Logo />
           <div className="ca-nav-right">
-            <a href="../search/index.html">Browse</a>
+            <a href="/search">Browse</a>
             <span className="ca-avatar">S</span>
           </div>
         </div>
@@ -60,7 +60,7 @@ function CustomerAccount() {
               <div className="sey-eyebrow ca-eyebrow">My account</div>
               <h1 className="ca-title">Hi, <em className="sey-accent-italic">Sofia</em></h1>
             </div>
-            <Button as="a" href="../search/index.html">Book something new</Button>
+            <Button as="a" href="/search">Book something new</Button>
           </div>
           <div className="ca-tabs" role="tablist">
             {TABS.map(([k,l]) => (
