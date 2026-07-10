@@ -674,7 +674,7 @@
     const total = chosen.reduce((n, it) => n + it.price, 0);
     const deposit = pay === "now" ? Math.max(5, Math.round(total * 0.2)) : 0;
     const staffName = staff === "any" ? "Any professional" : (staffPool.find(p => p.id === staff) || {}).name;
-    const TITLES = ["Choose services", "Choose professional", "Pick a time", "Payment"];
+    const TITLES = ["Choose services", "Choose professional", "Pick a time", "Review"];
     function confirm() {
       // Instant local booking — offline/demo fallback + drives the PWA "My bookings" list.
       addBooking({
@@ -770,7 +770,7 @@
         className: "k"
       }, "Payment"), /*#__PURE__*/React.createElement("span", {
         className: "v"
-      }, pay === "now" ? "SCR " + deposit + " deposit paid" : "Pay in salon")), /*#__PURE__*/React.createElement("div", {
+      }, "On site \xB7 cash or card")), /*#__PURE__*/React.createElement("div", {
         className: "receipt-row"
       }, /*#__PURE__*/React.createElement("span", {
         className: "k"
@@ -934,59 +934,12 @@
       className: "switch" + (recurring ? " is-on" : ""),
       onClick: () => setRecurring(!recurring)
     }, /*#__PURE__*/React.createElement("i", null)))), step === 3 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      className: "block--flush"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eyebrow",
-      style: {
-        marginBottom: 8
-      }
-    }, "Payment"), /*#__PURE__*/React.createElement("button", {
-      className: "paymethod" + (pay === "salon" ? " is-on" : ""),
-      onClick: () => setPay("salon")
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "arow-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "pin",
-      size: 19
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "srv-name"
-    }, "Pay in salon"), /*#__PURE__*/React.createElement("div", {
-      className: "srv-meta"
-    }, "Free booking \xB7 pay after your visit")), pay === "salon" && /*#__PURE__*/React.createElement(Ic, {
-      name: "check",
-      size: 18,
-      color: "var(--ink)"
-    })), /*#__PURE__*/React.createElement("button", {
-      className: "paymethod" + (pay === "now" ? " is-on" : ""),
-      onClick: () => setPay("now")
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "arow-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "card",
-      size: 19
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "srv-name"
-    }, "Pay a deposit now"), /*#__PURE__*/React.createElement("div", {
-      className: "srv-meta"
-    }, "Secures your slot \xB7 Visa \xB7\xB7\xB7\xB7 4291")), pay === "now" && /*#__PURE__*/React.createElement(Ic, {
-      name: "check",
-      size: 18,
-      color: "var(--ink)"
-    }))), /*#__PURE__*/React.createElement("div", {
       className: "paynote"
     }, /*#__PURE__*/React.createElement(Ic, {
       name: "shield",
       size: 16,
       color: "var(--eucalyptus)"
-    }), " ", pay === "now" ? "SCR " + deposit + " deposit today, SCR " + (total - deposit) + " in salon. Refundable if you cancel 12h before." : "No card needed. A no-show may limit future free bookings."), /*#__PURE__*/React.createElement("div", {
+    }), " Pay the studio directly on the day \u2014 cash or card. No online payment, no card needed."), /*#__PURE__*/React.createElement("div", {
       className: "receipt",
       style: {
         marginTop: 4
@@ -1009,13 +962,13 @@
       className: "k"
     }, "When"), /*#__PURE__*/React.createElement("span", {
       className: "v"
-    }, D.DAYS[day].d, " \xB7 ", slot)), deposit > 0 && /*#__PURE__*/React.createElement("div", {
+    }, D.DAYS[day].d, " \xB7 ", slot)), /*#__PURE__*/React.createElement("div", {
       className: "receipt-row"
     }, /*#__PURE__*/React.createElement("span", {
       className: "k"
-    }, "Due now"), /*#__PURE__*/React.createElement("span", {
+    }, "Pay"), /*#__PURE__*/React.createElement("span", {
       className: "v"
-    }, "SCR ", deposit)))))), /*#__PURE__*/React.createElement("div", {
+    }, "On site \xB7 cash or card")))))), /*#__PURE__*/React.createElement("div", {
       style: {
         position: "absolute",
         left: 0,
@@ -1040,7 +993,7 @@
     }, "Continue ", slot ? "· " + D.DAYS[day].d + " " + slot : ""), step === 3 && /*#__PURE__*/React.createElement("button", {
       className: "btn btn--primary btn--full",
       onClick: confirm
-    }, pay === "now" ? "Pay SCR " + deposit + " & confirm" : "Confirm booking")));
+    }, "Confirm booking")));
   }
 
   // ---------- CLASS JOIN ----------
@@ -1438,18 +1391,6 @@
       lb: "Rewards & stamps",
       go: () => nav.push("rewards")
     }, {
-      ic: "calendar",
-      lb: "Messages",
-      go: () => nav.push("messages")
-    }, {
-      ic: "card",
-      lb: "Packages & gift cards",
-      go: () => nav.push("packages")
-    }, {
-      ic: "clock",
-      lb: "Waitlist",
-      go: () => nav.push("waitlist")
-    }, {
       ic: "heart",
       lb: "Favourites",
       go: () => nav.push("favs")
@@ -1461,10 +1402,6 @@
       ic: "bell",
       lb: "Notifications",
       go: () => nav.push("notif")
-    }, {
-      ic: "card",
-      lb: "Payment methods",
-      go: () => nav.push("payments")
     }, {
       ic: "globe",
       lb: "Language · English",
@@ -2018,460 +1955,6 @@
     }, "Keep booking")));
   }
 
-  // ---------- WAITLIST ----------
-  function Waitlist({
-    nav
-  }) {
-    const [items, setItems] = useState([{
-      id: "w1",
-      studio: "L'Accent Barber",
-      studioId: "laccent",
-      slot: "Today · 16:00",
-      svc: "Skin fade & beard",
-      photo: D.STUDIOS.find(s => s.id === "laccent").photo,
-      on: true
-    }, {
-      id: "w2",
-      studio: "Kreol Spa",
-      studioId: "kreol-spa",
-      slot: "Sat · morning",
-      svc: "Coconut & frangipani massage",
-      photo: D.STUDIOS.find(s => s.id === "kreol-spa").photo,
-      on: true
-    }]);
-    return /*#__PURE__*/React.createElement("div", {
-      className: "sheet-full"
-    }, /*#__PURE__*/React.createElement(TopBar, {
-      title: "Waitlist",
-      onBack: nav.pop
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "screen",
-      style: {
-        paddingTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("p", {
-      className: "muted",
-      style: {
-        margin: "0 0 12px"
-      }
-    }, "We'll notify you the moment a slot frees up. Booking still free \u2014 first to tap gets it."), items.length === 0 ? /*#__PURE__*/React.createElement("div", {
-      className: "empty"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "empty-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "clock",
-      size: 26
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "h-md"
-    }, "No waitlists"), /*#__PURE__*/React.createElement("p", {
-      className: "muted",
-      style: {
-        margin: 0
-      }
-    }, "Tap \"Join waitlist\" on a full time slot.")) : items.map(w => /*#__PURE__*/React.createElement("div", {
-      className: "bk",
-      key: w.id,
-      style: {
-        cursor: "default",
-        marginBottom: 12
-      }
-    }, /*#__PURE__*/React.createElement("img", {
-      className: "bk-photo",
-      src: w.photo,
-      alt: ""
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "bk-info"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "bk-when"
-    }, w.slot), /*#__PURE__*/React.createElement("div", {
-      className: "bk-name"
-    }, w.svc), /*#__PURE__*/React.createElement("div", {
-      className: "bk-sub"
-    }, w.studio)), /*#__PURE__*/React.createElement("span", {
-      className: "switch" + (w.on ? " is-on" : ""),
-      onClick: () => setItems(items.map(x => x.id === w.id ? {
-        ...x,
-        on: !x.on
-      } : x))
-    }, /*#__PURE__*/React.createElement("i", null)))))));
-  }
-
-  // ---------- PACKAGES & GIFT CARDS ----------
-  function Packages({
-    nav
-  }) {
-    const owned = [{
-      id: "p1",
-      name: "5× Coconut massage",
-      studio: "Kreol Spa",
-      left: 2,
-      total: 5,
-      exp: "Exp. Dec 2026"
-    }, {
-      id: "p2",
-      name: "Unlimited yoga · monthly",
-      studio: "North Shore Fitness",
-      left: "∞",
-      total: "∞",
-      exp: "Renews 1 Aug"
-    }];
-    return /*#__PURE__*/React.createElement("div", {
-      className: "sheet-full"
-    }, /*#__PURE__*/React.createElement(TopBar, {
-      title: "Packages & gift cards",
-      onBack: nav.pop
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "screen",
-      style: {
-        paddingTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "wallet"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "tiny",
-      style: {
-        opacity: 0.8
-      }
-    }, "Gift card balance"), /*#__PURE__*/React.createElement("div", {
-      className: "wallet-amt"
-    }, "\u20AC40"), /*#__PURE__*/React.createElement("div", {
-      className: "tiny",
-      style: {
-        opacity: 0.8
-      }
-    }, "Use at any sey.la studio")), /*#__PURE__*/React.createElement("div", {
-      className: "sec-title",
-      style: {
-        marginTop: 22
-      }
-    }, /*#__PURE__*/React.createElement("h2", {
-      className: "h-md"
-    }, "Your packages")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 12
-      }
-    }, owned.map(p => /*#__PURE__*/React.createElement("div", {
-      className: "loy",
-      key: p.id
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "loy-head"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "staff-any"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "sparkle",
-      size: 20
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "scard-name"
-    }, p.name), /*#__PURE__*/React.createElement("div", {
-      className: "loy-progress"
-    }, p.studio, " \xB7 ", p.exp)), /*#__PURE__*/React.createElement("span", {
-      className: "tagpill loyal"
-    }, p.left, " left"))))), /*#__PURE__*/React.createElement("div", {
-      className: "block"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "sec-title"
-    }, /*#__PURE__*/React.createElement("h2", {
-      className: "h-md"
-    }, "Buy")), /*#__PURE__*/React.createElement("button", {
-      className: "paymethod",
-      onClick: () => nav.push("giftbuy")
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "arow-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "heart",
-      size: 19
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "srv-name"
-    }, "Send a gift card"), /*#__PURE__*/React.createElement("div", {
-      className: "srv-meta"
-    }, "\u20AC25 \xB7 \u20AC50 \xB7 \u20AC100")), /*#__PURE__*/React.createElement(Ic, {
-      name: "chevronRight",
-      size: 18,
-      color: "var(--cocoa-40)"
-    })), /*#__PURE__*/React.createElement("button", {
-      className: "paymethod",
-      onClick: () => nav.push("studio", {
-        id: "kreol-spa"
-      })
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "arow-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "sparkle",
-      size: 19
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "srv-name"
-    }, "Buy a service package"), /*#__PURE__*/React.createElement("div", {
-      className: "srv-meta"
-    }, "Save up to 20% vs single visits")), /*#__PURE__*/React.createElement(Ic, {
-      name: "chevronRight",
-      size: 18,
-      color: "var(--cocoa-40)"
-    }))))));
-  }
-  function GiftBuy({
-    nav
-  }) {
-    const [amt, setAmt] = useState(50);
-    const [done, setDone] = useState(false);
-    if (done) return /*#__PURE__*/React.createElement("div", {
-      className: "sheet-full"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "confirm"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "confirm-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "heart",
-      size: 34,
-      color: "var(--eucalyptus)",
-      fill: "var(--eucalyptus)"
-    })), /*#__PURE__*/React.createElement("h1", {
-      className: "h-lg"
-    }, "Gift on its way"), /*#__PURE__*/React.createElement("p", {
-      className: "muted",
-      style: {
-        margin: 0
-      }
-    }, "A \u20AC", amt, " sey.la gift card has been sent."))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: "12px 18px calc(12px + env(safe-area-inset-bottom,0px))"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "btn btn--primary btn--full",
-      onClick: nav.pop
-    }, "Done")));
-    return /*#__PURE__*/React.createElement("div", {
-      className: "sheet-full"
-    }, /*#__PURE__*/React.createElement(TopBar, {
-      title: "Send a gift card",
-      onBack: nav.pop
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "screen",
-      style: {
-        paddingTop: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eyebrow",
-      style: {
-        marginBottom: 10
-      }
-    }, "Amount"), /*#__PURE__*/React.createElement("div", {
-      className: "slotgrid",
-      style: {
-        gridTemplateColumns: "repeat(3,1fr)"
-      }
-    }, [25, 50, 100].map(v => /*#__PURE__*/React.createElement("button", {
-      key: v,
-      className: "slot" + (amt === v ? " is-active" : ""),
-      onClick: () => setAmt(v)
-    }, "\u20AC", v))), /*#__PURE__*/React.createElement("div", {
-      className: "field",
-      style: {
-        marginTop: 16
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "field-prefix"
-    }, "To"), /*#__PURE__*/React.createElement("input", {
-      placeholder: "Recipient's phone or email"
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "field",
-      style: {
-        marginTop: 10
-      }
-    }, /*#__PURE__*/React.createElement("input", {
-      placeholder: "Message (optional)"
-    })))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: "12px 18px calc(12px + env(safe-area-inset-bottom,0px))"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "btn btn--primary btn--full",
-      onClick: () => setDone(true)
-    }, "Pay \u20AC", amt, " & send")));
-  }
-
-  // ---------- MESSAGES ----------
-  function Messages({
-    nav
-  }) {
-    const threads = [{
-      id: "kreol-spa",
-      studio: "Kreol Spa",
-      photo: D.STUDIOS.find(s => s.id === "kreol-spa").photo,
-      last: "See you tomorrow at 14:30 🌺",
-      when: "2h",
-      unread: true
-    }, {
-      id: "laccent",
-      studio: "L'Accent Barber",
-      photo: D.STUDIOS.find(s => s.id === "laccent").photo,
-      last: "A slot opened at 16:00 today",
-      when: "1d",
-      unread: false
-    }];
-    return /*#__PURE__*/React.createElement("div", {
-      className: "sheet-full"
-    }, /*#__PURE__*/React.createElement(TopBar, {
-      title: "Messages",
-      onBack: nav.pop
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "screen",
-      style: {
-        paddingTop: 4
-      }
-    }, threads.map(t => /*#__PURE__*/React.createElement("div", {
-      className: "arow",
-      key: t.id,
-      onClick: () => nav.push("thread", {
-        id: t.id
-      })
-    }, /*#__PURE__*/React.createElement("img", {
-      className: "avatar",
-      style: {
-        width: 46,
-        height: 46
-      },
-      src: t.photo,
-      alt: ""
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "appt-name"
-    }, t.studio), /*#__PURE__*/React.createElement("div", {
-      className: "srv-meta",
-      style: {
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis"
-      }
-    }, t.last)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "tiny muted"
-    }, t.when), t.unread && /*#__PURE__*/React.createElement("span", {
-      className: "dotsep",
-      style: {
-        width: 8,
-        height: 8,
-        background: "var(--clay)",
-        marginTop: 4
-      }
-    })))))));
-  }
-  function Thread({
-    id,
-    nav
-  }) {
-    const st = D.STUDIOS.find(s => s.id === id);
-    const [msgs, setMsgs] = useState([{
-      me: false,
-      t: "Hi Amelia! Confirming your massage tomorrow at 14:30 with Aline 🌺"
-    }, {
-      me: true,
-      t: "Perfect, thank you! Any parking nearby?"
-    }, {
-      me: false,
-      t: "Yes — free spots right by the beach entrance."
-    }]);
-    const [txt, setTxt] = useState("");
-    function send() {
-      if (!txt.trim()) return;
-      setMsgs([...msgs, {
-        me: true,
-        t: txt
-      }]);
-      setTxt("");
-    }
-    return /*#__PURE__*/React.createElement("div", {
-      className: "sheet-full"
-    }, /*#__PURE__*/React.createElement(TopBar, {
-      title: st.name,
-      onBack: nav.pop
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll",
-      style: {
-        paddingBottom: 76
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "screen",
-      style: {
-        paddingTop: 10,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8
-      }
-    }, msgs.map((m, i) => /*#__PURE__*/React.createElement("div", {
-      key: i,
-      className: "msgbubble" + (m.me ? " me" : "")
-    }, m.t)))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "absolute",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        padding: "10px 14px calc(10px + env(safe-area-inset-bottom,0px))",
-        background: "var(--surface)",
-        borderTop: "1px solid var(--line)",
-        display: "flex",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("input", {
-      className: "field",
-      style: {
-        flex: 1,
-        height: 46
-      },
-      value: txt,
-      onChange: e => setTxt(e.target.value),
-      placeholder: "Message\u2026",
-      onKeyDown: e => {
-        if (e.key === "Enter") send();
-      }
-    }), /*#__PURE__*/React.createElement("button", {
-      className: "iconbtn",
-      style: {
-        width: 46,
-        height: 46,
-        background: "var(--ink)",
-        color: "var(--cream)",
-        border: "none"
-      },
-      onClick: send
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "arrowRight",
-      size: 20,
-      color: "var(--cream)"
-    }))));
-  }
-
   // ---------- NOTIFICATION SETTINGS ----------
   function NotifSettings({
     nav
@@ -2607,111 +2090,6 @@
       size: 18,
       color: "var(--ink)"
     }))))));
-  }
-
-  // ---------- PAYMENT METHODS ----------
-  function PaymentMethods({
-    nav
-  }) {
-    const [cards, setCards] = useState([{
-      id: 1,
-      brand: "Visa",
-      last: "4291",
-      exp: "08/27",
-      def: true
-    }]);
-    return /*#__PURE__*/React.createElement("div", {
-      className: "sheet-full"
-    }, /*#__PURE__*/React.createElement(TopBar, {
-      title: "Payment methods",
-      onBack: nav.pop
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "screen",
-      style: {
-        paddingTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("p", {
-      className: "muted",
-      style: {
-        margin: "0 0 12px"
-      }
-    }, "Used for deposits and no-show protection. Booking itself is always free."), cards.map(c => /*#__PURE__*/React.createElement("div", {
-      className: "paymethod is-on",
-      key: c.id,
-      style: {
-        cursor: "default"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "arow-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "card",
-      size: 19
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "srv-name"
-    }, c.brand, " \xB7\xB7\xB7\xB7 ", c.last), /*#__PURE__*/React.createElement("div", {
-      className: "srv-meta"
-    }, "Expires ", c.exp, c.def ? " · Default" : "")))), /*#__PURE__*/React.createElement("button", {
-      className: "paymethod",
-      onClick: () => setCards([...cards, {
-        id: Date.now(),
-        brand: "Mastercard",
-        last: "8830",
-        exp: "05/28"
-      }])
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "arow-ic"
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "sparkle",
-      size: 19
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "srv-name"
-    }, "Add a card"), /*#__PURE__*/React.createElement("div", {
-      className: "srv-meta"
-    }, "Visa \xB7 Mastercard \xB7 Amex")), /*#__PURE__*/React.createElement(Ic, {
-      name: "chevronRight",
-      size: 18,
-      color: "var(--cocoa-40)"
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "block--flush"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eyebrow",
-      style: {
-        marginBottom: 8
-      }
-    }, "Balances"), /*#__PURE__*/React.createElement("div", {
-      className: "receipt"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "receipt-row"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "k"
-    }, "Gift card"), /*#__PURE__*/React.createElement("span", {
-      className: "v"
-    }, "\u20AC40")), /*#__PURE__*/React.createElement("div", {
-      className: "receipt-row"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "k"
-    }, "Invite wallet"), /*#__PURE__*/React.createElement("span", {
-      className: "v"
-    }, "\u20AC15")))), /*#__PURE__*/React.createElement("div", {
-      className: "paynote",
-      style: {
-        marginTop: 14
-      }
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "shield",
-      size: 16,
-      color: "var(--eucalyptus)"
-    }), " A no-show or a late cancel (under 12h) may charge the studio's fee. You'll always see it before you book."))));
   }
 
   // ---------- TAB BAR ----------
@@ -2946,20 +2324,7 @@
           nav: nav,
           onSubmit: id => setReviewed(r => [...r, id])
         });
-      } else if (top.name === "waitlist") overlay = /*#__PURE__*/React.createElement(Waitlist, {
-        nav: nav
-      });else if (top.name === "packages") overlay = /*#__PURE__*/React.createElement(Packages, {
-        nav: nav
-      });else if (top.name === "giftbuy") overlay = /*#__PURE__*/React.createElement(GiftBuy, {
-        nav: nav
-      });else if (top.name === "messages") overlay = /*#__PURE__*/React.createElement(Messages, {
-        nav: nav
-      });else if (top.name === "thread") overlay = /*#__PURE__*/React.createElement(Thread, {
-        id: p.id,
-        nav: nav
-      });else if (top.name === "notifsettings") overlay = /*#__PURE__*/React.createElement(NotifSettings, {
-        nav: nav
-      });else if (top.name === "payments") overlay = /*#__PURE__*/React.createElement(PaymentMethods, {
+      } else if (top.name === "notifsettings") overlay = /*#__PURE__*/React.createElement(NotifSettings, {
         nav: nav
       });else if (top.name === "language") overlay = /*#__PURE__*/React.createElement(Language, {
         nav: nav

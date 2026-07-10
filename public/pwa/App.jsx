@@ -332,7 +332,7 @@
     const total = chosen.reduce((n, it) => n + it.price, 0);
     const deposit = pay === "now" ? Math.max(5, Math.round(total * 0.2)) : 0;
     const staffName = staff === "any" ? "Any professional" : (staffPool.find((p) => p.id === staff) || {}).name;
-    const TITLES = ["Choose services", "Choose professional", "Pick a time", "Payment"];
+    const TITLES = ["Choose services", "Choose professional", "Pick a time", "Review"];
 
     function confirm() {
       // Instant local booking — offline/demo fallback + drives the PWA "My bookings" list.
@@ -383,7 +383,7 @@
                 <div className="receipt-row"><span className="k">Service</span><span className="v">{chosen.map((c) => c.name).join(", ")}</span></div>
                 <div className="receipt-row"><span className="k">With</span><span className="v">{staffName}</span></div>
                 <div className="receipt-row"><span className="k">When</span><span className="v">{D.DAYS[day].d} · {slot}{recurring ? " · repeats" : ""}</span></div>
-                <div className="receipt-row"><span className="k">Payment</span><span className="v">{pay === "now" ? "SCR " + deposit + " deposit paid" : "Pay in salon"}</span></div>
+                <div className="receipt-row"><span className="k">Payment</span><span className="v">On site · cash or card</span></div>
                 <div className="receipt-row"><span className="k">Total</span><span className="v">SCR {total}</span></div>
               </div>
             </div>
@@ -471,25 +471,12 @@
 
             {step === 3 && (
               <>
-                <div className="block--flush">
-                  <div className="eyebrow" style={{ marginBottom: 8 }}>Payment</div>
-                  <button className={"paymethod" + (pay === "salon" ? " is-on" : "")} onClick={() => setPay("salon")}>
-                    <span className="arow-ic"><Ic name="pin" size={19} /></span>
-                    <div style={{ flex: 1 }}><div className="srv-name">Pay in salon</div><div className="srv-meta">Free booking · pay after your visit</div></div>
-                    {pay === "salon" && <Ic name="check" size={18} color="var(--ink)" />}
-                  </button>
-                  <button className={"paymethod" + (pay === "now" ? " is-on" : "")} onClick={() => setPay("now")}>
-                    <span className="arow-ic"><Ic name="card" size={19} /></span>
-                    <div style={{ flex: 1 }}><div className="srv-name">Pay a deposit now</div><div className="srv-meta">Secures your slot · Visa ···· 4291</div></div>
-                    {pay === "now" && <Ic name="check" size={18} color="var(--ink)" />}
-                  </button>
-                </div>
-                <div className="paynote"><Ic name="shield" size={16} color="var(--eucalyptus)" /> {pay === "now" ? "SCR " + deposit + " deposit today, SCR " + (total - deposit) + " in salon. Refundable if you cancel 12h before." : "No card needed. A no-show may limit future free bookings."}</div>
+                <div className="paynote"><Ic name="shield" size={16} color="var(--eucalyptus)" /> Pay the studio directly on the day — cash or card. No online payment, no card needed.</div>
                 <div className="receipt" style={{ marginTop: 4 }}>
                   <div className="receipt-row"><span className="k">{chosen.length} service{chosen.length > 1 ? "s" : ""}</span><span className="v">SCR {total}</span></div>
                   <div className="receipt-row"><span className="k">With</span><span className="v">{staffName}</span></div>
                   <div className="receipt-row"><span className="k">When</span><span className="v">{D.DAYS[day].d} · {slot}</span></div>
-                  {deposit > 0 && <div className="receipt-row"><span className="k">Due now</span><span className="v">SCR {deposit}</span></div>}
+                  <div className="receipt-row"><span className="k">Pay</span><span className="v">On site · cash or card</span></div>
                 </div>
               </>
             )}
@@ -499,7 +486,7 @@
           {step === 0 && <button className="btn btn--primary btn--full" disabled={!picked.length} onClick={() => setStep(1)}>Continue{total ? " · SCR " + total : ""}</button>}
           {step === 1 && <button className="btn btn--primary btn--full" onClick={() => setStep(2)}>Continue</button>}
           {step === 2 && <button className="btn btn--primary btn--full" disabled={!slot} onClick={() => setStep(3)}>Continue {slot ? "· " + D.DAYS[day].d + " " + slot : ""}</button>}
-          {step === 3 && <button className="btn btn--primary btn--full" onClick={confirm}>{pay === "now" ? "Pay SCR " + deposit + " & confirm" : "Confirm booking"}</button>}
+          {step === 3 && <button className="btn btn--primary btn--full" onClick={confirm}>Confirm booking</button>}
         </div>
       </div>
     );
@@ -662,13 +649,9 @@
     if (!user) return <Login onDone={setUser} />;
     const rows = [
       { ic: "sparkle", lb: "Rewards & stamps", go: () => nav.push("rewards") },
-      { ic: "calendar", lb: "Messages", go: () => nav.push("messages") },
-      { ic: "card", lb: "Packages & gift cards", go: () => nav.push("packages") },
-      { ic: "clock", lb: "Waitlist", go: () => nav.push("waitlist") },
       { ic: "heart", lb: "Favourites", go: () => nav.push("favs") },
       { ic: "sparkle", lb: "Invite a studio · €15", go: () => nav.push("invite") },
       { ic: "bell", lb: "Notifications", go: () => nav.push("notif") },
-      { ic: "card", lb: "Payment methods", go: () => nav.push("payments") },
       { ic: "globe", lb: "Language · English", go: () => nav.push("language") },
       { ic: "help", lb: "Help & support" },
     ];
@@ -902,130 +885,6 @@
     );
   }
 
-  // ---------- WAITLIST ----------
-  function Waitlist({ nav }) {
-    const [items, setItems] = useState([
-      { id: "w1", studio: "L'Accent Barber", studioId: "laccent", slot: "Today · 16:00", svc: "Skin fade & beard", photo: D.STUDIOS.find(s=>s.id==="laccent").photo, on: true },
-      { id: "w2", studio: "Kreol Spa", studioId: "kreol-spa", slot: "Sat · morning", svc: "Coconut & frangipani massage", photo: D.STUDIOS.find(s=>s.id==="kreol-spa").photo, on: true },
-    ]);
-    return (
-      <div className="sheet-full">
-        <TopBar title="Waitlist" onBack={nav.pop} />
-        <div className="app-scroll"><div className="screen" style={{ paddingTop: 6 }}>
-          <p className="muted" style={{ margin: "0 0 12px" }}>We'll notify you the moment a slot frees up. Booking still free — first to tap gets it.</p>
-          {items.length === 0 ? (
-            <div className="empty"><div className="empty-ic"><Ic name="clock" size={26} /></div><div className="h-md">No waitlists</div><p className="muted" style={{ margin: 0 }}>Tap "Join waitlist" on a full time slot.</p></div>
-          ) : items.map((w) => (
-            <div className="bk" key={w.id} style={{ cursor: "default", marginBottom: 12 }}>
-              <img className="bk-photo" src={w.photo} alt="" />
-              <div className="bk-info"><div className="bk-when">{w.slot}</div><div className="bk-name">{w.svc}</div><div className="bk-sub">{w.studio}</div></div>
-              <span className={"switch" + (w.on ? " is-on" : "")} onClick={() => setItems(items.map(x => x.id===w.id?{...x,on:!x.on}:x))}><i /></span>
-            </div>
-          ))}
-        </div></div>
-      </div>
-    );
-  }
-
-  // ---------- PACKAGES & GIFT CARDS ----------
-  function Packages({ nav }) {
-    const owned = [
-      { id: "p1", name: "5× Coconut massage", studio: "Kreol Spa", left: 2, total: 5, exp: "Exp. Dec 2026" },
-      { id: "p2", name: "Unlimited yoga · monthly", studio: "North Shore Fitness", left: "∞", total: "∞", exp: "Renews 1 Aug" },
-    ];
-    return (
-      <div className="sheet-full">
-        <TopBar title="Packages & gift cards" onBack={nav.pop} />
-        <div className="app-scroll"><div className="screen" style={{ paddingTop: 6 }}>
-          <div className="wallet"><div className="tiny" style={{ opacity: 0.8 }}>Gift card balance</div><div className="wallet-amt">€40</div><div className="tiny" style={{ opacity: 0.8 }}>Use at any sey.la studio</div></div>
-          <div className="sec-title" style={{ marginTop: 22 }}><h2 className="h-md">Your packages</h2></div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {owned.map((p) => (
-              <div className="loy" key={p.id}><div className="loy-head">
-                <span className="staff-any"><Ic name="sparkle" size={20} /></span>
-                <div style={{ flex: 1 }}><div className="scard-name">{p.name}</div><div className="loy-progress">{p.studio} · {p.exp}</div></div>
-                <span className="tagpill loyal">{p.left} left</span>
-              </div></div>
-            ))}
-          </div>
-          <div className="block">
-            <div className="sec-title"><h2 className="h-md">Buy</h2></div>
-            <button className="paymethod" onClick={() => nav.push("giftbuy")}><span className="arow-ic"><Ic name="heart" size={19} /></span><div style={{ flex: 1 }}><div className="srv-name">Send a gift card</div><div className="srv-meta">€25 · €50 · €100</div></div><Ic name="chevronRight" size={18} color="var(--cocoa-40)" /></button>
-            <button className="paymethod" onClick={() => nav.push("studio", { id: "kreol-spa" })}><span className="arow-ic"><Ic name="sparkle" size={19} /></span><div style={{ flex: 1 }}><div className="srv-name">Buy a service package</div><div className="srv-meta">Save up to 20% vs single visits</div></div><Ic name="chevronRight" size={18} color="var(--cocoa-40)" /></button>
-          </div>
-        </div></div>
-      </div>
-    );
-  }
-
-  function GiftBuy({ nav }) {
-    const [amt, setAmt] = useState(50);
-    const [done, setDone] = useState(false);
-    if (done) return (
-      <div className="sheet-full"><div className="app-scroll"><div className="confirm">
-        <div className="confirm-ic"><Ic name="heart" size={34} color="var(--eucalyptus)" fill="var(--eucalyptus)" /></div>
-        <h1 className="h-lg">Gift on its way</h1><p className="muted" style={{ margin: 0 }}>A €{amt} sey.la gift card has been sent.</p>
-      </div></div><div style={{ padding: "12px 18px calc(12px + env(safe-area-inset-bottom,0px))" }}><button className="btn btn--primary btn--full" onClick={nav.pop}>Done</button></div></div>
-    );
-    return (
-      <div className="sheet-full">
-        <TopBar title="Send a gift card" onBack={nav.pop} />
-        <div className="app-scroll"><div className="screen" style={{ paddingTop: 8 }}>
-          <div className="eyebrow" style={{ marginBottom: 10 }}>Amount</div>
-          <div className="slotgrid" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>{[25,50,100].map(v => <button key={v} className={"slot" + (amt===v?" is-active":"")} onClick={() => setAmt(v)}>€{v}</button>)}</div>
-          <div className="field" style={{ marginTop: 16 }}><span className="field-prefix">To</span><input placeholder="Recipient's phone or email" /></div>
-          <div className="field" style={{ marginTop: 10 }}><input placeholder="Message (optional)" /></div>
-        </div></div>
-        <div style={{ padding: "12px 18px calc(12px + env(safe-area-inset-bottom,0px))" }}><button className="btn btn--primary btn--full" onClick={() => setDone(true)}>Pay €{amt} & send</button></div>
-      </div>
-    );
-  }
-
-  // ---------- MESSAGES ----------
-  function Messages({ nav }) {
-    const threads = [
-      { id: "kreol-spa", studio: "Kreol Spa", photo: D.STUDIOS.find(s=>s.id==="kreol-spa").photo, last: "See you tomorrow at 14:30 🌺", when: "2h", unread: true },
-      { id: "laccent", studio: "L'Accent Barber", photo: D.STUDIOS.find(s=>s.id==="laccent").photo, last: "A slot opened at 16:00 today", when: "1d", unread: false },
-    ];
-    return (
-      <div className="sheet-full">
-        <TopBar title="Messages" onBack={nav.pop} />
-        <div className="app-scroll"><div className="screen" style={{ paddingTop: 4 }}>
-          {threads.map((t) => (
-            <div className="arow" key={t.id} onClick={() => nav.push("thread", { id: t.id })}>
-              <img className="avatar" style={{ width: 46, height: 46 }} src={t.photo} alt="" />
-              <div style={{ flex: 1, minWidth: 0 }}><div className="appt-name">{t.studio}</div><div className="srv-meta" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.last}</div></div>
-              <div style={{ textAlign: "right" }}><div className="tiny muted">{t.when}</div>{t.unread && <span className="dotsep" style={{ width: 8, height: 8, background: "var(--clay)", marginTop: 4 }} />}</div>
-            </div>
-          ))}
-        </div></div>
-      </div>
-    );
-  }
-
-  function Thread({ id, nav }) {
-    const st = D.STUDIOS.find(s => s.id === id);
-    const [msgs, setMsgs] = useState([
-      { me: false, t: "Hi Amelia! Confirming your massage tomorrow at 14:30 with Aline 🌺" },
-      { me: true, t: "Perfect, thank you! Any parking nearby?" },
-      { me: false, t: "Yes — free spots right by the beach entrance." },
-    ]);
-    const [txt, setTxt] = useState("");
-    function send() { if (!txt.trim()) return; setMsgs([...msgs, { me: true, t: txt }]); setTxt(""); }
-    return (
-      <div className="sheet-full">
-        <TopBar title={st.name} onBack={nav.pop} />
-        <div className="app-scroll" style={{ paddingBottom: 76 }}><div className="screen" style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-          {msgs.map((m, i) => <div key={i} className={"msgbubble" + (m.me ? " me" : "")}>{m.t}</div>)}
-        </div></div>
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "10px 14px calc(10px + env(safe-area-inset-bottom,0px))", background: "var(--surface)", borderTop: "1px solid var(--line)", display: "flex", gap: 8 }}>
-          <input className="field" style={{ flex: 1, height: 46 }} value={txt} onChange={(e) => setTxt(e.target.value)} placeholder="Message…" onKeyDown={(e) => { if (e.key === "Enter") send(); }} />
-          <button className="iconbtn" style={{ width: 46, height: 46, background: "var(--ink)", color: "var(--cream)", border: "none" }} onClick={send}><Ic name="arrowRight" size={20} color="var(--cream)" /></button>
-        </div>
-      </div>
-    );
-  }
-
   // ---------- NOTIFICATION SETTINGS ----------
   function NotifSettings({ nav }) {
     const EVENTS = [
@@ -1080,38 +939,6 @@
               {lang === o[0] && <Ic name="check" size={18} color="var(--ink)" />}
             </button>
           ))}
-        </div></div>
-      </div>
-    );
-  }
-
-  // ---------- PAYMENT METHODS ----------
-  function PaymentMethods({ nav }) {
-    const [cards, setCards] = useState([{ id: 1, brand: "Visa", last: "4291", exp: "08/27", def: true }]);
-    return (
-      <div className="sheet-full">
-        <TopBar title="Payment methods" onBack={nav.pop} />
-        <div className="app-scroll"><div className="screen" style={{ paddingTop: 6 }}>
-          <p className="muted" style={{ margin: "0 0 12px" }}>Used for deposits and no-show protection. Booking itself is always free.</p>
-          {cards.map((c) => (
-            <div className="paymethod is-on" key={c.id} style={{ cursor: "default" }}>
-              <span className="arow-ic"><Ic name="card" size={19} /></span>
-              <div style={{ flex: 1 }}><div className="srv-name">{c.brand} ···· {c.last}</div><div className="srv-meta">Expires {c.exp}{c.def ? " · Default" : ""}</div></div>
-            </div>
-          ))}
-          <button className="paymethod" onClick={() => setCards([...cards, { id: Date.now(), brand: "Mastercard", last: "8830", exp: "05/28" }])}>
-            <span className="arow-ic"><Ic name="sparkle" size={19} /></span>
-            <div style={{ flex: 1 }}><div className="srv-name">Add a card</div><div className="srv-meta">Visa · Mastercard · Amex</div></div>
-            <Ic name="chevronRight" size={18} color="var(--cocoa-40)" />
-          </button>
-          <div className="block--flush">
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Balances</div>
-            <div className="receipt">
-              <div className="receipt-row"><span className="k">Gift card</span><span className="v">€40</span></div>
-              <div className="receipt-row"><span className="k">Invite wallet</span><span className="v">€15</span></div>
-            </div>
-          </div>
-          <div className="paynote" style={{ marginTop: 14 }}><Ic name="shield" size={16} color="var(--eucalyptus)" /> A no-show or a late cancel (under 12h) may charge the studio's fee. You'll always see it before you book.</div>
         </div></div>
       </div>
     );
@@ -1213,13 +1040,7 @@
       else if (top.name === "rewards") overlay = <Rewards nav={nav} />;
       else if (top.name === "invite") overlay = <Invite nav={nav} />;
       else if (top.name === "review") { const bk = bookings.find((b) => b.id === p.bookingId); overlay = <ReviewFlow booking={bk} nav={nav} onSubmit={(id) => setReviewed((r) => [...r, id])} />; }
-      else if (top.name === "waitlist") overlay = <Waitlist nav={nav} />;
-      else if (top.name === "packages") overlay = <Packages nav={nav} />;
-      else if (top.name === "giftbuy") overlay = <GiftBuy nav={nav} />;
-      else if (top.name === "messages") overlay = <Messages nav={nav} />;
-      else if (top.name === "thread") overlay = <Thread id={p.id} nav={nav} />;
       else if (top.name === "notifsettings") overlay = <NotifSettings nav={nav} />;
-      else if (top.name === "payments") overlay = <PaymentMethods nav={nav} />;
       else if (top.name === "language") overlay = <Language nav={nav} />;
     }
 
