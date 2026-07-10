@@ -30,44 +30,45 @@ export default function AccountPage() {
     else { setBookings(null); setFaves(null); setWallet(null); setRewards(null); }
   }, [user]);
 
+  const firstName = user ? String(user.user_metadata?.name || user.email || "there").split("@")[0].split(" ")[0] : "";
+
   return (
     <>
-      <div style={{ background: "var(--bg-dark)", color: "var(--text-on-dark)" }}>
-        <div className="sey-container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 0", flexWrap: "wrap" }}>
+      {/* Warm account header (greeting + sign-out) instead of a hard black bar. */}
+      <header style={{ background: "var(--blush)", borderBottom: "1px solid var(--line)" }}>
+        <div className="sey-container" style={{ padding: "clamp(28px, 5vw, 44px) 0 clamp(24px, 4vw, 34px)" }}>
+          <div className="sey-eyebrow" style={{ marginBottom: 12 }}>My account</div>
           {loading ? (
-            <span style={{ opacity: 0.7 }}>…</span>
+            <h1 style={{ fontSize: "var(--text-h1)", margin: 0, opacity: 0.5 }}>…</h1>
           ) : user ? (
-            <>
-              <span style={{ fontSize: "var(--text-sm)" }}>Signed in as <b>{user.email}</b></span>
-              <Button variant="secondary" size="sm" onClick={() => signOut()}>Log out</Button>
-            </>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ minWidth: 0 }}>
+                <h1 style={{ fontSize: "var(--text-h1)", margin: 0, lineHeight: 1.1 }}>Hi, <em className="sey-accent-italic">{firstName}</em></h1>
+                <p style={{ color: "var(--text-muted)", margin: "8px 0 0", fontSize: "var(--text-sm)" }}>Signed in as {user.email}</p>
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <Button size="sm" as="a" href="/search">Book something new</Button>
+                <Button variant="secondary" size="sm" onClick={() => signOut()}>Log out</Button>
+              </div>
+            </div>
           ) : (
-            <>
-              <span style={{ fontSize: "var(--text-sm)", color: "var(--text-on-dark-muted)" }}>You're browsing as a guest — log in to see your real bookings.</span>
-              <Button size="sm" as="a" href="/login">Log in</Button>
-            </>
+            <div style={{ maxWidth: 520 }}>
+              <h1 style={{ fontSize: "var(--text-h1)", margin: "0 0 10px", lineHeight: 1.1 }}>Your <em className="sey-accent-italic">account</em></h1>
+              <p style={{ color: "var(--text-muted)", margin: "0 0 22px" }}>
+                Log in to see your bookings, saved studios, rewards and wallet — all in one place. It's free, always.
+              </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <Button size="lg" as="a" href="/login">Log in or sign up</Button>
+                <Button variant="secondary" size="lg" as="a" href="/search">Browse studios</Button>
+              </div>
+            </div>
           )}
         </div>
-      </div>
-
-      {!user && !loading && (
-        <section style={{ background: "var(--bg-alt)" }}>
-          <div className="sey-container" style={{ padding: "56px 0", textAlign: "center", maxWidth: 480 }}>
-            <h1 style={{ fontSize: "var(--text-h2)", margin: "0 0 8px" }}>Your account</h1>
-            <p style={{ color: "var(--text-muted)", margin: "0 0 22px" }}>
-              Log in to see your bookings, saved studios, rewards and wallet — all in one place. It's free, always.
-            </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <Button size="lg" as="a" href="/login">Log in or sign up</Button>
-              <Button variant="secondary" size="lg" as="a" href="/search">Browse studios</Button>
-            </div>
-          </div>
-        </section>
-      )}
+      </header>
 
       {user && (
-        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
-          <div className="sey-container" style={{ padding: "20px 0" }}>
+        <section>
+          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Your details</h2>
             <AccountDetails user={user} />
           </div>
@@ -75,8 +76,8 @@ export default function AccountPage() {
       )}
 
       {user && bookings && bookings.length > 0 && (
-        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
-          <div className="sey-container" style={{ padding: "20px 0" }}>
+        <section>
+          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Your bookings</h2>
             <div style={{ display: "grid", gap: 10 }}>
               {bookings.map((b) => (
@@ -94,8 +95,8 @@ export default function AccountPage() {
       )}
 
       {user && rewards && rewards.length > 0 && (
-        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
-          <div className="sey-container" style={{ padding: "20px 0" }}>
+        <section>
+          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Your rewards</h2>
             <div style={{ display: "grid", gap: 10 }}>
               {rewards.map((r) => (
@@ -115,8 +116,8 @@ export default function AccountPage() {
       )}
 
       {user && faves && faves.length > 0 && (
-        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
-          <div className="sey-container" style={{ padding: "20px 0" }}>
+        <section>
+          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Saved studios</h2>
             <div style={{ display: "grid", gap: 10 }}>
               {faves.map((s) => (
@@ -135,8 +136,8 @@ export default function AccountPage() {
       )}
 
       {user && wallet && (
-        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
-          <div className="sey-container" style={{ padding: "20px 0" }}>
+        <section>
+          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Wallet</h2>
             <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
@@ -161,8 +162,8 @@ export default function AccountPage() {
       )}
 
       {user && (
-        <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
-          <div className="sey-container" style={{ padding: "20px 0" }}>
+        <section>
+          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Invite a studio · €15</h2>
             <ReferStudio />
           </div>
