@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import CustomerAccount from "@/components/sections/CustomerAccount";
 import { Button } from "@/components/core/Button";
 import { useUser } from "@/lib/useUser";
 import { getMyBookings, getMyRewards } from "@/lib/bookings";
@@ -154,8 +153,6 @@ export default function AccountPage() {
           </div>
         </section>
       )}
-
-      <CustomerAccount />
     </>
   );
 }
