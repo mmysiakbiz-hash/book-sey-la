@@ -50,12 +50,12 @@ function StudiosHero() {
             <div className="st-panel-stats">
               <div><b>8</b><span>booked</span></div>
               <div><b>3</b><span>open slots</span></div>
-              <div><b>€410</b><span>today</span></div>
+              <div><b>SCR 410</b><span>today</span></div>
             </div>
             <div className="st-panel-list">
-              <BookingCard service="Coconut &amp; Frangipani massage" studio="Aline · 60 min" when="14:30" price="€55" status="Confirmed" icon="spa" style={{ maxWidth: "none" }} />
-              <BookingCard service="Signature facial" studio="New client · 45 min" when="16:00" price="€48" status="New" icon="sparkle" style={{ maxWidth: "none" }} />
-              <BookingCard service="Scalp ritual" studio="Regular · 30 min" when="17:15" price="€30" status="Confirmed" icon="lotus" style={{ maxWidth: "none" }} />
+              <BookingCard service="Coconut &amp; Frangipani massage" studio="Aline · 60 min" when="14:30" price="SCR 55" status="Confirmed" icon="spa" style={{ maxWidth: "none" }} />
+              <BookingCard service="Signature facial" studio="New client · 45 min" when="16:00" price="SCR 48" status="New" icon="sparkle" style={{ maxWidth: "none" }} />
+              <BookingCard service="Scalp ritual" studio="Regular · 30 min" when="17:15" price="SCR 30" status="Confirmed" icon="lotus" style={{ maxWidth: "none" }} />
             </div>
           </div>
         </div>

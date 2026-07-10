@@ -102,9 +102,9 @@ function EmbedPage() {
                 <div className="em-w-body">
                   <label htmlFor="em-srv">Service</label>
                   <select id="em-srv" defaultValue="0">
-                    <option value="0">Coconut &amp; Frangipani massage · €55</option>
-                    <option value="1">Signature facial · €48</option>
-                    <option value="2">Hot stone therapy · €65</option>
+                    <option value="0">Coconut &amp; Frangipani massage · SCR 55</option>
+                    <option value="1">Signature facial · SCR 48</option>
+                    <option value="2">Hot stone therapy · SCR 65</option>
                   </select>
                   <div className="em-w-days">
                     {DAYS.map((d, i) => (

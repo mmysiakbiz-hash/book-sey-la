@@ -11,7 +11,7 @@ export function BookingCard({
   service = "Coconut & Frangipani massage",
   studio = "Kreol Spa, Beau Vallon",
   when = "Tomorrow · 14:30",
-  price = "€55",
+  price = "SCR 55",
   status = "Confirmed",
   icon = "spa",
   imageSlot = false,

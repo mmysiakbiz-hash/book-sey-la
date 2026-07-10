@@ -354,7 +354,7 @@ export default function OwnerPanel() {
               <>
                 <input style={{ ...field, flex: 2 }} placeholder="Service name" value={row.name} onChange={(e) => upd({ name: e.target.value })} />
                 <input style={{ ...field, width: 90 }} type="number" placeholder="min" value={row.duration_min} onChange={(e) => upd({ duration_min: e.target.value })} />
-                <input style={{ ...field, width: 90 }} type="number" placeholder="€" value={row.price_eur} onChange={(e) => upd({ price_eur: e.target.value })} />
+                <input style={{ ...field, width: 90 }} type="number" placeholder="SCR" value={row.price_eur} onChange={(e) => upd({ price_eur: e.target.value })} />
               </>
             )} addLabel="Add service" />
           </Section>
@@ -421,7 +421,7 @@ export default function OwnerPanel() {
                   <option value="package">Package</option>
                   <option value="membership">Membership</option>
                 </select>
-                <input style={{ ...field, width: 90 }} type="number" placeholder="€" value={row.price_eur} onChange={(e) => upd({ price_eur: e.target.value })} />
+                <input style={{ ...field, width: 90 }} type="number" placeholder="SCR" value={row.price_eur} onChange={(e) => upd({ price_eur: e.target.value })} />
                 <input style={{ ...field, width: 90 }} type="number" placeholder="visits" value={row.credits} onChange={(e) => upd({ credits: e.target.value })} />
                 <input style={{ ...field, flex: 2, minWidth: 160 }} placeholder="Short description (optional)" value={row.description} onChange={(e) => upd({ description: e.target.value })} />
               </>
@@ -560,7 +560,7 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
                     <div style={{ width: 58, fontWeight: 700, color: "var(--clay)", fontSize: "var(--text-sm)" }}>{timeLabel(b.start)}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{b.service}</div>
-                      <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{b.client}{b.staff ? ` · ${b.staff}` : ""}{b.price != null ? ` · €${Math.round(b.price)}` : ""}</div>
+                      <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{b.client}{b.staff ? ` · ${b.staff}` : ""}{b.price != null ? ` · SCR ${Math.round(b.price)}` : ""}</div>
                     </div>
                     <button onClick={() => setMoving(isMoving ? null : { id: b.id, date: b.start ? b.start.toISOString().slice(0, 10) : "", time: b.start ? b.start.toTimeString().slice(0, 5) : "", durationMin: durMin })}
                       style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>Move</button>
@@ -689,7 +689,7 @@ function Classes({ studioId, classes, onRefresh }) {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Minutes</span><input style={{ ...inp, width: "100%" }} type="number" value={form.durationMin} onChange={(e) => upd({ durationMin: e.target.value })} /></label>
             <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Capacity</span><input style={{ ...inp, width: "100%" }} type="number" value={form.capacity} onChange={(e) => upd({ capacity: e.target.value })} /></label>
-            <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Price €</span><input style={{ ...inp, width: "100%" }} type="number" value={form.price} onChange={(e) => upd({ price: e.target.value })} /></label>
+            <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Price SCR</span><input style={{ ...inp, width: "100%" }} type="number" value={form.price} onChange={(e) => upd({ price: e.target.value })} /></label>
           </div>
           <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Saving…" : "Add class"}</button>
           {err && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</span>}
@@ -706,7 +706,7 @@ function Classes({ studioId, classes, onRefresh }) {
                   <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{c.name}</div>
                   <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>
                     {c.start ? c.start.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : "—"}
-                    {c.price != null ? ` · €${Math.round(c.price)}` : ""} · {c.booked}/{c.capacity != null ? c.capacity : "∞"} booked
+                    {c.price != null ? ` · SCR ${Math.round(c.price)}` : ""} · {c.booked}/{c.capacity != null ? c.capacity : "∞"} booked
                   </div>
                 </div>
                 <button onClick={() => del(c.id)} disabled={busy} style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>Delete</button>
@@ -752,7 +752,7 @@ function AddAppointment({ catalog, onAdd, onDone }) {
         <input style={inp} placeholder="Phone (optional)" value={f.phone} onChange={(e) => set({ phone: e.target.value })} />
         {services.length > 0 && (
           <select style={inp} value={f.serviceId} onChange={(e) => set({ serviceId: e.target.value })}>
-            {services.map((s) => <option key={s.id} value={s.id}>{s.name}{s.price_eur != null ? ` · €${Math.round(s.price_eur)}` : ""}</option>)}
+            {services.map((s) => <option key={s.id} value={s.id}>{s.name}{s.price_eur != null ? ` · SCR ${Math.round(s.price_eur)}` : ""}</option>)}
           </select>
         )}
         {staff.length > 0 && (
@@ -945,7 +945,7 @@ function Clients2({ clients, loyalty, onSaveNote, onSaveTags, onSaveLoyalty, onR
               )}
             </span>
             <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{c.visits} visit{c.visits === 1 ? "" : "s"}</span>
-            <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>€{Math.round(c.spent)}</span>
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>SCR {Math.round(c.spent)}</span>
             {active && <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: stampsOf(c) >= req ? "var(--eucalyptus)" : "var(--cocoa-40)" }}>{Math.min(stampsOf(c), req)}/{req} 🎁</span>}
             {active && stampsOf(c) >= req && c.email && (
               <button onClick={() => onRedeem(c.email)} style={{ border: "1px solid var(--eucalyptus)", background: "var(--surface)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 700, cursor: "pointer", color: "var(--eucalyptus)" }}>Redeem</button>

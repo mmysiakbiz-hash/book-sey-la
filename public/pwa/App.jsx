@@ -43,8 +43,7 @@
           </div>
           <div className="scard-meta">
             <Ic name="pin" size={13} color="var(--cocoa-40)" />{s.area}
-            <i className="dotsep" />{s.distance}
-            <i className="dotsep" />{s.price}
+            {s.distance ? <React.Fragment><i className="dotsep" />{s.distance}</React.Fragment> : null}
           </div>
         </div>
       </button>
@@ -64,7 +63,7 @@
           <div className="class-info">
             <div className="scard-name">{c.name}</div>
             <div className="srv-meta">{c.studio} · {c.instructor}</div>
-            <div className="scard-meta">{c.dur}<i className="dotsep" />{c.level}<i className="dotsep" />€{c.price}</div>
+            <div className="scard-meta">{c.dur}<i className="dotsep" />{c.level}<i className="dotsep" />SCR {c.price}</div>
           </div>
         </div>
         <div className={"spots" + (low ? " spots--low" : "")}><i style={{ width: pct + "%" }} /></div>
@@ -188,7 +187,7 @@
               <div className="map-road" style={{ left: 0, top: "48%", width: "100%", height: 3 }} />
               {list.map((s) => (
                 <div key={s.id} className={"pin-marker" + (active === s.id ? " is-active" : "")} style={{ left: s.x + "%", top: s.y + "%" }} onClick={() => setActive(s.id)}>
-                  <span className="pin-price">{s.price} · {s.rating}</span>
+                  <span className="pin-price">★ {s.rating}</span>
                 </div>
               ))}
             </div>
@@ -244,7 +243,7 @@
                       <div className="srv-meta">{it.dur}</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span className="srv-price">€{it.price}</span>
+                      <span className="srv-price">SCR {it.price}</span>
                       <Ic name="chevronRight" size={18} color="var(--cocoa-40)" />
                     </div>
                   </div>
@@ -384,8 +383,8 @@
                 <div className="receipt-row"><span className="k">Service</span><span className="v">{chosen.map((c) => c.name).join(", ")}</span></div>
                 <div className="receipt-row"><span className="k">With</span><span className="v">{staffName}</span></div>
                 <div className="receipt-row"><span className="k">When</span><span className="v">{D.DAYS[day].d} · {slot}{recurring ? " · repeats" : ""}</span></div>
-                <div className="receipt-row"><span className="k">Payment</span><span className="v">{pay === "now" ? "€" + deposit + " deposit paid" : "Pay in salon"}</span></div>
-                <div className="receipt-row"><span className="k">Total</span><span className="v">€{total}</span></div>
+                <div className="receipt-row"><span className="k">Payment</span><span className="v">{pay === "now" ? "SCR " + deposit + " deposit paid" : "Pay in salon"}</span></div>
+                <div className="receipt-row"><span className="k">Total</span><span className="v">SCR {total}</span></div>
               </div>
             </div>
           </div>
@@ -411,7 +410,7 @@
                   const on = picked.includes(it.id);
                   return (
                     <div className="srv" key={it.id}>
-                      <div><div className="srv-name">{it.name}</div><div className="srv-meta">{it.dur} · €{it.price}</div></div>
+                      <div><div className="srv-name">{it.name}</div><div className="srv-meta">{it.dur} · SCR {it.price}</div></div>
                       <button className={"srv-add" + (on ? " is-on" : "")} onClick={() => setPicked(on ? picked.filter((p) => p !== it.id) : [...picked, it.id])}>{on ? "Added ✓" : "Add"}</button>
                     </div>
                   );
@@ -485,22 +484,22 @@
                     {pay === "now" && <Ic name="check" size={18} color="var(--ink)" />}
                   </button>
                 </div>
-                <div className="paynote"><Ic name="shield" size={16} color="var(--eucalyptus)" /> {pay === "now" ? "€" + deposit + " deposit today, €" + (total - deposit) + " in salon. Refundable if you cancel 12h before." : "No card needed. A no-show may limit future free bookings."}</div>
+                <div className="paynote"><Ic name="shield" size={16} color="var(--eucalyptus)" /> {pay === "now" ? "SCR " + deposit + " deposit today, SCR " + (total - deposit) + " in salon. Refundable if you cancel 12h before." : "No card needed. A no-show may limit future free bookings."}</div>
                 <div className="receipt" style={{ marginTop: 4 }}>
-                  <div className="receipt-row"><span className="k">{chosen.length} service{chosen.length > 1 ? "s" : ""}</span><span className="v">€{total}</span></div>
+                  <div className="receipt-row"><span className="k">{chosen.length} service{chosen.length > 1 ? "s" : ""}</span><span className="v">SCR {total}</span></div>
                   <div className="receipt-row"><span className="k">With</span><span className="v">{staffName}</span></div>
                   <div className="receipt-row"><span className="k">When</span><span className="v">{D.DAYS[day].d} · {slot}</span></div>
-                  {deposit > 0 && <div className="receipt-row"><span className="k">Due now</span><span className="v">€{deposit}</span></div>}
+                  {deposit > 0 && <div className="receipt-row"><span className="k">Due now</span><span className="v">SCR {deposit}</span></div>}
                 </div>
               </>
             )}
           </div>
         </div>
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "12px 18px calc(12px + env(safe-area-inset-bottom,0px))", background: "color-mix(in srgb, var(--surface) 94%, transparent)", backdropFilter: "blur(12px)", borderTop: "1px solid var(--line)" }}>
-          {step === 0 && <button className="btn btn--primary btn--full" disabled={!picked.length} onClick={() => setStep(1)}>Continue{total ? " · €" + total : ""}</button>}
+          {step === 0 && <button className="btn btn--primary btn--full" disabled={!picked.length} onClick={() => setStep(1)}>Continue{total ? " · SCR " + total : ""}</button>}
           {step === 1 && <button className="btn btn--primary btn--full" onClick={() => setStep(2)}>Continue</button>}
           {step === 2 && <button className="btn btn--primary btn--full" disabled={!slot} onClick={() => setStep(3)}>Continue {slot ? "· " + D.DAYS[day].d + " " + slot : ""}</button>}
-          {step === 3 && <button className="btn btn--primary btn--full" onClick={confirm}>{pay === "now" ? "Pay €" + deposit + " & confirm" : "Confirm booking"}</button>}
+          {step === 3 && <button className="btn btn--primary btn--full" onClick={confirm}>{pay === "now" ? "Pay SCR " + deposit + " & confirm" : "Confirm booking"}</button>}
         </div>
       </div>
     );
@@ -522,7 +521,7 @@
               <div className="receipt-row"><span className="k">When</span><span className="v">{c.day} · {c.time}</span></div>
               <div className="receipt-row"><span className="k">Duration</span><span className="v">{c.dur}</span></div>
               <div className="receipt-row"><span className="k">Level</span><span className="v">{c.level}</span></div>
-              <div className="receipt-row"><span className="k">Price</span><span className="v">€{c.price}</span></div>
+              <div className="receipt-row"><span className="k">Price</span><span className="v">SCR {c.price}</span></div>
             </div>
             <div className="block--flush">
               <div className={"spots" + (c.spots <= 3 ? " spots--low" : "")}><i style={{ width: pct + "%" }} /></div>
@@ -532,7 +531,7 @@
         </div>
         <div style={{ padding: "12px 18px calc(12px + env(safe-area-inset-bottom,0px))" }}>
           <button className="btn btn--primary btn--full" disabled={joined} onClick={() => { joinClass(c); nav.pop(); }}>
-            {joined ? "Already joined ✓" : "Join class · €" + c.price}
+            {joined ? "Already joined ✓" : "Join class · SCR " + c.price}
           </button>
         </div>
       </div>
@@ -585,7 +584,7 @@
                   <div className="bk-info">
                     <div className="bk-when">{b.when}</div>
                     <div className="bk-name">{b.service}</div>
-                    <div className="bk-sub">{b.studio} · €{b.price}</div>
+                    <div className="bk-sub">{b.studio} · SCR {b.price}</div>
                   </div>
                   <span className={"status " + (b.past ? "status--past" : "status--ok")}>{b.status}</span>
                 </div>
@@ -635,7 +634,7 @@
       { ic: "calendar", t: "Reminder: Coconut & frangipani massage", s: "Tomorrow at 14:30 · Kreol Spa", when: "2h ago", dot: true },
       { ic: "check", t: "Booking confirmed", s: "Sunrise beach yoga · Sat 07:00", when: "1d ago", dot: true },
       { ic: "sparkle", t: "A slot opened at L'Accent Barber", s: "Today 16:00 — you were watching this", when: "2d ago" },
-      { ic: "heart", t: "Lumière Nails added a new service", s: "BIAB overlay · €42", when: "5d ago" },
+      { ic: "heart", t: "Lumière Nails added a new service", s: "BIAB overlay · SCR 42", when: "5d ago" },
     ];
     return (
       <div className="sheet-full">

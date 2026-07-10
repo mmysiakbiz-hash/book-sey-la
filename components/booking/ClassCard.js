@@ -14,7 +14,7 @@ export function ClassCard({
   instructor = "with Aline",
   duration = "60 min",
   level = "All levels",
-  price = "€18",
+  price = "SCR 18",
   spotsLeft = 4,
   capacity = 12,
   onJoin,

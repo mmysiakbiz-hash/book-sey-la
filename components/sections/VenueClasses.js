@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/core/Button";
 import { Icon } from "@/components/brand/Icon";
+import { scr } from "@/lib/money";
 
 // Public classes for a studio — live spots + inline join (POST /api/class-book).
 export default function VenueClasses({ classes }) {
@@ -57,7 +58,7 @@ function ClassCard({ c, onJoined }) {
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ fontWeight: 700, color: "var(--cocoa)" }}>{c.name}</div>
           <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)", marginTop: 2 }}>
-            {when}{c.staff ? ` · ${c.staff}` : ""}{c.priceEur != null ? ` · €${Math.round(c.priceEur)}` : ""}
+            {when}{c.staff ? ` · ${c.staff}` : ""}{c.priceEur != null ? ` · ${scr(c.priceEur)}` : ""}
           </div>
           {c.description && <p style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)", margin: "8px 0 0" }}>{c.description}</p>}
           {c.spotsLeft != null && (

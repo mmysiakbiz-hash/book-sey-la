@@ -12,7 +12,7 @@ export function ArchMirror({
   service = "Coconut & Frangipani massage",
   studio = "Kreol Spa, Beau Vallon",
   when = "Tomorrow · 14:30",
-  price = "€55",
+  price = "SCR 55",
   status = "Confirmed",
   image = "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?auto=format&fit=crop&w=200&q=70",
   showCard = true,

@@ -13,7 +13,7 @@ export function StudioCard({
   image,
   rating = 4.9,
   reviews = 128,
-  priceFrom = "€45",
+  priceFrom = "SCR 45",
   services = [],
   badge,
   available = "Today",

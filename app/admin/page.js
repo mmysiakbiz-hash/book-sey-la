@@ -191,8 +191,8 @@ function Overview({ bi, range, onRange }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 22 }}>
         <Stat label="Studios" value={s.total} sub={`${(s.active || 0) + (s.verified || 0)} live · ${s.unclaimed || 0} unclaimed · ${s.draft || 0} draft`} />
         <Stat label="MRR (subscriptions)" value={`€${bi.mrr_eur || 0}`} sub="€25 × team members · live studios" />
-        <Stat label="Commission (new clients)" value={`€${bi.commission_eur || 0}`} sub={`${bi.new_clients || 0} acquired`} />
-        <Stat label="GMV booked" value={`€${bi.gmv_eur || 0}`} />
+        <Stat label="Commission (new clients)" value={`SCR ${bi.commission_eur || 0}`} sub={`${bi.new_clients || 0} acquired`} />
+        <Stat label="GMV booked" value={`SCR ${bi.gmv_eur || 0}`} />
         <Stat label="Bookings" value={bi.bookings_total} sub={`${bi.bookings_cancelled || 0} cancelled`} />
         <Stat label="Classes" value={bi.classes} sub={`${bi.class_bookings || 0} joins`} />
         <Stat label="Reviews" value={bi.reviews} sub={bi.avg_rating ? `avg ${bi.avg_rating}★` : "—"} />
@@ -265,7 +265,7 @@ function Bookings({ rows, busy, onAction }) {
             <span style={{ fontWeight: 600 }}>{b.studio}</span>
             <span style={{ display: "block", color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>{b.service} · {b.client}{b.newClient ? " · new" : ""}</span>
           </span>
-          <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)", minWidth: 90 }}>{b.price != null ? `€${Math.round(b.price)}` : ""}{b.commission ? ` · +€${b.commission} comm` : ""}</span>
+          <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)", minWidth: 90 }}>{b.price != null ? `SCR ${Math.round(b.price)}` : ""}{b.commission ? ` · +SCR ${b.commission} comm` : ""}</span>
           <StatusPill status={b.status} />
           {b.status !== "cancelled" && <button style={MINI} disabled={busy === b.id + "cancel"} onClick={() => onAction(b.id, "cancel")}>Cancel</button>}
           {b.status === "confirmed" && <button style={MINI} disabled={busy === b.id + "complete"} onClick={() => onAction(b.id, "complete")}>Complete</button>}

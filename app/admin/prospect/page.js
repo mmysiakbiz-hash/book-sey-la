@@ -65,7 +65,7 @@ export default function ProspectPage() {
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <input style={{ ...field, flex: 2 }} placeholder="Service" value={s.name} onChange={(e) => setSvc(svc.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
                 <input style={{ ...field, width: 80 }} type="number" placeholder="min" value={s.duration_min} onChange={(e) => setSvc(svc.map((x, j) => j === i ? { ...x, duration_min: e.target.value } : x))} />
-                <input style={{ ...field, width: 80 }} type="number" placeholder="€" value={s.price_eur} onChange={(e) => setSvc(svc.map((x, j) => j === i ? { ...x, price_eur: e.target.value } : x))} />
+                <input style={{ ...field, width: 80 }} type="number" placeholder="SCR" value={s.price_eur} onChange={(e) => setSvc(svc.map((x, j) => j === i ? { ...x, price_eur: e.target.value } : x))} />
               </div>
             ))}
             <button onClick={() => setSvc([...svc, { name: "", duration_min: 60, price_eur: "" }])} style={{ background: "none", border: "1.5px solid var(--border-strong)", borderRadius: "var(--radius-pill)", padding: "7px 14px", fontWeight: 600, fontSize: "var(--text-sm)", cursor: "pointer", color: "var(--cocoa)" }}>+ Add service</button>

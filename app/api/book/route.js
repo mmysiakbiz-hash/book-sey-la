@@ -111,7 +111,7 @@ export async function POST(req) {
   const whenText = start.toLocaleString("en-GB", {
     weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe",
   });
-  const priceText = body.priceEur != null ? `€${Math.round(body.priceEur)}` : "";
+  const priceText = body.priceEur != null ? `SCR ${Math.round(body.priceEur)}` : "";
   const { subject, html } = bookingConfirmationEmail({ studioName, serviceName, whenText, priceText });
 
   // Email is best-effort — the booking is already saved either way.

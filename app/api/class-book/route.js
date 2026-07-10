@@ -66,7 +66,7 @@ export async function POST(req) {
   const whenText = start && !isNaN(start)
     ? start.toLocaleString("en-GB", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" })
     : "";
-  const priceText = session.price_eur != null ? `€${Math.round(Number(session.price_eur))}` : "";
+  const priceText = session.price_eur != null ? `SCR ${Math.round(Number(session.price_eur))}` : "";
   const { subject, html } = classConfirmationEmail({
     studioName: (session.studios && session.studios.name) || "",
     className: session.name || "Class",

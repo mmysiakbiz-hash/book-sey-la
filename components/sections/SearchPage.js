@@ -21,23 +21,23 @@ const CLASSES = [];
 
 const STUDIOS = [
   { name: "Kreol Spa", location: "Beau Vallon, Mahé", category: "Spa & massage", image: U+"1519823551278-64ac92734fb1", rating: 4.9, reviews: 214, badge: "Popular",
-    services: [{ name: "Coconut & Frangipani massage", duration: "60 min", price: "€55" }, { name: "Signature facial", duration: "50 min", price: "€48" }] },
+    services: [{ name: "Coconut & Frangipani massage", duration: "60 min", price: "SCR 55" }, { name: "Signature facial", duration: "50 min", price: "SCR 48" }] },
   { name: "Palm & Blade", location: "Victoria, Mahé", category: "Barber", image: U+"1512864084360-7c0c4d0a0845", rating: 4.8, reviews: 132, badge: "Loved by locals",
-    services: [{ name: "Skin fade & style", duration: "40 min", price: "€22" }, { name: "Beard trim & hot towel", duration: "25 min", price: "€16" }] },
+    services: [{ name: "Skin fade & style", duration: "40 min", price: "SCR 22" }, { name: "Beard trim & hot towel", duration: "25 min", price: "SCR 16" }] },
   { name: "Lumière Studio", location: "Victoria, Mahé", category: "Hair", image: U+"1632765866070-3fadf25d3d5b", rating: 4.8, reviews: 176,
-    services: [{ name: "Cut & blow-dry", duration: "45 min", price: "€30" }, { name: "Braids & styling", duration: "120 min", price: "€60" }] },
+    services: [{ name: "Cut & blow-dry", duration: "45 min", price: "SCR 30" }, { name: "Braids & styling", duration: "120 min", price: "SCR 60" }] },
   { name: "North Shore Grooming", location: "Beau Vallon, Mahé", category: "Barber", image: U+"1699641975121-5c3f55a553e5", rating: 4.9, reviews: 121,
-    services: [{ name: "Cut, beard & hot towel", duration: "45 min", price: "€26" }, { name: "Sports recovery massage", duration: "30 min", price: "€32" }] },
+    services: [{ name: "Cut, beard & hot towel", duration: "45 min", price: "SCR 26" }, { name: "Sports recovery massage", duration: "30 min", price: "SCR 32" }] },
   { name: "Frangipani Nails", location: "Grand Anse, Praslin", category: "Nails", image: U+"1632345031435-8727f6897d53", rating: 4.9, reviews: 98,
-    services: [{ name: "Gel manicure", duration: "45 min", price: "€25" }, { name: "Spa pedicure", duration: "60 min", price: "€35" }] },
+    services: [{ name: "Gel manicure", duration: "45 min", price: "SCR 25" }, { name: "Spa pedicure", duration: "60 min", price: "SCR 35" }] },
   { name: "Island Glow", location: "La Digue", category: "Brows & lashes", image: U+"1632765854612-9b02b6ec2b15", rating: 4.7, reviews: 64, available: "",
-    services: [{ name: "Brow lamination", duration: "40 min", price: "€35" }, { name: "Lash lift & tint", duration: "50 min", price: "€42" }] },
+    services: [{ name: "Brow lamination", duration: "40 min", price: "SCR 35" }, { name: "Lash lift & tint", duration: "50 min", price: "SCR 42" }] },
   { name: "Zen Shore", location: "Anse Royale, Mahé", category: "Spa & massage", image: U+"1696841212541-449ca29397cc", rating: 5.0, reviews: 87,
-    services: [{ name: "Hot stone therapy", duration: "75 min", price: "€65" }, { name: "Scalp ritual", duration: "30 min", price: "€30" }] },
+    services: [{ name: "Hot stone therapy", duration: "75 min", price: "SCR 65" }, { name: "Scalp ritual", duration: "30 min", price: "SCR 30" }] },
   { name: "Takamaka Wellness", location: "Takamaka, Mahé", category: "Skin & facial", image: U+"1570172619644-dfd03ed5d881", rating: 4.8, reviews: 73,
-    services: [{ name: "Volcanic clay facial", duration: "50 min", price: "€44" }, { name: "Deep-tissue massage", duration: "60 min", price: "€58" }] },
+    services: [{ name: "Volcanic clay facial", duration: "50 min", price: "SCR 44" }, { name: "Deep-tissue massage", duration: "60 min", price: "SCR 58" }] },
   { name: "Coco Makeup Bar", location: "Victoria, Mahé", category: "Makeup", image: U+"1516975080664-ed2fc6a32937", rating: 4.7, reviews: 52,
-    services: [{ name: "Event makeup", duration: "60 min", price: "€48" }, { name: "Bridal trial", duration: "90 min", price: "€70" }] },
+    services: [{ name: "Event makeup", duration: "60 min", price: "SCR 48" }, { name: "Bridal trial", duration: "90 min", price: "SCR 70" }] },
 ];
 
 const SORTS = ["Recommended", "Top rated", "Nearest", "Price: low to high"];
@@ -52,7 +52,7 @@ function SearchPage({ studios, initialCat, initialQ = "", initialLoc = "" }) {
   // Real studios only — no demo fallback here (the empty state handles none).
   // (rev2 — force recompile)
   const SOURCE = Array.isArray(studios) ? studios : [];
-  const priceOf = (s) => parseInt((s.services && s.services[0] ? s.services[0].price : "€0").slice(1), 10) || 0;
+  const priceOf = (s) => parseInt(String(s.services && s.services[0] ? s.services[0].price : "0").replace(/[^\d]/g, ""), 10) || 0;
   // Free-text match across name, category, area and service names; plus a
   // separate location contains-match. Empty query = everything.
   const ql = q.trim().toLowerCase();

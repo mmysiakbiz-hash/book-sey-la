@@ -83,7 +83,7 @@ export default function AccountPage() {
                 <div key={b.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px" }}>
                   <span style={{ fontWeight: 600 }}>{fmtRange(b.during) || "Booking"}</span>
                   <span style={{ display: "inline-flex", gap: 12, alignItems: "center", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
-                    {b.price_eur != null && <span>€{Math.round(b.price_eur)}</span>}
+                    {b.price_eur != null && <span>SCR {Math.round(b.price_eur)}</span>}
                     <span style={{ color: "var(--confirmed)", fontWeight: 600 }}>{b.status || "confirmed"}</span>
                   </span>
                 </div>

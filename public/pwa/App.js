@@ -95,11 +95,9 @@
       name: "pin",
       size: 13,
       color: "var(--cocoa-40)"
-    }), s.area, /*#__PURE__*/React.createElement("i", {
+    }), s.area, s.distance ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("i", {
       className: "dotsep"
-    }), s.distance, /*#__PURE__*/React.createElement("i", {
-      className: "dotsep"
-    }), s.price)));
+    }), s.distance) : null)));
   }
   function ClassCard({
     c,
@@ -130,7 +128,7 @@
       className: "dotsep"
     }), c.level, /*#__PURE__*/React.createElement("i", {
       className: "dotsep"
-    }), "\u20AC", c.price))), /*#__PURE__*/React.createElement("div", {
+    }), "SCR ", c.price))), /*#__PURE__*/React.createElement("div", {
       className: "spots" + (low ? " spots--low" : "")
     }, /*#__PURE__*/React.createElement("i", {
       style: {
@@ -372,7 +370,7 @@
       onClick: () => setActive(s.id)
     }, /*#__PURE__*/React.createElement("span", {
       className: "pin-price"
-    }, s.price, " \xB7 ", s.rating)))), active && (() => {
+    }, "\u2605 ", s.rating)))), active && (() => {
       const s = list.find(x => x.id === active) || D.STUDIOS.find(x => x.id === active);
       return /*#__PURE__*/React.createElement("div", {
         style: {
@@ -536,7 +534,7 @@
       }
     }, /*#__PURE__*/React.createElement("span", {
       className: "srv-price"
-    }, "\u20AC", it.price), /*#__PURE__*/React.createElement(Ic, {
+    }, "SCR ", it.price), /*#__PURE__*/React.createElement(Ic, {
       name: "chevronRight",
       size: 18,
       color: "var(--cocoa-40)"
@@ -772,13 +770,13 @@
         className: "k"
       }, "Payment"), /*#__PURE__*/React.createElement("span", {
         className: "v"
-      }, pay === "now" ? "€" + deposit + " deposit paid" : "Pay in salon")), /*#__PURE__*/React.createElement("div", {
+      }, pay === "now" ? "SCR " + deposit + " deposit paid" : "Pay in salon")), /*#__PURE__*/React.createElement("div", {
         className: "receipt-row"
       }, /*#__PURE__*/React.createElement("span", {
         className: "k"
       }, "Total"), /*#__PURE__*/React.createElement("span", {
         className: "v"
-      }, "\u20AC", total))))), /*#__PURE__*/React.createElement("div", {
+      }, "SCR ", total))))), /*#__PURE__*/React.createElement("div", {
         style: {
           padding: "12px 18px calc(12px + env(safe-area-inset-bottom,0px))"
         }
@@ -826,7 +824,7 @@
         className: "srv-name"
       }, it.name), /*#__PURE__*/React.createElement("div", {
         className: "srv-meta"
-      }, it.dur, " \xB7 \u20AC", it.price)), /*#__PURE__*/React.createElement("button", {
+      }, it.dur, " \xB7 SCR ", it.price)), /*#__PURE__*/React.createElement("button", {
         className: "srv-add" + (on ? " is-on" : ""),
         onClick: () => setPicked(on ? picked.filter(p => p !== it.id) : [...picked, it.id])
       }, on ? "Added ✓" : "Add"));
@@ -988,7 +986,7 @@
       name: "shield",
       size: 16,
       color: "var(--eucalyptus)"
-    }), " ", pay === "now" ? "€" + deposit + " deposit today, €" + (total - deposit) + " in salon. Refundable if you cancel 12h before." : "No card needed. A no-show may limit future free bookings."), /*#__PURE__*/React.createElement("div", {
+    }), " ", pay === "now" ? "SCR " + deposit + " deposit today, SCR " + (total - deposit) + " in salon. Refundable if you cancel 12h before." : "No card needed. A no-show may limit future free bookings."), /*#__PURE__*/React.createElement("div", {
       className: "receipt",
       style: {
         marginTop: 4
@@ -999,7 +997,7 @@
       className: "k"
     }, chosen.length, " service", chosen.length > 1 ? "s" : ""), /*#__PURE__*/React.createElement("span", {
       className: "v"
-    }, "\u20AC", total)), /*#__PURE__*/React.createElement("div", {
+    }, "SCR ", total)), /*#__PURE__*/React.createElement("div", {
       className: "receipt-row"
     }, /*#__PURE__*/React.createElement("span", {
       className: "k"
@@ -1017,7 +1015,7 @@
       className: "k"
     }, "Due now"), /*#__PURE__*/React.createElement("span", {
       className: "v"
-    }, "\u20AC", deposit)))))), /*#__PURE__*/React.createElement("div", {
+    }, "SCR ", deposit)))))), /*#__PURE__*/React.createElement("div", {
       style: {
         position: "absolute",
         left: 0,
@@ -1032,7 +1030,7 @@
       className: "btn btn--primary btn--full",
       disabled: !picked.length,
       onClick: () => setStep(1)
-    }, "Continue", total ? " · €" + total : ""), step === 1 && /*#__PURE__*/React.createElement("button", {
+    }, "Continue", total ? " · SCR " + total : ""), step === 1 && /*#__PURE__*/React.createElement("button", {
       className: "btn btn--primary btn--full",
       onClick: () => setStep(2)
     }, "Continue"), step === 2 && /*#__PURE__*/React.createElement("button", {
@@ -1042,7 +1040,7 @@
     }, "Continue ", slot ? "· " + D.DAYS[day].d + " " + slot : ""), step === 3 && /*#__PURE__*/React.createElement("button", {
       className: "btn btn--primary btn--full",
       onClick: confirm
-    }, pay === "now" ? "Pay €" + deposit + " & confirm" : "Confirm booking")));
+    }, pay === "now" ? "Pay SCR " + deposit + " & confirm" : "Confirm booking")));
   }
 
   // ---------- CLASS JOIN ----------
@@ -1103,7 +1101,7 @@
       className: "k"
     }, "Price"), /*#__PURE__*/React.createElement("span", {
       className: "v"
-    }, "\u20AC", c.price))), /*#__PURE__*/React.createElement("div", {
+    }, "SCR ", c.price))), /*#__PURE__*/React.createElement("div", {
       className: "block--flush"
     }, /*#__PURE__*/React.createElement("div", {
       className: "spots" + (c.spots <= 3 ? " spots--low" : "")
@@ -1128,7 +1126,7 @@
         joinClass(c);
         nav.pop();
       }
-    }, joined ? "Already joined ✓" : "Join class · €" + c.price)));
+    }, joined ? "Already joined ✓" : "Join class · SCR " + c.price)));
   }
 
   // ---------- CLASSES LIST ----------
@@ -1251,7 +1249,7 @@
       className: "bk-name"
     }, b.service), /*#__PURE__*/React.createElement("div", {
       className: "bk-sub"
-    }, b.studio, " \xB7 \u20AC", b.price)), /*#__PURE__*/React.createElement("span", {
+    }, b.studio, " \xB7 SCR ", b.price)), /*#__PURE__*/React.createElement("span", {
       className: "status " + (b.past ? "status--past" : "status--ok")
     }, b.status)), b.past && /*#__PURE__*/React.createElement("div", {
       style: {
@@ -1373,7 +1371,7 @@
     }, {
       ic: "heart",
       t: "Lumière Nails added a new service",
-      s: "BIAB overlay · €42",
+      s: "BIAB overlay · SCR 42",
       when: "5d ago"
     }];
     return /*#__PURE__*/React.createElement("div", {

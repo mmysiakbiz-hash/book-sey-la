@@ -13,11 +13,11 @@ const U = "https://images.unsplash.com/photo-";
 // ("this could be your studio") so nobody hits a dead booking.
 const DEMO = [
   { name: "Kreol Spa", location: "Beau Vallon, Mahé", category: "Spa & massage", image: U + "1519823551278-64ac92734fb1", rating: 4.9, reviews: 214, badge: "Demo", href: "/for-studios",
-    services: [{ name: "Coconut & Frangipani massage", duration: "60 min", price: "€55" }, { name: "Aroma back & neck", duration: "30 min", price: "€30" }] },
+    services: [{ name: "Coconut & Frangipani massage", duration: "60 min", price: "SCR 55" }, { name: "Aroma back & neck", duration: "30 min", price: "SCR 30" }] },
   { name: "Palm & Blade", location: "Victoria, Mahé", category: "Barber", image: U + "1512864084360-7c0c4d0a0845", rating: 4.8, reviews: 132, badge: "Demo", href: "/for-studios",
-    services: [{ name: "Skin fade & style", duration: "40 min", price: "€22" }, { name: "Beard trim & hot towel", duration: "25 min", price: "€16" }] },
+    services: [{ name: "Skin fade & style", duration: "40 min", price: "SCR 22" }, { name: "Beard trim & hot towel", duration: "25 min", price: "SCR 16" }] },
   { name: "Lumière Studio", location: "Victoria, Mahé", category: "Hair", image: U + "1632765866070-3fadf25d3d5b", rating: 4.8, reviews: 176, badge: "Demo", href: "/for-studios",
-    services: [{ name: "Cut & blow-dry", duration: "45 min", price: "€30" }, { name: "Braids & styling", duration: "120 min", price: "€60" }] },
+    services: [{ name: "Cut & blow-dry", duration: "45 min", price: "SCR 30" }, { name: "Braids & styling", duration: "120 min", price: "SCR 60" }] },
 ];
 
 function FeaturedStudios({ studios }) {

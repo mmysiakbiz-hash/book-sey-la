@@ -56,7 +56,7 @@ function Hero() {
           <img className="lp-m lp-m--c" src={U + "1632765854612-9b02b6ec2b15?auto=format&fit=crop&w=440&q=70"} alt="" loading="lazy" />
           <img className="lp-m lp-m--d" src={U + "1699641975121-5c3f55a553e5?auto=format&fit=crop&w=440&q=70"} alt="" loading="lazy" />
           <div className="lp-hero-floatcard">
-            <BookingCard service="Coconut & Frangipani massage" studio="Kreol Spa · Beau Vallon" when="Tomorrow · 14:30" price="€55" status="Confirmed" float style={{ maxWidth: "none" }} />
+            <BookingCard service="Coconut & Frangipani massage" studio="Kreol Spa · Beau Vallon" when="Tomorrow · 14:30" price="SCR 55" status="Confirmed" float style={{ maxWidth: "none" }} />
           </div>
         </div>
       </div>

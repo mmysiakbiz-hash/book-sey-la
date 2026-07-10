@@ -4,23 +4,24 @@ import { Button } from "@/components/core/Button";
 import { Icon } from "@/components/brand/Icon";
 import { Badge } from "@/components/core/Badge";
 import { BookNow } from "@/components/booking/BookNow";
+import { scr } from "@/lib/money";
 // VenueServices — the core: grouped treatment menu with prices + book buttons.
 
 
 
 const GROUPS = [
   { name: "Massage", items: [
-    { name: "Coconut & Frangipani signature", desc: "Warm oil full-body massage with island botanicals.", dur: "60 min", price: "€55", tag: "Most booked" },
-    { name: "Deep-tissue recovery", desc: "Firmer pressure for shoulders, back and legs.", dur: "60 min", price: "€58" },
-    { name: "Hot stone therapy", desc: "Volcanic stones to melt deep tension.", dur: "75 min", price: "€65" },
+    { name: "Coconut & Frangipani signature", desc: "Warm oil full-body massage with island botanicals.", dur: "60 min", price: "SCR 55", tag: "Most booked" },
+    { name: "Deep-tissue recovery", desc: "Firmer pressure for shoulders, back and legs.", dur: "60 min", price: "SCR 58" },
+    { name: "Hot stone therapy", desc: "Volcanic stones to melt deep tension.", dur: "75 min", price: "SCR 65" },
   ]},
   { name: "Face", items: [
-    { name: "Signature island facial", desc: "Cleanse, clay mask and lymphatic massage.", dur: "50 min", price: "€48" },
-    { name: "Express glow facial", desc: "A quick reset before dinner.", dur: "30 min", price: "€32" },
+    { name: "Signature island facial", desc: "Cleanse, clay mask and lymphatic massage.", dur: "50 min", price: "SCR 48" },
+    { name: "Express glow facial", desc: "A quick reset before dinner.", dur: "30 min", price: "SCR 32" },
   ]},
   { name: "Body & rituals", items: [
-    { name: "Sea salt & clay body wrap", desc: "Exfoliate, wrap and hydrate.", dur: "60 min", price: "€52" },
-    { name: "Couples' frangipani ritual", desc: "Side-by-side massage for two.", dur: "60 min", price: "€105", tag: "For two" },
+    { name: "Sea salt & clay body wrap", desc: "Exfoliate, wrap and hydrate.", dur: "60 min", price: "SCR 52" },
+    { name: "Couples' frangipani ritual", desc: "Side-by-side massage for two.", dur: "60 min", price: "SCR 105", tag: "For two" },
   ]},
 ];
 
@@ -101,7 +102,7 @@ function VenueServices({ studio }) {
                   </div>
                   {p.description && <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>{p.description}</p>}
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 4 }}>
-                    {p.priceEur != null && <span className="vn-srv-price">€{Math.round(p.priceEur)}{p.kind === "membership" ? " / mo" : ""}</span>}
+                    {p.priceEur != null && <span className="vn-srv-price">{scr(p.priceEur)}{p.kind === "membership" ? " / mo" : ""}</span>}
                     {p.credits != null && <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>{p.credits} visits</span>}
                   </div>
                   <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)", marginTop: 2 }}>Ask in-studio to redeem</span>
