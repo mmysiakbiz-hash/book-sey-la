@@ -57,11 +57,12 @@ export function SearchBar({
       <style dangerouslySetInnerHTML={{ __html: `
         .sey-search-field {
           flex: 1; min-width: 0;
-          display: flex; align-items: center; gap: 10px;
-          padding: 6px 18px;
+          display: flex; align-items: center; gap: 8px;
+          padding: 6px 12px;
           border-radius: var(--radius-pill);
           transition: background var(--dur-fast) var(--ease-soft);
         }
+        .sey-search-field svg { flex: none; }
         .sey-search-field:focus-within { background: var(--blush); }
         .sey-search-field input {
           flex: 1; min-width: 0;

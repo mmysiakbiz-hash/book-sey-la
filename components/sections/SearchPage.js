@@ -7,6 +7,7 @@ import { ClassCard } from "@/components/booking/ClassCard";
 import { Button } from "@/components/core/Button";
 import { Icon } from "@/components/brand/Icon";
 import { Badge } from "@/components/core/Badge";
+import { Select } from "@/components/core/Select";
 // SearchPage — client-facing browse / results page in the sey.la | book pattern.
 
 
@@ -102,12 +103,10 @@ function SearchPage({ studios, initialCat, initialQ = "", initialLoc = "" }) {
           <div className="sr-meta">
             <span className="sr-count">{isClasses ? (<React.Fragment><b>{CLASSES.length}</b> classes this week across the islands</React.Fragment>) : (<React.Fragment><b>{results.length}</b> studio{results.length!==1?"s":""}{cat!=="All" ? " · " + cat : ""} on Mahé, Praslin &amp; La Digue</React.Fragment>)}</span>
             <div className="sr-controls">
-              <label className="sr-sort">
+              <div className="sr-sort">
                 <span>Sort</span>
-                <select value={sort} onChange={e=>setSort(e.target.value)}>
-                  {SORTS.map(s=><option key={s}>{s}</option>)}
-                </select>
-              </label>
+                <Select value={sort} onChange={setSort} options={SORTS} ariaLabel="Sort studios" align="right" style={{ minWidth: 170 }} />
+              </div>
               <button className={"sr-maptoggle" + (mapOpen ? " is-active" : "")} onClick={()=>setMapOpen(v=>!v)}>
                 <Icon name="pin" size={16} color={mapOpen ? "var(--surface)" : "var(--clay)"} /> {mapOpen ? "Hide map" : "Map"}
               </button>
@@ -146,12 +145,18 @@ function SearchPage({ studios, initialCat, initialQ = "", initialLoc = "" }) {
             {mapOpen && !isClasses && (
               <aside className="sr-map" aria-label="Map">
                 <div className="sr-map-inner">
-                  {results.slice(0,6).map((s,i)=>(
-                    <span className="sr-map-pin" key={s.slug || s.name} style={{ top: (18+i*12)+"%", left: (20+((i*27)%60))+"%" }}>
-                      <Icon name="pin" size={18} color="var(--surface)" />
-                    </span>
-                  ))}
-                  <span className="sr-map-label">Live availability · Beau Vallon</span>
+                  {/* Real OpenStreetMap of the Seychelles (Mahé · Praslin · La Digue).
+                      Per-studio pins need studio coordinates, which we don't store
+                      yet — for now this shows the region rather than fake pins. */}
+                  <iframe
+                    title="Map of the Seychelles"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=55.30%2C-4.85%2C55.90%2C-4.28&layer=mapnik"
+                    style={{ width: "100%", height: "100%", border: 0, display: "block" }}
+                    loading="lazy"
+                  />
+                  <a className="sr-map-label" href="https://www.openstreetmap.org/#map=11/-4.62/55.45" target="_blank" rel="noreferrer" style={{ textDecoration: "none", zIndex: 2 }}>
+                    View larger map ↗
+                  </a>
                 </div>
               </aside>
             )}

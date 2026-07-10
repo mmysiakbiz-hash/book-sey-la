@@ -14,13 +14,18 @@ export function Logo({ product = "book", size = "md", color, mono = false, style
   const fs = sizes[size] || sizes.md;
   const base = color || "var(--cocoa)";
   return (
-    <span
+    // The wordmark always returns to the book homepage ("/"), never the parent
+    // sey.la brand site — book.sey.la is a separate project.
+    <a
+      href="/"
+      aria-label="sey.la | book — home"
       style={{
         fontFamily: "var(--font-display)",
         fontSize: fs,
         fontWeight: 600,
         letterSpacing: "-0.01em",
         color: base,
+        textDecoration: "none",
         display: "inline-flex",
         alignItems: "baseline",
         gap: "0.4em",
@@ -53,6 +58,6 @@ export function Logo({ product = "book", size = "md", color, mono = false, style
       >
         {product}
       </span>
-    </span>
+    </a>
   );
 }

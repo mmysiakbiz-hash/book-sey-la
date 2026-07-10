@@ -27,7 +27,7 @@ function FinalCTA() {
             Your next <em className="sey-accent-italic">cut, massage or ritual</em> is one search away.
           </h2>
           <p className="lp-final-lead">See open slots near you right now — it's free.</p>
-          <div className="lp-final-search"><SearchBar cta="Find a studio" onSubmit={goSearch} /></div>
+          <div className="lp-final-search"><SearchBar cta="Search" onSubmit={goSearch} /></div>
         </div>
       </section>
 

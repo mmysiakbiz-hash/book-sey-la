@@ -468,6 +468,16 @@ a:hover { color: var(--brand-hover); }
 .sr-sort { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-sm); color: var(--cocoa-60); }
 .sr-sort select { appearance: none; font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; color: var(--cocoa); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 8px 30px 8px 14px; cursor: pointer;
   background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%233B2A25' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+/* Custom dropdown (design-matched replacement for native <select>) */
+.sey-select-btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; color: var(--cocoa); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 8px 14px; cursor: pointer; width: 100%; justify-content: space-between; transition: border-color var(--dur-fast) var(--ease-soft); }
+.sey-select-btn:hover { border-color: var(--clay); }
+.sey-select-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sey-select-list { position: absolute; top: calc(100% + 6px); left: 0; min-width: 100%; z-index: 60; margin: 0; padding: 6px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+.sey-select-list--right { left: auto; right: 0; }
+.sey-select-opt { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 12px; border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--cocoa); cursor: pointer; white-space: nowrap; }
+.sey-select-opt:hover { background: var(--blush); }
+.sey-select-opt.is-sel { color: var(--clay); font-weight: 600; }
+
 .sr-maptoggle { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; color: var(--cocoa); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 8px 16px; cursor: pointer; transition: background var(--dur-fast) var(--ease-soft), color var(--dur-fast) var(--ease-soft); }
 .sr-maptoggle:hover { border-color: var(--clay); }
 .sr-maptoggle.is-active { background: var(--clay); color: var(--surface); border-color: var(--clay); }

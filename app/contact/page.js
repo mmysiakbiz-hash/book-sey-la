@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { Select } from "@/components/core/Select";
 
 const TOPICS = ["General enquiry", "I run a studio", "Partnership", "Press", "Privacy / data request"];
 
@@ -85,9 +86,13 @@ export default function ContactPage() {
                   </div>
                   <div className="pg-field">
                     <label htmlFor="c-topic">Topic</label>
-                    <select id="c-topic" value={form.topic} onChange={set("topic")}>
-                      {TOPICS.map((t) => <option key={t}>{t}</option>)}
-                    </select>
+                    <Select
+                      value={form.topic}
+                      onChange={(v) => setForm((f) => ({ ...f, topic: v }))}
+                      options={TOPICS}
+                      ariaLabel="Topic"
+                      buttonStyle={{ padding: "12px 14px", fontWeight: 400, borderRadius: "var(--radius-md)", fontSize: "var(--text-body)" }}
+                    />
                   </div>
                   <div className="pg-field">
                     <label htmlFor="c-msg">Message</label>
