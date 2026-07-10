@@ -4,24 +4,28 @@ import { Icon } from "../brand/Icon";
 import { Button } from "../core/Button";
 
 /**
- * SearchBar — the hero booking search. Treatment + location + CTA in one warm bar.
- * Collapses to stacked fields on mobile.
+ * SearchBar — treatment/studio + location search. Submitting calls
+ * onSubmit({ q, loc }) with the trimmed values; the caller decides whether to
+ * navigate to /search or filter in place. No date field: availability isn't
+ * searchable yet, so we don't offer a filter we can't honour.
  */
 export function SearchBar({
   treatmentPlaceholder = "Treatment or studio",
   locationPlaceholder = "Anywhere on Mahé",
-  datePlaceholder = "Any date",
-  withDate = false,
-  cta = "See open slots",
+  cta = "Search",
+  initialQ = "",
+  initialLoc = "",
   onSubmit,
   style = {},
   ...rest
 }) {
+  const [q, setQ] = React.useState(initialQ);
+  const [loc, setLoc] = React.useState(initialLoc);
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit && onSubmit(e);
+        onSubmit && onSubmit({ q: q.trim(), loc: loc.trim() });
       }}
       className="sey-searchbar"
       style={{
@@ -39,20 +43,13 @@ export function SearchBar({
     >
       <label className="sey-search-field">
         <Icon name="search" size={19} color="var(--cocoa-40)" />
-        <input type="text" placeholder={treatmentPlaceholder} aria-label="Treatment or studio" />
+        <input type="text" placeholder={treatmentPlaceholder} aria-label="Treatment or studio" value={q} onChange={(e) => setQ(e.target.value)} />
       </label>
       <span className="sey-search-divider" aria-hidden="true" />
       <label className="sey-search-field">
         <Icon name="pin" size={19} color="var(--cocoa-40)" />
-        <input type="text" placeholder={locationPlaceholder} aria-label="Location" />
+        <input type="text" placeholder={locationPlaceholder} aria-label="Location" value={loc} onChange={(e) => setLoc(e.target.value)} />
       </label>
-      {withDate && <span className="sey-search-divider" aria-hidden="true" />}
-      {withDate && (
-        <label className="sey-search-field sey-search-field--sm">
-          <Icon name="calendar" size={19} color="var(--cocoa-40)" />
-          <input type="text" placeholder={datePlaceholder} aria-label="Date" />
-        </label>
-      )}
       <Button type="submit" size="md" style={{ flex: "none" }}>
         {cta}
       </Button>
@@ -66,7 +63,6 @@ export function SearchBar({
           transition: background var(--dur-fast) var(--ease-soft);
         }
         .sey-search-field:focus-within { background: var(--blush); }
-        .sey-search-field--sm { flex: 0.7; }
         .sey-search-field input {
           flex: 1; min-width: 0;
           border: none; outline: none; background: transparent;

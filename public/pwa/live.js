@@ -25,6 +25,33 @@
   function hm(m) { return Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0"); }
   function withSuffix(u) { return u && u.indexOf("?") === -1 ? u + "?auto=format&fit=crop&w=600&q=70" : (u || ""); }
 
+  // Human "x ago" from an ISO date, for real review timestamps.
+  function relTime(iso) {
+    if (!iso) return "";
+    var then = new Date(iso).getTime();
+    if (isNaN(then)) return "";
+    var days = Math.floor((Date.now() - then) / 86400000);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 7) return days + " days ago";
+    if (days < 30) { var w = Math.round(days / 7); return w + (w === 1 ? " week ago" : " weeks ago"); }
+    if (days < 365) { var mo = Math.round(days / 30); return mo + (mo === 1 ? " month ago" : " months ago"); }
+    var yr = Math.round(days / 365); return yr + (yr === 1 ? " year ago" : " years ago");
+  }
+
+  // A real upcoming-days strip (today + 7) for the booking flow: { d, n, dow }.
+  function buildDays() {
+    var out = [];
+    var base = new Date();
+    for (var i = 0; i < 8; i++) {
+      var dt = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+      var dow = (dt.getDay() + 6) % 7; // Mon=0..Sun=6
+      var label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : DAYLBL[dow];
+      out.push({ d: label, n: String(dt.getDate()), dow: dow });
+    }
+    return out;
+  }
+
   function mapStudio(r, i) {
     var photos = Array.isArray(r.photos) ? r.photos : [];
     var photo = withSuffix(photos[0] || "");
@@ -46,6 +73,19 @@
     var hours = openRows.map(function (h) { return [DAYLBL[h.day_of_week] || "", hm(h.open_min) + " – " + hm(h.close_min)]; });
     var todayDow = (new Date().getDay() + 6) % 7; // JS Sun=0..Sat=6 → Mon=0..Sun=6
     var todayIdx = openRows.map(function (h) { return h.day_of_week; }).indexOf(todayDow);
+    // Real reviews (if any) — mapped to the app's review shape. Empty → the
+    // reviews tab is hidden rather than showing anything invented.
+    var reviewsList = (r.reviews || [])
+      .slice()
+      .sort(function (a, b) { return new Date(b.created_at || 0) - new Date(a.created_at || 0); })
+      .map(function (rv) {
+        return { name: rv.guest_name || "Guest", when: relTime(rv.created_at), text: rv.text || "", av: "",
+                 rating: Math.max(1, Math.min(5, Math.round(Number(rv.rating) || 5))) };
+      })
+      .filter(function (x) { return x.text; });
+    var revCount = r.google_review_count || reviewsList.length;
+    var rating = r.google_rating != null ? Number(r.google_rating)
+      : (reviewsList.length ? Math.round((reviewsList.reduce(function (n, x) { return n + x.rating; }, 0) / reviewsList.length) * 10) / 10 : null);
     return {
       id: r.slug,
       dbId: r.id || null,             // real studios.id (uuid) — enables a real booking write
@@ -53,8 +93,9 @@
       cat: CAT[r.category] || "spa",
       area: r.address || r.island || "Seychelles",
       about: r.bio || r.tagline || "",
-      rating: r.google_rating != null ? Number(r.google_rating) : 4.8,
-      reviews: r.google_review_count || 0,
+      rating: rating != null ? rating : 4.8,
+      reviews: revCount,
+      reviews_list: reviewsList,
       distance: "",
       price: priceLevel(r.services),
       photo: photo,
@@ -88,7 +129,7 @@
   }
 
   var url = SUPABASE_URL + "/rest/v1/studios?select=" +
-    encodeURIComponent("id,slug,name,category,island,address,bio,tagline,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort),staff(id,name,role,active),business_hours(day_of_week,open_min,close_min)") +
+    encodeURIComponent("id,slug,name,category,island,address,bio,tagline,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort),staff(id,name,role,active),business_hours(day_of_week,open_min,close_min),reviews(rating,text,guest_name,created_at)") +
     "&status=in.(active,verified)&order=google_rating.desc";
 
   var fetchStudios = fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON } })
@@ -97,10 +138,19 @@
   withTimeout(fetchStudios, TIMEOUT_MS).then(function (rows) {
     try {
       if (window.SEY_DATA && Array.isArray(rows)) {
-        // Fetch succeeded → use REAL studios only (even if empty → empty state).
+        // Fetch succeeded → use REAL data only (even if empty → empty state).
         // Only a hard fetch failure (rows === null) keeps the bundled demo so a
         // network blip doesn't blank the app.
         window.SEY_DATA.STUDIOS = rows.map(mapStudio);
+        window.SEY_DATA.DAYS = buildDays();
+        // These aren't wired to real per-user/per-studio sources in the PWA yet,
+        // so show nothing rather than invented content. Reviews come per studio
+        // (studio.reviews_list); bookings fill in as the user books.
+        window.SEY_DATA.CLASSES = [];
+        window.SEY_DATA.BOOKINGS = [];
+        window.SEY_DATA.REVIEWS = [];
+        window.SEY_DATA.LOYALTY = [];
+        window.SEY_DATA.STAFF = [];
       }
     } catch (e) { /* keep demo data on error */ }
     loadApp();

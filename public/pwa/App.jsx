@@ -229,7 +229,7 @@
             <p className="muted" style={{ marginTop: 12, lineHeight: 1.55 }}>{s.about}</p>
 
             <div className="chips" style={{ marginTop: 6, marginBottom: 4 }}>
-              {["services", classes.length ? "classes" : null, "reviews", "about"].filter(Boolean).map((t) => (
+              {["services", classes.length ? "classes" : null, (s.reviews_list && s.reviews_list.length) ? "reviews" : null, "about"].filter(Boolean).map((t) => (
                 <button key={t} className={"chip" + (tab === t ? " is-active" : "")} onClick={() => setTab(t)} style={{ textTransform: "capitalize" }}>{t}</button>
               ))}
             </div>
@@ -260,10 +260,12 @@
 
             {tab === "reviews" && (
               <div className="block--flush">
-                {D.REVIEWS.map((r, i) => (
+                {(s.reviews_list || []).map((r, i) => (
                   <div className="review" key={i}>
                     <div className="review-head">
-                      <img className="review-av" src={r.av} alt="" />
+                      {r.av
+                        ? <img className="review-av" src={r.av} alt="" />
+                        : <span className="review-av" style={{ display: "grid", placeItems: "center", background: "var(--blush)", color: "var(--clay)", fontWeight: 700 }}>{(r.name || "G").slice(0, 1).toUpperCase()}</span>}
                       <div style={{ flex: 1 }}><b>{r.name}</b><div className="tiny muted">{r.when}</div></div>
                       <span className="rating"><Ic name="star" size={13} fill="var(--ink)" color="var(--ink)" /> {r.rating}.0</span>
                     </div>
@@ -292,6 +294,25 @@
         </div>
       </div>
     );
+  }
+
+  // Real bookable times for a studio on a given weekday (Mon=0..Sun=6), derived
+  // from the studio's opening hours. Every 30 min inside the open window; empty
+  // when the studio is closed that day. A real conflict is still validated by
+  // /api/book on submit — this just stops us inventing availability.
+  const SLOT_DOWLBL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  function slotsForDay(s, dow) {
+    if (dow == null) return [];
+    const row = (s.hours || []).find((h) => h[0] === SLOT_DOWLBL[dow]);
+    if (!row) return [];
+    const m = String(row[1]).match(/(\d{1,2}):(\d{2}).*?(\d{1,2}):(\d{2})/);
+    if (!m) return [];
+    const pad = (n) => String(n).padStart(2, "0");
+    const start = (+m[1]) * 60 + (+m[2]);
+    const end = (+m[3]) * 60 + (+m[4]);
+    const out = [];
+    for (let t = start; t + 30 <= end; t += 30) out.push(pad(Math.floor(t / 60)) + ":" + pad(t % 60));
+    return out;
   }
 
   // ---------- BOOKING FLOW (service -> staff -> time -> payment -> confirm) ----------
@@ -430,12 +451,17 @@
                 </div>
                 <div className="block--flush">
                   <div className="eyebrow" style={{ marginBottom: 8 }}>Available times</div>
-                  <div className="slotgrid">
-                    {D.SLOTS.map((t, i) => {
-                      const taken = (day === 0 && D.TAKEN.includes(t)) || (staff !== "any" && i % 3 === 2);
-                      return <button key={t} className={"slot" + (slot === t ? " is-active" : "")} disabled={taken} onClick={() => setSlot(t)}>{t}</button>;
-                    })}
-                  </div>
+                  {(() => {
+                    const times = slotsForDay(s, (D.DAYS[day] || {}).dow);
+                    if (!times.length) return <p className="muted" style={{ margin: 0 }}>Closed on this day — pick another.</p>;
+                    return (
+                      <div className="slotgrid">
+                        {times.map((t) => (
+                          <button key={t} className={"slot" + (slot === t ? " is-active" : "")} onClick={() => setSlot(t)}>{t}</button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <label className="togglerow">
                   <div><div className="srv-name">Repeat this appointment</div><div className="srv-meta">Every 4 weeks · cancel anytime</div></div>
@@ -520,7 +546,9 @@
         <TopBar title="Group classes" onBack={nav.pop} />
         <div className="app-scroll">
           <div className="screen" style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 6 }}>
-            {D.CLASSES.map((c) => <ClassCard key={c.id} c={c} joined={false} onJoin={(cl) => nav.push("classJoin", { id: cl.id })} />)}
+            {D.CLASSES.length
+              ? D.CLASSES.map((c) => <ClassCard key={c.id} c={c} joined={false} onJoin={(cl) => nav.push("classJoin", { id: cl.id })} />)
+              : <div className="empty"><div className="empty-ic"><Ic name="fitness" size={26} /></div><div className="h-md" style={{ marginBottom: 4 }}>No classes yet</div><p className="muted" style={{ margin: 0 }}>Group classes will appear here as studios add them.</p></div>}
           </div>
         </div>
       </div>
@@ -769,7 +797,9 @@
         <div className="app-scroll">
           <div className="screen" style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 6 }}>
             <p className="muted" style={{ margin: "0 0 2px" }}>Collect a stamp on every visit. Rewards apply automatically at checkout.</p>
-            {D.LOYALTY.map((l) => <LoyaltyCard key={l.studioId} l={l} />)}
+            {D.LOYALTY.length
+              ? D.LOYALTY.map((l) => <LoyaltyCard key={l.studioId} l={l} />)
+              : <div className="empty"><div className="empty-ic"><Ic name="sparkle" size={26} /></div><div className="h-md" style={{ marginBottom: 4 }}>No rewards yet</div><p className="muted" style={{ margin: 0 }}>Book with a studio that runs a loyalty card and your stamps show up here.</p></div>}
           </div>
         </div>
       </div>
@@ -1115,7 +1145,7 @@
   function App() {
     const [tab, setTab] = useState("home");
     const [stack, setStack] = useState([]); // overlay pages on top of the active tab
-    const [favs, setFavs] = useState(() => load("favs", ["kreol-spa"]));
+    const [favs, setFavs] = useState(() => load("favs", []));
     const [bookings, setBookings] = useState(() => load("bookings", D.BOOKINGS));
     const [joined, setJoined] = useState(() => load("joined", []));
     const [reviewed, setReviewed] = useState(() => load("reviewed", []));

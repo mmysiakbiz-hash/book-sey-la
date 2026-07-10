@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/core/Button";
 import { SearchBar } from "@/components/booking/SearchBar";
 import { Logo } from "@/components/brand/Logo";
@@ -9,6 +10,14 @@ import { Icon } from "@/components/brand/Icon";
 
 
 function FinalCTA() {
+  const router = useRouter();
+  const goSearch = ({ q, loc }) => {
+    const p = new URLSearchParams();
+    if (q) p.set("q", q);
+    if (loc) p.set("loc", loc);
+    const qs = p.toString();
+    router.push(qs ? `/search?${qs}` : "/search");
+  };
   return (
     <React.Fragment>
       <section className="lp-section lp-final">
@@ -18,7 +27,7 @@ function FinalCTA() {
             Your next <em className="sey-accent-italic">cut, massage or ritual</em> is one search away.
           </h2>
           <p className="lp-final-lead">See open slots near you right now — it's free.</p>
-          <div className="lp-final-search"><SearchBar cta="Find a studio" /></div>
+          <div className="lp-final-search"><SearchBar cta="Find a studio" onSubmit={goSearch} /></div>
         </div>
       </section>
 

@@ -41,16 +41,30 @@ const STUDIOS = [
 
 const SORTS = ["Recommended", "Top rated", "Nearest", "Price: low to high"];
 
-function SearchPage({ studios, initialCat }) {
+function SearchPage({ studios, initialCat, initialQ = "", initialLoc = "" }) {
   const [cat, setCat] = React.useState(initialCat && CHIPS.includes(initialCat) ? initialCat : "All");
   const [sort, setSort] = React.useState("Recommended");
   const [mapOpen, setMapOpen] = React.useState(false);
+  const [q, setQ] = React.useState(initialQ);
+  const [loc, setLoc] = React.useState(initialLoc);
   const isClasses = cat === "Classes";
   // Real studios only — no demo fallback here (the empty state handles none).
   // (rev2 — force recompile)
   const SOURCE = Array.isArray(studios) ? studios : [];
   const priceOf = (s) => parseInt((s.services && s.services[0] ? s.services[0].price : "€0").slice(1), 10) || 0;
-  let results = SOURCE.filter(s => cat === "All" || s.category === cat);
+  // Free-text match across name, category, area and service names; plus a
+  // separate location contains-match. Empty query = everything.
+  const ql = q.trim().toLowerCase();
+  const locl = loc.trim().toLowerCase();
+  const matchText = (s) => {
+    if (ql) {
+      const hay = [s.name, s.category, s.location, ...((s.services || []).map((x) => x.name))].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(ql)) return false;
+    }
+    if (locl && !String(s.location || "").toLowerCase().includes(locl)) return false;
+    return true;
+  };
+  let results = SOURCE.filter(s => (cat === "All" || s.category === cat) && matchText(s));
   if (sort === "Top rated") results = [...results].sort((a,b)=>(b.rating||0)-(a.rating||0));
   if (sort === "Price: low to high") results = [...results].sort((a,b)=>priceOf(a)-priceOf(b));
 
@@ -69,7 +83,7 @@ function SearchPage({ studios, initialCat }) {
       <section className="sr-head">
         <div className="sey-container">
           <h1 className="sr-title">Browse studios in the <em className="sey-accent-italic">Seychelles</em></h1>
-          <div className="sr-search"><SearchBar withDate cta="Search" /></div>
+          <div className="sr-search"><SearchBar cta="Search" initialQ={q} initialLoc={loc} onSubmit={({ q, loc }) => { setQ(q); setLoc(loc); }} /></div>
           <div className="sr-chips">
             {CHIPS.map(c => {
               const n = c === "All" ? SOURCE.length : c === "Classes" ? CLASSES.length : SOURCE.filter(s => s.category === c).length;
@@ -115,10 +129,17 @@ function SearchPage({ studios, initialCat }) {
             ) : (
             <div className="sr-grid">
               {results.length === 0 ? (
-                <div className="sr-empty">
-                  <h3>No studios here yet</h3>
-                  <p>We're onboarding {cat.toLowerCase()} studios across the islands. Check back soon.</p>
-                </div>
+                (ql || locl) ? (
+                  <div className="sr-empty">
+                    <h3>No studios match your search</h3>
+                    <p>Try a different treatment or place{cat !== "All" ? `, or clear the ${cat} filter` : ""}.</p>
+                  </div>
+                ) : (
+                  <div className="sr-empty">
+                    <h3>No studios here yet</h3>
+                    <p>We're onboarding {cat.toLowerCase()} studios across the islands. Check back soon.</p>
+                  </div>
+                )
               ) : results.map(s => <StudioCard key={s.slug || s.name} {...s} as="a" href={s.href || (s.slug ? "/studio/" + s.slug : "#")} />)}
             </div>
             )}

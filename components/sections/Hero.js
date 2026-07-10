@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 import { SearchBar } from "@/components/booking/SearchBar";
 import { BookingCard } from "@/components/booking/BookingCard";
 import { Icon } from "@/components/brand/Icon";
@@ -11,6 +12,14 @@ const POPULAR = ["Massage", "Hair", "Nails", "Barber", "Facial", "Yoga"];
 const U = "https://images.unsplash.com/photo-";
 
 function Hero() {
+  const router = useRouter();
+  const goSearch = ({ q, loc }) => {
+    const p = new URLSearchParams();
+    if (q) p.set("q", q);
+    if (loc) p.set("loc", loc);
+    const qs = p.toString();
+    router.push(qs ? `/search?${qs}` : "/search");
+  };
   return (
     <section className="lp-hero">
       <div className="sey-container lp-hero-grid">
@@ -24,7 +33,7 @@ function Hero() {
             seconds — always free for you.
           </p>
           <div className="lp-hero-search">
-            <SearchBar withDate cta="Search" />
+            <SearchBar cta="Search" onSubmit={goSearch} />
           </div>
           <div className="lp-hero-popular">
             <span className="lp-hero-popular-label">Popular</span>

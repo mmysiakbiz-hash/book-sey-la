@@ -502,7 +502,7 @@
         marginTop: 6,
         marginBottom: 4
       }
-    }, ["services", classes.length ? "classes" : null, "reviews", "about"].filter(Boolean).map(t => /*#__PURE__*/React.createElement("button", {
+    }, ["services", classes.length ? "classes" : null, s.reviews_list && s.reviews_list.length ? "reviews" : null, "about"].filter(Boolean).map(t => /*#__PURE__*/React.createElement("button", {
       key: t,
       className: "chip" + (tab === t ? " is-active" : ""),
       onClick: () => setTab(t),
@@ -556,16 +556,25 @@
       })
     }))), tab === "reviews" && /*#__PURE__*/React.createElement("div", {
       className: "block--flush"
-    }, D.REVIEWS.map((r, i) => /*#__PURE__*/React.createElement("div", {
+    }, (s.reviews_list || []).map((r, i) => /*#__PURE__*/React.createElement("div", {
       className: "review",
       key: i
     }, /*#__PURE__*/React.createElement("div", {
       className: "review-head"
-    }, /*#__PURE__*/React.createElement("img", {
+    }, r.av ? /*#__PURE__*/React.createElement("img", {
       className: "review-av",
       src: r.av,
       alt: ""
-    }), /*#__PURE__*/React.createElement("div", {
+    }) : /*#__PURE__*/React.createElement("span", {
+      className: "review-av",
+      style: {
+        display: "grid",
+        placeItems: "center",
+        background: "var(--blush)",
+        color: "var(--clay)",
+        fontWeight: 700
+      }
+    }, (r.name || "G").slice(0, 1).toUpperCase()), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
@@ -623,6 +632,25 @@
         id: s.id
       })
     }, "Book now")));
+  }
+
+  // Real bookable times for a studio on a given weekday (Mon=0..Sun=6), derived
+  // from the studio's opening hours. Every 30 min inside the open window; empty
+  // when the studio is closed that day. A real conflict is still validated by
+  // /api/book on submit — this just stops us inventing availability.
+  const SLOT_DOWLBL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  function slotsForDay(s, dow) {
+    if (dow == null) return [];
+    const row = (s.hours || []).find(h => h[0] === SLOT_DOWLBL[dow]);
+    if (!row) return [];
+    const m = String(row[1]).match(/(\d{1,2}):(\d{2}).*?(\d{1,2}):(\d{2})/);
+    if (!m) return [];
+    const pad = n => String(n).padStart(2, "0");
+    const start = +m[1] * 60 + +m[2];
+    const end = +m[3] * 60 + +m[4];
+    const out = [];
+    for (let t = start; t + 30 <= end; t += 30) out.push(pad(Math.floor(t / 60)) + ":" + pad(t % 60));
+    return out;
   }
 
   // ---------- BOOKING FLOW (service -> staff -> time -> payment -> confirm) ----------
@@ -883,17 +911,22 @@
       style: {
         marginBottom: 8
       }
-    }, "Available times"), /*#__PURE__*/React.createElement("div", {
-      className: "slotgrid"
-    }, D.SLOTS.map((t, i) => {
-      const taken = day === 0 && D.TAKEN.includes(t) || staff !== "any" && i % 3 === 2;
-      return /*#__PURE__*/React.createElement("button", {
+    }, "Available times"), (() => {
+      const times = slotsForDay(s, (D.DAYS[day] || {}).dow);
+      if (!times.length) return /*#__PURE__*/React.createElement("p", {
+        className: "muted",
+        style: {
+          margin: 0
+        }
+      }, "Closed on this day \u2014 pick another.");
+      return /*#__PURE__*/React.createElement("div", {
+        className: "slotgrid"
+      }, times.map(t => /*#__PURE__*/React.createElement("button", {
         key: t,
         className: "slot" + (slot === t ? " is-active" : ""),
-        disabled: taken,
         onClick: () => setSlot(t)
-      }, t);
-    }))), /*#__PURE__*/React.createElement("label", {
+      }, t)));
+    })()), /*#__PURE__*/React.createElement("label", {
       className: "togglerow"
     }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       className: "srv-name"
@@ -1117,14 +1150,31 @@
         gap: 12,
         paddingTop: 6
       }
-    }, D.CLASSES.map(c => /*#__PURE__*/React.createElement(ClassCard, {
+    }, D.CLASSES.length ? D.CLASSES.map(c => /*#__PURE__*/React.createElement(ClassCard, {
       key: c.id,
       c: c,
       joined: false,
       onJoin: cl => nav.push("classJoin", {
         id: cl.id
       })
-    })))));
+    })) : /*#__PURE__*/React.createElement("div", {
+      className: "empty"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "empty-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "fitness",
+      size: 26
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "h-md",
+      style: {
+        marginBottom: 4
+      }
+    }, "No classes yet"), /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        margin: 0
+      }
+    }, "Group classes will appear here as studios add them.")))));
   }
 
   // ---------- BOOKINGS ----------
@@ -1718,10 +1768,27 @@
       style: {
         margin: "0 0 2px"
       }
-    }, "Collect a stamp on every visit. Rewards apply automatically at checkout."), D.LOYALTY.map(l => /*#__PURE__*/React.createElement(LoyaltyCard, {
+    }, "Collect a stamp on every visit. Rewards apply automatically at checkout."), D.LOYALTY.length ? D.LOYALTY.map(l => /*#__PURE__*/React.createElement(LoyaltyCard, {
       key: l.studioId,
       l: l
-    })))));
+    })) : /*#__PURE__*/React.createElement("div", {
+      className: "empty"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "empty-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "sparkle",
+      size: 26
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "h-md",
+      style: {
+        marginBottom: 4
+      }
+    }, "No rewards yet"), /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        margin: 0
+      }
+    }, "Book with a studio that runs a loyalty card and your stamps show up here.")))));
   }
 
   // ---------- POST-VISIT REVIEW ----------
@@ -2711,7 +2778,7 @@
   function App() {
     const [tab, setTab] = useState("home");
     const [stack, setStack] = useState([]); // overlay pages on top of the active tab
-    const [favs, setFavs] = useState(() => load("favs", ["kreol-spa"]));
+    const [favs, setFavs] = useState(() => load("favs", []));
     const [bookings, setBookings] = useState(() => load("bookings", D.BOOKINGS));
     const [joined, setJoined] = useState(() => load("joined", []));
     const [reviewed, setReviewed] = useState(() => load("reviewed", []));
