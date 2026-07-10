@@ -1302,31 +1302,16 @@
 
   // ---------- NOTIFICATIONS ----------
   function Notifications({
-    nav
+    nav,
+    bookings
   }) {
-    const items = [{
+    // Real notifications only: a reminder for each of your upcoming bookings.
+    // No bookings → nothing to show (a logged-out visitor sees an empty state).
+    const items = (bookings || []).filter(b => !b.past).map(b => ({
       ic: "calendar",
-      t: "Reminder: Coconut & frangipani massage",
-      s: "Tomorrow at 14:30 · Kreol Spa",
-      when: "2h ago",
-      dot: true
-    }, {
-      ic: "check",
-      t: "Booking confirmed",
-      s: "Sunrise beach yoga · Sat 07:00",
-      when: "1d ago",
-      dot: true
-    }, {
-      ic: "sparkle",
-      t: "A slot opened at L'Accent Barber",
-      s: "Today 16:00 — you were watching this",
-      when: "2d ago"
-    }, {
-      ic: "heart",
-      t: "Lumière Nails added a new service",
-      s: "BIAB overlay · SCR 42",
-      when: "5d ago"
-    }];
+      t: "Reminder: " + b.service,
+      s: [b.when, b.studio].filter(Boolean).join(" · ")
+    }));
     return /*#__PURE__*/React.createElement("div", {
       className: "sheet-full"
     }, /*#__PURE__*/React.createElement(TopBar, {
@@ -1344,7 +1329,24 @@
       className: "app-scroll"
     }, /*#__PURE__*/React.createElement("div", {
       className: "screen"
-    }, items.map((n, i) => /*#__PURE__*/React.createElement("div", {
+    }, items.length === 0 ? /*#__PURE__*/React.createElement("div", {
+      className: "empty"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "empty-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "bell",
+      size: 26
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "h-md",
+      style: {
+        marginBottom: 4
+      }
+    }, "No notifications yet"), /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        margin: 0
+      }
+    }, "Booking reminders and updates will show up here.")) : items.map((n, i) => /*#__PURE__*/React.createElement("div", {
       className: "arow",
       key: i
     }, /*#__PURE__*/React.createElement("span", {
@@ -1366,12 +1368,7 @@
       style: {
         marginTop: 2
       }
-    }, n.s)), /*#__PURE__*/React.createElement("div", {
-      className: "tiny muted",
-      style: {
-        whiteSpace: "nowrap"
-      }
-    }, n.when))))));
+    }, n.s)))))));
   }
 
   // ---------- ACCOUNT + LOGIN/OTP ----------
@@ -2155,7 +2152,9 @@
     const [tab, setTab] = useState("home");
     const [stack, setStack] = useState([]); // overlay pages on top of the active tab
     const [favs, setFavs] = useState(() => load("favs", []));
-    const [bookings, setBookings] = useState(() => load("bookings", D.BOOKINGS));
+    // "bookings2" — bumped from "bookings" to drop any demo bookings older builds
+    // persisted to localStorage. Starts empty; only real local bookings are stored.
+    const [bookings, setBookings] = useState(() => load("bookings2", []));
     const [joined, setJoined] = useState(() => load("joined", []));
     const [reviewed, setReviewed] = useState(() => load("reviewed", []));
     const [manage, setManage] = useState(null); // booking being managed (action sheet)
@@ -2165,7 +2164,7 @@
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
     useEffect(() => save("favs", favs), [favs]);
-    useEffect(() => save("bookings", bookings), [bookings]);
+    useEffect(() => save("bookings2", bookings), [bookings]);
     useEffect(() => save("joined", joined), [joined]);
     useEffect(() => save("reviewed", reviewed), [reviewed]);
     useEffect(() => save("user", user), [user]);
@@ -2312,7 +2311,8 @@
         toggleFav: toggleFav,
         nav: nav
       });else if (top.name === "notif") overlay = /*#__PURE__*/React.createElement(Notifications, {
-        nav: nav
+        nav: nav,
+        bookings: bookings
       });else if (top.name === "rewards") overlay = /*#__PURE__*/React.createElement(Rewards, {
         nav: nav
       });else if (top.name === "invite") overlay = /*#__PURE__*/React.createElement(Invite, {

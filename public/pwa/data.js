@@ -103,25 +103,12 @@
     },
   ];
 
-  const CLASSES = [
-    { id: "c1", studio: "North Shore Fitness", studioId: "north-shore-fit", name: "Sunrise beach yoga", instructor: "with Aline", day: "Sat", time: "07:00", dur: "60 min", level: "All levels", price: 18, spots: 6, cap: 14 },
-    { id: "c2", studio: "North Shore Fitness", studioId: "north-shore-fit", name: "Small-group strength", instructor: "with Denis", day: "Sat", time: "08:30", dur: "45 min", level: "Intermediate", price: 25, spots: 2, cap: 6 },
-    { id: "c3", studio: "Kreol Spa", studioId: "kreol-spa", name: "Sound bath & breathwork", instructor: "with Maya", day: "Sun", time: "17:00", dur: "50 min", level: "All levels", price: 22, spots: 9, cap: 16 },
-    { id: "c4", studio: "North Shore Fitness", studioId: "north-shore-fit", name: "HIIT circuit", instructor: "with Denis", day: "Mon", time: "18:00", dur: "40 min", level: "Advanced", price: 20, spots: 4, cap: 10 },
-  ];
-
-  const BOOKINGS = [
-    { id: "bk1", studioId: "kreol-spa", studio: "Kreol Spa", area: "Beau Vallon, Mahé", service: "Coconut & frangipani massage", when: "Tomorrow · 14:30", price: 55, status: "Confirmed", photo: U+"1600334129128-685c5582fd35"+q, past: false },
-    { id: "bk2", studioId: "north-shore-fit", studio: "North Shore Fitness", area: "Glacis, Mahé", service: "Sunrise beach yoga · class", when: "Sat · 07:00", price: 18, status: "Confirmed", photo: U+"1571902943202-507ec2618e8f"+q, past: false },
-    { id: "bk3", studioId: "laccent", studio: "L'Accent Barber", area: "Victoria, Mahé", service: "Skin fade & beard", when: "12 Jun · 10:00", price: 28, status: "Completed", photo: U+"1503951914875-452162b0f3f1"+q, past: true },
-    { id: "bk4", studioId: "lumiere-nails", studio: "Lumière Nails", area: "Eden Island, Mahé", service: "Gel manicure", when: "28 May · 16:30", price: 30, status: "Completed", photo: U+"1610992015732-2449b76344bc"+q, past: true },
-  ];
-
-  const REVIEWS = [
-    { name: "Sara M.", when: "2 weeks ago", rating: 5, text: "The frangipani massage was unreal — left floating. Booking took ten seconds.", av: U+"1544005313-94ddf0286df2"+q },
-    { name: "James O.", when: "1 month ago", rating: 5, text: "Real-time slots meant I got in same day. Spotless place, warm team.", av: U+"1500648767791-00dcc994a43e"+q },
-    { name: "Nadia R.", when: "1 month ago", rating: 4, text: "Lovely treatment. Parking near Beau Vallon can be tricky at weekends.", av: U+"1534528741775-53994a69daeb"+q },
-  ];
+  // User-specific data is never seeded with demo content — a logged-out user
+  // must see nothing fake. Real classes come per studio; bookings fill in as the
+  // user books; reviews come from each studio (studio.reviews_list).
+  const CLASSES = [];
+  const BOOKINGS = [];
+  const REVIEWS = [];
 
   const DAYS = [
     { d: "Today", n: "3" }, { d: "Thu", n: "4" }, { d: "Fri", n: "5" }, { d: "Sat", n: "6" },
@@ -130,18 +117,8 @@
   const SLOTS = ["09:00","10:00","11:00","12:30","14:00","14:30","16:00","17:15","18:00","18:45","19:15","20:00"];
   const TAKEN = ["12:30","16:00","19:15"];
 
-  const LOYALTY = [
-    { studioId: "kreol-spa", studio: "Kreol Spa", photo: U+"1600334129128-685c5582fd35"+q, have: 4, need: 6, reward: "6th massage — 50% off" },
-    { studioId: "laccent", studio: "L'Accent Barber", photo: U+"1503951914875-452162b0f3f1"+q, have: 9, need: 10, reward: "10th cut on the house" },
-    { studioId: "lumiere-nails", studio: "Lumière Nails", photo: U+"1610992015732-2449b76344bc"+q, have: 2, need: 8, reward: "Free nail art set" },
-  ];
-
-  const STAFF = [
-    { id: "aline", name: "Aline", role: "Massage therapist", rating: 4.9, av: U+"1544005313-94ddf0286df2"+q },
-    { id: "denis", name: "Denis", role: "Barber", rating: 4.8, av: U+"1500648767791-00dcc994a43e"+q },
-    { id: "maya", name: "Maya", role: "Nail artist", rating: 4.9, av: U+"1534528741775-53994a69daeb"+q },
-    { id: "nadia", name: "Nadia", role: "Esthetician", rating: 4.7, av: U+"1531123897727-8f129e1688ce"+q },
-  ];
+  const LOYALTY = [];
+  const STAFF = [];
 
   window.SEY_DATA = { CATEGORIES, STUDIOS, CLASSES, BOOKINGS, REVIEWS, DAYS, SLOTS, TAKEN, LOYALTY, STAFF };
 })();

@@ -616,26 +616,30 @@
   }
 
   // ---------- NOTIFICATIONS ----------
-  function Notifications({ nav }) {
-    const items = [
-      { ic: "calendar", t: "Reminder: Coconut & frangipani massage", s: "Tomorrow at 14:30 · Kreol Spa", when: "2h ago", dot: true },
-      { ic: "check", t: "Booking confirmed", s: "Sunrise beach yoga · Sat 07:00", when: "1d ago", dot: true },
-      { ic: "sparkle", t: "A slot opened at L'Accent Barber", s: "Today 16:00 — you were watching this", when: "2d ago" },
-      { ic: "heart", t: "Lumière Nails added a new service", s: "BIAB overlay · SCR 42", when: "5d ago" },
-    ];
+  function Notifications({ nav, bookings }) {
+    // Real notifications only: a reminder for each of your upcoming bookings.
+    // No bookings → nothing to show (a logged-out visitor sees an empty state).
+    const items = (bookings || [])
+      .filter((b) => !b.past)
+      .map((b) => ({ ic: "calendar", t: "Reminder: " + b.service, s: [b.when, b.studio].filter(Boolean).join(" · ") }));
     return (
       <div className="sheet-full">
         <TopBar title="Notifications" onBack={nav.pop} right={<button className="iconbtn iconbtn--plain" aria-label="Settings" onClick={() => nav.push("notifsettings")}><Ic name="shield" size={20} /></button>} />
         <div className="app-scroll">
           <div className="screen">
-            {items.map((n, i) => (
+            {items.length === 0 ? (
+              <div className="empty">
+                <div className="empty-ic"><Ic name="bell" size={26} /></div>
+                <div className="h-md" style={{ marginBottom: 4 }}>No notifications yet</div>
+                <p className="muted" style={{ margin: 0 }}>Booking reminders and updates will show up here.</p>
+              </div>
+            ) : items.map((n, i) => (
               <div className="arow" key={i}>
                 <span className="arow-ic"><Ic name={n.ic} size={20} /></span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, color: "var(--ink)" }}>{n.t}</div>
                   <div className="tiny muted" style={{ marginTop: 2 }}>{n.s}</div>
                 </div>
-                <div className="tiny muted" style={{ whiteSpace: "nowrap" }}>{n.when}</div>
               </div>
             ))}
           </div>
@@ -972,7 +976,9 @@
     const [tab, setTab] = useState("home");
     const [stack, setStack] = useState([]); // overlay pages on top of the active tab
     const [favs, setFavs] = useState(() => load("favs", []));
-    const [bookings, setBookings] = useState(() => load("bookings", D.BOOKINGS));
+    // "bookings2" — bumped from "bookings" to drop any demo bookings older builds
+    // persisted to localStorage. Starts empty; only real local bookings are stored.
+    const [bookings, setBookings] = useState(() => load("bookings2", []));
     const [joined, setJoined] = useState(() => load("joined", []));
     const [reviewed, setReviewed] = useState(() => load("reviewed", []));
     const [manage, setManage] = useState(null); // booking being managed (action sheet)
@@ -983,7 +989,7 @@
     const [install, setInstall] = useState(false);
 
     useEffect(() => save("favs", favs), [favs]);
-    useEffect(() => save("bookings", bookings), [bookings]);
+    useEffect(() => save("bookings2", bookings), [bookings]);
     useEffect(() => save("joined", joined), [joined]);
     useEffect(() => save("reviewed", reviewed), [reviewed]);
     useEffect(() => save("user", user), [user]);
@@ -1036,7 +1042,7 @@
       else if (top.name === "classJoin") overlay = <ClassJoin id={p.id} nav={nav} joinClass={joinClass} joinedIds={joined} />;
       else if (top.name === "classes") overlay = <Classes nav={nav} />;
       else if (top.name === "favs") overlay = <Favourites favs={favs} toggleFav={toggleFav} nav={nav} />;
-      else if (top.name === "notif") overlay = <Notifications nav={nav} />;
+      else if (top.name === "notif") overlay = <Notifications nav={nav} bookings={bookings} />;
       else if (top.name === "rewards") overlay = <Rewards nav={nav} />;
       else if (top.name === "invite") overlay = <Invite nav={nav} />;
       else if (top.name === "review") { const bk = bookings.find((b) => b.id === p.bookingId); overlay = <ReviewFlow booking={bk} nav={nav} onSubmit={(id) => setReviewed((r) => [...r, id])} />; }
