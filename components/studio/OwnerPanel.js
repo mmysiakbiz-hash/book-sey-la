@@ -154,7 +154,23 @@ export default function OwnerPanel() {
       let r = { ok: true };
       if (stepIndex === 0) r = await updateStudio(s.id, { name: f.name, category: f.category || null });
       else if (stepIndex === 1) r = await updateStudio(s.id, { tagline: f.tagline || null, bio: f.bio || null });
-      else if (stepIndex === 2) r = await updateStudio(s.id, { address: f.address || null, island: f.island || null, lat: f.lat === "" ? null : Number(f.lat), lng: f.lng === "" ? null : Number(f.lng) });
+      else if (stepIndex === 2) {
+        let lat = f.lat === "" ? null : Number(f.lat);
+        let lng = f.lng === "" ? null : Number(f.lng);
+        // Auto-geocode from the address so the studio shows on the map — unless
+        // coordinates were entered by hand. Best-effort; never blocks the save.
+        if ((lat == null || lng == null) && (f.address || f.island)) {
+          try {
+            const q = [f.address, f.island].filter(Boolean).join(", ");
+            const g = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`).then((res) => res.json());
+            if (g && typeof g.lat === "number" && typeof g.lng === "number") {
+              lat = g.lat; lng = g.lng;
+              set({ lat: String(g.lat), lng: String(g.lng) });
+            }
+          } catch (e) { /* keep saving without coordinates */ }
+        }
+        r = await updateStudio(s.id, { address: f.address || null, island: f.island || null, lat, lng });
+      }
       else if (stepIndex === 3) r = await saveHours(s.id, f.hours.map((h) => ({ day_of_week: h.day_of_week, open_min: hhmmToMin(h.open), close_min: hhmmToMin(h.close) })));
       else if (stepIndex === 4) r = await saveServices(s.id, f.services);
       else if (stepIndex === 5) r = await saveStaff(s.id, f.staff);

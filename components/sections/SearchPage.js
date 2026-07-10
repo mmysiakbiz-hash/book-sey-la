@@ -8,6 +8,7 @@ import { Button } from "@/components/core/Button";
 import { Icon } from "@/components/brand/Icon";
 import { Badge } from "@/components/core/Badge";
 import { Select } from "@/components/core/Select";
+import { StudioMap } from "@/components/booking/StudioMap";
 // SearchPage — client-facing browse / results page in the sey.la | book pattern.
 
 
@@ -145,18 +146,9 @@ function SearchPage({ studios, initialCat, initialQ = "", initialLoc = "" }) {
             {mapOpen && !isClasses && (
               <aside className="sr-map" aria-label="Map">
                 <div className="sr-map-inner">
-                  {/* Real OpenStreetMap of the Seychelles (Mahé · Praslin · La Digue).
-                      Per-studio pins need studio coordinates, which we don't store
-                      yet — for now this shows the region rather than fake pins. */}
-                  <iframe
-                    title="Map of the Seychelles"
-                    src="https://www.openstreetmap.org/export/embed.html?bbox=55.30%2C-4.85%2C55.90%2C-4.28&layer=mapnik"
-                    style={{ width: "100%", height: "100%", border: 0, display: "block" }}
-                    loading="lazy"
-                  />
-                  <a className="sr-map-label" href="https://www.openstreetmap.org/#map=11/-4.62/55.45" target="_blank" rel="noreferrer" style={{ textDecoration: "none", zIndex: 2 }}>
-                    View larger map ↗
-                  </a>
+                  {/* Real OpenStreetMap (Leaflet) with a pin per studio that has
+                      coordinates (geocoded from its address on save). */}
+                  <StudioMap studios={results} />
                 </div>
               </aside>
             )}
