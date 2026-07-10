@@ -50,6 +50,21 @@ export default function AccountPage() {
         </div>
       </div>
 
+      {!user && !loading && (
+        <section style={{ background: "var(--bg-alt)" }}>
+          <div className="sey-container" style={{ padding: "56px 0", textAlign: "center", maxWidth: 480 }}>
+            <h1 style={{ fontSize: "var(--text-h2)", margin: "0 0 8px" }}>Your account</h1>
+            <p style={{ color: "var(--text-muted)", margin: "0 0 22px" }}>
+              Log in to see your bookings, saved studios, rewards and wallet — all in one place. It's free, always.
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              <Button size="lg" as="a" href="/login">Log in or sign up</Button>
+              <Button variant="secondary" size="lg" as="a" href="/search">Browse studios</Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {user && (
         <section style={{ background: "var(--bg-alt)", borderBottom: "1px solid var(--line)" }}>
           <div className="sey-container" style={{ padding: "20px 0" }}>

@@ -5,14 +5,6 @@ import { Icon } from "@/components/brand/Icon";
 // VenueClose — reviews, visit info (hours + map), booking CTA, powered-by footer.
 
 
-const U = "https://images.unsplash.com/photo-";
-
-const REVIEWS = [
-  { name: "Sofia", when: "2 days ago", img: U + "1632765866070-3fadf25d3d5b", text: "The frangipani massage was the highlight of our trip. Booked the night before and everything was ready." },
-  { name: "James", when: "1 week ago", img: U + "1699641975121-5c3f55a553e5", text: "Deep-tissue with Denis sorted out my surfing shoulders. Calm room, warm welcome." },
-  { name: "Nadia", when: "2 weeks ago", img: U + "1713845784497-fe3d7ed176d8", text: "A proper island spa. Tea after the facial, no rushing. I'll be back before I fly home." },
-];
-
 const HOURS = [
   ["Mon – Fri", "9:00 – 19:00"],
   ["Saturday", "9:00 – 17:00"],

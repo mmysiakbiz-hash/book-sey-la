@@ -40,7 +40,7 @@ function EmbedPage() {
           <nav className="pg-nav-right">
             <a href="/search">Browse</a>
             <a href="/for-studios">For studios</a>
-            <a className="pg-btn" href="/business">Business panel</a>
+            <a className="pg-btn" href="/panel">Business panel</a>
           </nav>
         </div>
       </header>

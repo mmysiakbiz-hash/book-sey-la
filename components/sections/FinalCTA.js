@@ -37,7 +37,6 @@ function FinalCTA() {
               <a href="/search">Explore</a>
               <a href="#how">How it works</a>
               <a href="/for-studios">For studios</a>
-              <a href="/business">Business</a>
               <a href="/account">My account</a>
               <a href="/login">Log in</a>
             </nav>
