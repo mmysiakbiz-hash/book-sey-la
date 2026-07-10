@@ -8,7 +8,16 @@ import { Icon } from "@/components/brand/Icon";
 
 
 
-const POPULAR = ["Massage", "Hair", "Nails", "Barber", "Facial", "Yoga"];
+// Popular treatment types → the real category the search filters on.
+const POPULAR = [
+  { label: "Massage", cat: "Spa & massage" },
+  { label: "Hair", cat: "Hair" },
+  { label: "Nails", cat: "Nails" },
+  { label: "Barber", cat: "Barber" },
+  { label: "Facial", cat: "Skin & facial" },
+  { label: "Yoga", cat: "Fitness & yoga" },
+];
+const ISLANDS = ["Mahé", "Praslin", "La Digue"];
 const U = "https://images.unsplash.com/photo-";
 
 function Hero() {
@@ -38,7 +47,13 @@ function Hero() {
           <div className="lp-hero-popular">
             <span className="lp-hero-popular-label">Popular</span>
             {POPULAR.map((p) => (
-              <a key={p} href="#categories" className="lp-chip">{p}</a>
+              <a key={p.label} href={`/search?cat=${encodeURIComponent(p.cat)}`} className="lp-chip">{p.label}</a>
+            ))}
+          </div>
+          <div className="lp-hero-popular">
+            <span className="lp-hero-popular-label">Islands</span>
+            {ISLANDS.map((i) => (
+              <a key={i} href={`/search?loc=${encodeURIComponent(i)}`} className="lp-chip">{i}</a>
             ))}
           </div>
           <div className="lp-hero-trust">
