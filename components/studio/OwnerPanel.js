@@ -628,9 +628,9 @@ function Billing({ studio, staffCount }) {
       <div style={{ ...card, marginBottom: 16 }}>
         <div style={{ fontWeight: 700, color: "var(--cocoa)", marginBottom: 10 }}>Your plan</div>
         <div style={{ display: "grid", gap: 8, fontSize: "var(--text-sm)" }}>
-          <Row k="Users billed" v={`${b.users}`} />
-          <Row k="Rate" v={`${b.perUser} SCR / user`} />
-          <Row k="Subscription per cycle" v={<b>{b.amount} SCR</b>} />
+          <Row k="Team members billed" v={`${b.users}`} />
+          <Row k="Rate" v={`€${b.perUser} / team member`} />
+          <Row k="Subscription per month" v={<b>€{b.amount}</b>} />
           <Row k="New-client commission" v={`${Math.round(b.commissionRate * 100)}% of the first booking`} />
           <Row k={b.state === "trial" ? "Free until" : "Next due"} v={fmtDate(b.dueAt)} />
           <Row k="Grace period" v={`${b.graceDays} days`} />

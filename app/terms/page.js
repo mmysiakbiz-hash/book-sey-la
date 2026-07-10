@@ -56,7 +56,7 @@ const HTML=`<header class="pg-nav">
         </ul>
 
         <h2 id="business"><span class="num">5</span>Business subscriptions</h2>
-        <p>Studios subscribe to list and take bookings. The subscription is <strong>€19 per month</strong> with the first <strong>3 months free</strong>. Subscriptions renew monthly and can be cancelled anytime; see the <a href="/refund">Refund Policy</a> for details. Studios are responsible for their listings, prices, staff and services.</p>
+        <p>Studios subscribe to list and take bookings. The subscription is <strong>€25 per month per studio</strong> (which includes one team member), plus <strong>€25 per month for each additional team member</strong>, with the first <strong>3 months free</strong>. Subscriptions renew monthly and can be cancelled anytime; see the <a href="/refund">Refund Policy</a> for details. Studios are responsible for their listings, prices, staff and services.</p>
 
         <h2 id="conduct"><span class="num">6</span>Acceptable use</h2>
         <p>Don't misuse the platform: no fraud, no scraping, no interfering with security, and no unlawful, harmful or misleading content. We may suspend accounts that break these rules.</p>

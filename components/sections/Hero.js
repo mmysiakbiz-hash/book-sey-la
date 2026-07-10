@@ -34,8 +34,8 @@ function Hero() {
           </div>
           <div className="lp-hero-trust">
             <span className="lp-hero-rating">
-              <Icon name="star" size={16} color="var(--ink)" />
-              <b>4.9</b> from 12,000+ island bookings
+              <Icon name="clock" size={16} color="var(--ink)" />
+              Real-time availability
             </span>
             <span className="lp-hero-free"><Icon name="heart" size={15} color="var(--cocoa-60)" /> Free for clients</span>
           </div>

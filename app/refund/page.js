@@ -43,7 +43,7 @@ const HTML=`<header class="pg-nav">
         </ul>
 
         <h2 id="business"><span class="num">3</span>Business subscriptions</h2>
-        <p>The studio subscription is <strong>€19 per month</strong>. You can cancel anytime and keep access until the end of the current billing period. Monthly fees already paid are non-refundable except where required by law.</p>
+        <p>The studio subscription is <strong>€25 per month per studio</strong> (including one team member), plus <strong>€25 per month for each additional team member</strong>, with the first 3 months free. You can cancel anytime and keep access until the end of the current billing period. Monthly fees already paid are non-refundable except where required by law.</p>
 
         <h2 id="trial"><span class="num">4</span>Free trial</h2>
         <p>New studios get <strong>3 months free</strong>. You won't be charged during the trial and can cancel before it ends at no cost. Billing begins only after the trial unless you cancel.</p>

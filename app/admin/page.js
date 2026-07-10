@@ -190,7 +190,7 @@ function Overview({ bi, range, onRange }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 22 }}>
         <Stat label="Studios" value={s.total} sub={`${(s.active || 0) + (s.verified || 0)} live · ${s.unclaimed || 0} unclaimed · ${s.draft || 0} draft`} />
-        <Stat label="MRR (subscriptions)" value={`${bi.mrr_scr || 0} SCR`} sub="500 SCR × live users" />
+        <Stat label="MRR (subscriptions)" value={`€${bi.mrr_eur || 0}`} sub="€25 × team members · live studios" />
         <Stat label="Commission (new clients)" value={`€${bi.commission_eur || 0}`} sub={`${bi.new_clients || 0} acquired`} />
         <Stat label="GMV booked" value={`€${bi.gmv_eur || 0}`} />
         <Stat label="Bookings" value={bi.bookings_total} sub={`${bi.bookings_cancelled || 0} cancelled`} />

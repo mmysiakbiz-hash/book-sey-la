@@ -12,10 +12,10 @@ import { Logo } from "@/components/brand/Logo";
 const INCLUDED = [
   "Live real-time calendar",
   "Verified local listing",
-  "Automatic reminders",
+  "WhatsApp & email reminders",
   "Cancellation protection",
-  "Client messaging",
-  "No commission on clients",
+  "Client & loyalty tools",
+  "Always free for your clients",
 ];
 
 function StudiosClose() {
@@ -26,16 +26,16 @@ function StudiosClose() {
           <SectionHeader
             align="center"
             eyebrow="Simple, honest pricing"
-            title="Free to start on the"
-            accent="islands."
-            intro="List your studio and take bookings for free. A small flat fee applies only on completed bookings — never a cut of your service price."
+            title="Free for your first"
+            accent="3 months."
+            intro="List your studio and take real bookings free for 3 months. After that it's a flat €25 a month per studio — that includes your first team member — plus €25 for each additional team member. No setup fees, cancel anytime."
           />
           <div className="st-pricing">
             <div className="st-price-head">
               <span className="st-price-amt">Free</span>
-              <span className="st-price-per">to list &amp; go live</span>
+              <span className="st-price-per">for 3 months</span>
             </div>
-            <div className="st-price-flat">then <b>€1</b> per completed booking · nothing on cancellations</div>
+            <div className="st-price-flat">then <b>€25</b> / month per studio — includes 1 team member · <b>+€25</b> for each extra team member</div>
             <ul className="st-price-list">
               {INCLUDED.map((f) => (
                 <li key={f}><Icon name="check" size={17} color="var(--eucalyptus)" /> {f}</li>
