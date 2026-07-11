@@ -26,7 +26,7 @@ function ClassCard({ c, onJoined }) {
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
-  const [state, setState] = React.useState("idle"); // idle | sending | done | error | full
+  const [state, setState] = React.useState("idle"); // idle | sending | done | waitlisted | error
   const [err, setErr] = React.useState("");
 
   const start = c.startsAt ? new Date(c.startsAt) : null;
@@ -42,8 +42,7 @@ function ClassCard({ c, onJoined }) {
         body: JSON.stringify({ sessionId: c.id, name, email }),
       });
       const j = await res.json().catch(() => ({}));
-      if (res.ok && j.ok) { setState("done"); onJoined(j.spotsLeft); }
-      else if (j.error === "full") { setState("full"); onJoined(0); }
+      if (res.ok && j.ok) { setState(j.waitlisted ? "waitlisted" : "done"); onJoined(j.spotsLeft); }
       else if (j.error === "already_joined") { setState("done"); }
       else { setState("error"); setErr(j.error || "error"); }
     } catch (e) { setState("error"); setErr("network_error"); }
@@ -63,24 +62,26 @@ function ClassCard({ c, onJoined }) {
           {c.description && <p style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)", margin: "8px 0 0" }}>{c.description}</p>}
           {c.spotsLeft != null && (
             <div style={{ fontSize: "var(--text-xs)", fontWeight: 600, marginTop: 8, color: full ? "var(--clay)" : "var(--eucalyptus)" }}>
-              {full ? "Fully booked" : `${c.spotsLeft} spot${c.spotsLeft === 1 ? "" : "s"} left`}
+              {full ? "Fully booked · join the waitlist" : `${c.spotsLeft} spot${c.spotsLeft === 1 ? "" : "s"} left`}
             </div>
           )}
         </div>
         {state === "done" ? (
           <span style={{ color: "var(--eucalyptus)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="check" size={16} color="var(--eucalyptus)" /> Booked</span>
+        ) : state === "waitlisted" ? (
+          <span style={{ color: "var(--clay)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="check" size={16} color="var(--clay)" /> On waitlist</span>
         ) : (
-          <Button size="sm" variant={full ? "secondary" : "primary"} onClick={() => !full && setOpen((v) => !v)} disabled={full}>{full ? "Full" : (open ? "Close" : "Join")}</Button>
+          <Button size="sm" variant={full ? "secondary" : "primary"} onClick={() => setOpen((v) => !v)}>{open ? "Close" : (full ? "Join waitlist" : "Join")}</Button>
         )}
       </div>
 
-      {open && state !== "done" && !full && (
+      {open && state !== "done" && state !== "waitlisted" && (
         <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
+          {full && <p style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)", margin: 0 }}>This class is full. Join the waitlist and we'll email you if a spot opens up.</p>}
           <input style={inp} placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
           <input style={inp} type="email" inputMode="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") join(); }} />
-          <Button size="sm" onClick={join} disabled={state === "sending" || !email.trim()}>{state === "sending" ? "Booking…" : "Confirm spot"}</Button>
+          <Button size="sm" onClick={join} disabled={state === "sending" || !email.trim()}>{state === "sending" ? (full ? "Joining…" : "Booking…") : (full ? "Join waitlist" : "Confirm spot")}</Button>
           {state === "error" && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>Couldn't book ({err}). Try again.</span>}
-          {state === "full" && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>Sorry — this class just filled up.</span>}
         </div>
       )}
     </div>

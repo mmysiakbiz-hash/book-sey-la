@@ -674,7 +674,7 @@ function Row({ k, v }) {
 }
 
 function Classes({ studioId, classes, onRefresh }) {
-  const [form, setForm] = React.useState({ name: "", date: "", time: "", durationMin: 60, capacity: 10, price: "" });
+  const [form, setForm] = React.useState({ name: "", date: "", time: "", durationMin: 60, capacity: 10, price: "", repeat: 1 });
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState("");
   const upd = (patch) => setForm((v) => ({ ...v, ...patch }));
@@ -683,11 +683,12 @@ function Classes({ studioId, classes, onRefresh }) {
     setErr("");
     if (!form.name.trim() || !form.date || !form.time) { setErr("Add a name, date and time."); return; }
     setBusy(true);
-    const startISO = new Date(`${form.date}T${form.time}`).toISOString();
-    const r = await createClassSession(studioId, { name: form.name, startISO, durationMin: form.durationMin, capacity: form.capacity, price: form.price });
+    // Build the start in Mahé time (UTC+4) so it lands correctly regardless of the owner's browser.
+    const startISO = new Date(`${form.date}T${form.time}:00+04:00`).toISOString();
+    const r = await createClassSession(studioId, { name: form.name, startISO, durationMin: form.durationMin, capacity: form.capacity, price: form.price, repeatWeeks: form.repeat });
     setBusy(false);
     if (r.error) { setErr("Couldn't add: " + r.error); return; }
-    setForm({ name: "", date: "", time: "", durationMin: 60, capacity: 10, price: "" });
+    setForm({ name: "", date: "", time: "", durationMin: 60, capacity: 10, price: "", repeat: 1 });
     onRefresh();
   }
   async function del(id) { setBusy(true); await deleteClassSession(id); setBusy(false); onRefresh(); }
@@ -710,7 +711,16 @@ function Classes({ studioId, classes, onRefresh }) {
             <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Capacity</span><input style={{ ...inp, width: "100%" }} type="number" value={form.capacity} onChange={(e) => upd({ capacity: e.target.value })} /></label>
             <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Price SCR</span><input style={{ ...inp, width: "100%" }} type="number" value={form.price} onChange={(e) => upd({ price: e.target.value })} /></label>
           </div>
-          <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Saving…" : "Add class"}</button>
+          <label><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Repeat</span>
+            <select style={{ ...inp, width: "100%" }} value={form.repeat} onChange={(e) => upd({ repeat: Number(e.target.value) })}>
+              <option value={1}>Just this date</option>
+              <option value={4}>Weekly · 4 weeks</option>
+              <option value={8}>Weekly · 8 weeks</option>
+              <option value={12}>Weekly · 12 weeks</option>
+            </select>
+          </label>
+          {form.repeat > 1 && <span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Creates {form.repeat} weekly sessions, same day &amp; time.</span>}
+          <button style={{ ...primaryBtn, justifySelf: "start" }} onClick={add} disabled={busy}>{busy ? "Saving…" : (form.repeat > 1 ? `Add ${form.repeat} classes` : "Add class")}</button>
           {err && <span style={{ color: "var(--clay)", fontSize: "var(--text-sm)" }}>{err}</span>}
         </div>
       </div>
@@ -726,6 +736,7 @@ function Classes({ studioId, classes, onRefresh }) {
                   <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>
                     {c.start ? c.start.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : "—"}
                     {c.price != null ? ` · SCR ${Math.round(c.price)}` : ""} · {c.booked}/{c.capacity != null ? c.capacity : "∞"} booked
+                    {c.waitlist > 0 ? ` · ${c.waitlist} waiting` : ""}
                   </div>
                 </div>
                 <button onClick={() => del(c.id)} disabled={busy} style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>Delete</button>

@@ -9,7 +9,7 @@
 // Requires (server-only): NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, BREVO_API_KEY.
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendBrevoEmail, classConfirmationEmail } from "@/lib/email";
+import { sendBrevoEmail, classConfirmationEmail, classWaitlistEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,15 +37,17 @@ export async function POST(req) {
   if (!session) return NextResponse.json({ error: "not_found" }, { status: 404 });
   if ((session.status || "active") === "cancelled") return NextResponse.json({ error: "cancelled" }, { status: 409 });
 
+  // Only confirmed bookings count against capacity — waitlisters don't take a spot.
   const { count } = await supabase
     .from("class_bookings")
     .select("id", { count: "exact", head: true })
     .eq("session_id", sessionId)
-    .neq("status", "cancelled");
+    .eq("status", "confirmed");
   const taken = count || 0;
-  if (session.capacity != null && taken >= session.capacity) {
-    return NextResponse.json({ error: "full", spotsLeft: 0 }, { status: 409 });
-  }
+  // When the class is full we don't reject — we add the person to the waitlist,
+  // so they get promoted (and emailed) if a spot opens up later.
+  const isFull = session.capacity != null && taken >= session.capacity;
+  const bookingStatus = isFull ? "waitlist" : "confirmed";
 
   const { error } = await supabase.from("class_bookings").insert({
     session_id: sessionId,
@@ -53,7 +55,7 @@ export async function POST(req) {
     guest_name: name || null,
     guest_email: email,
     guest_phone: phone,
-    status: "confirmed",
+    status: bookingStatus,
   });
   if (error) {
     if ((error.code || "") === "23505") return NextResponse.json({ error: "already_joined" }, { status: 409 });
@@ -67,14 +69,14 @@ export async function POST(req) {
     ? start.toLocaleString("en-GB", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" })
     : "";
   const priceText = session.price_eur != null ? `SCR ${Math.round(Number(session.price_eur))}` : "";
-  const { subject, html } = classConfirmationEmail({
-    studioName: (session.studios && session.studios.name) || "",
-    className: session.name || "Class",
-    whenText, priceText,
-  });
+  const studioName = (session.studios && session.studios.name) || "";
+  const className = session.name || "Class";
+  const { subject, html } = isFull
+    ? classWaitlistEmail({ studioName, className, whenText })
+    : classConfirmationEmail({ studioName, className, whenText, priceText });
   const mail = await sendBrevoEmail({ to: email, subject, html });
   if (mail.error) console.error("[class-book] email failed:", mail.error);
 
-  const spotsLeft = session.capacity != null ? Math.max(0, session.capacity - taken - 1) : null;
-  return NextResponse.json({ ok: true, spotsLeft, emailed: !mail.error });
+  const spotsLeft = session.capacity != null ? Math.max(0, session.capacity - taken - (isFull ? 0 : 1)) : null;
+  return NextResponse.json({ ok: true, waitlisted: isFull, spotsLeft, emailed: !mail.error });
 }
