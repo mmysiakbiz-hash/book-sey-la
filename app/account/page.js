@@ -7,16 +7,8 @@ import { getFavouriteStudios } from "@/lib/favourites";
 import { getWallet } from "@/lib/wallet";
 import { ReferStudio } from "@/components/booking/ReferStudio";
 import { AccountDetails } from "@/components/booking/AccountDetails";
+import { MyBookings } from "@/components/booking/MyBookings";
 import { signOut } from "@/lib/auth";
-
-function fmtRange(during) {
-  // tstzrange like ["2026-07-06 14:30:00+00","2026-07-06 15:30:00+00")
-  const m = /([0-9T :+\-\.]+)"?,"?([0-9T :+\-\.]+)/.exec(during || "");
-  if (!m) return "";
-  const d = new Date(m[1].trim().replace(" ", "T"));
-  if (isNaN(d)) return "";
-  return d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
 
 export default function AccountPage() {
   const { user, loading } = useUser();
@@ -36,7 +28,7 @@ export default function AccountPage() {
     <>
       {/* Warm account header (greeting + sign-out) instead of a hard black bar. */}
       <header style={{ background: "var(--blush)", borderBottom: "1px solid var(--line)" }}>
-        <div className="sey-container" style={{ padding: "clamp(28px, 5vw, 44px) 0 clamp(24px, 4vw, 34px)" }}>
+        <div className="sey-container" style={{ paddingBlock: "clamp(28px, 5vw, 44px) clamp(24px, 4vw, 34px)" }}>
           <div className="sey-eyebrow" style={{ marginBottom: 12 }}>My account</div>
           {loading ? (
             <h1 style={{ fontSize: "var(--text-h1)", margin: 0, opacity: 0.5 }}>…</h1>
@@ -68,7 +60,7 @@ export default function AccountPage() {
 
       {user && (
         <section>
-          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
+          <div className="sey-container" style={{ paddingBlock: "22px", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Your details</h2>
             <AccountDetails user={user} />
           </div>
@@ -77,26 +69,16 @@ export default function AccountPage() {
 
       {user && bookings && bookings.length > 0 && (
         <section>
-          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
+          <div className="sey-container" style={{ paddingBlock: "22px", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Your bookings</h2>
-            <div style={{ display: "grid", gap: 10 }}>
-              {bookings.map((b) => (
-                <div key={b.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px" }}>
-                  <span style={{ fontWeight: 600 }}>{fmtRange(b.during) || "Booking"}</span>
-                  <span style={{ display: "inline-flex", gap: 12, alignItems: "center", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
-                    {b.price_eur != null && <span>SCR {Math.round(b.price_eur)}</span>}
-                    <span style={{ color: "var(--confirmed)", fontWeight: 600 }}>{b.status || "confirmed"}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
+            <MyBookings bookings={bookings} />
           </div>
         </section>
       )}
 
       {user && rewards && rewards.length > 0 && (
         <section>
-          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
+          <div className="sey-container" style={{ paddingBlock: "22px", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Your rewards</h2>
             <div style={{ display: "grid", gap: 10 }}>
               {rewards.map((r) => (
@@ -117,7 +99,7 @@ export default function AccountPage() {
 
       {user && faves && faves.length > 0 && (
         <section>
-          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
+          <div className="sey-container" style={{ paddingBlock: "22px", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Saved studios</h2>
             <div style={{ display: "grid", gap: 10 }}>
               {faves.map((s) => (
@@ -137,7 +119,7 @@ export default function AccountPage() {
 
       {user && wallet && (
         <section>
-          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
+          <div className="sey-container" style={{ paddingBlock: "22px", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Wallet</h2>
             <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
@@ -163,7 +145,7 @@ export default function AccountPage() {
 
       {user && (
         <section>
-          <div className="sey-container" style={{ padding: "22px 0", maxWidth: 720 }}>
+          <div className="sey-container" style={{ paddingBlock: "22px", maxWidth: 720 }}>
             <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Invite a studio · €15</h2>
             <ReferStudio />
           </div>

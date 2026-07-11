@@ -24,7 +24,7 @@ export default function VenueWaitlist({ studioId }) {
       <div className="sey-container" style={{ maxWidth: 620 }}>
         <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", padding: "18px 20px" }}>
           {state === "done" ? (
-            <p style={{ margin: 0, color: "var(--cocoa)" }}>You're on the waitlist 🌴 — we'll be in touch if a slot opens.</p>
+            <p style={{ margin: 0, color: "var(--cocoa)" }}>You're on the waitlist — we'll be in touch if a slot opens.</p>
           ) : (
             <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

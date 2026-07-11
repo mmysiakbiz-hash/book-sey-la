@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/core/Button";
 import { Icon } from "@/components/brand/Icon";
+import { Logo } from "@/components/brand/Logo";
 import { SaveStudioButton } from "@/components/booking/SaveStudioButton";
 // VenueHero — the studio's own header + full-bleed cover hero.
 
@@ -53,10 +54,9 @@ function VenueHero({ studio, hasClasses }) {
     <React.Fragment>
       <header className="vn-topbar">
         <div className="sey-container vn-topbar-inner">
-          <a className="vn-brand" href="#top">
-            <span className="vn-brand-mark">{mark}</span>
-            {word && <span className="vn-brand-word">{word}</span>}
-          </a>
+          {/* Platform wordmark links home (book.sey.la) — the studio's own name
+              is the hero heading. Standard marketplace pattern + an easy way back. */}
+          <Logo size="sm" />
           <nav className="vn-nav" aria-label="Sections">
             <a href="#services">Services</a>
             {hasClasses && <a href="#classes">Classes</a>}
