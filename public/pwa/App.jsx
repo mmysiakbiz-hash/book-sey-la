@@ -29,7 +29,9 @@
     return (
       <button className="scard" onClick={onOpen}>
         <div className="scard-photo">
-          <img src={s.photo} alt={s.name} loading="lazy" />
+          {s.photo
+            ? <img src={s.photo} alt={s.name} loading="lazy" />
+            : <span style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--blush)", color: "var(--clay)", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "2rem" }}>{(s.name || "?").trim().charAt(0).toUpperCase()}</span>}
           <span className="scard-tag">{s.tag}</span>
           <span className={"scard-fav" + (fav ? " is-on" : "")} role="button" aria-label="Save"
             onClick={(ev) => { ev.stopPropagation(); onFav(s.id); }}>
@@ -132,7 +134,7 @@
             ) : (
             <div className="block">
               <div className="empty">
-                <div className="empty-ic"><Ic name="spa" size={26} /></div>
+                <div className="empty-ic"><Ic name="search" size={26} /></div>
                 <div className="h-md">No studios yet</div>
                 <p className="muted" style={{ margin: "6px 0 0" }}>We're onboarding salons across Mahé, Praslin &amp; La Digue. Check back soon.</p>
               </div>

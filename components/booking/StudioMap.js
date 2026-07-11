@@ -61,8 +61,8 @@ export function StudioMap({ studios = [] }) {
         const coords = [];
         pins.forEach((s) => {
           const m = L.marker([s.lat, s.lng], { icon }).addTo(map);
-          const href = s.href || (s.slug ? `/studio/${s.slug}` : "#");
-          m.bindPopup(`<b>${esc(s.name)}</b>${s.location ? `<br>${esc(s.location)}` : ""}<br><a href="${href}">View studio →</a>`);
+          const href = s.href || (s.slug ? `/studio/${s.slug}` : "");
+          m.bindPopup(`<b>${esc(s.name)}</b>${s.location ? `<br>${esc(s.location)}` : ""}${href ? `<br><a href="${href}">View studio →</a>` : ""}`);
           map._seyMarkers.push(m);
           coords.push([s.lat, s.lng]);
         });

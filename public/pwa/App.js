@@ -62,11 +62,23 @@
       onClick: onOpen
     }, /*#__PURE__*/React.createElement("div", {
       className: "scard-photo"
-    }, /*#__PURE__*/React.createElement("img", {
+    }, s.photo ? /*#__PURE__*/React.createElement("img", {
       src: s.photo,
       alt: s.name,
       loading: "lazy"
-    }), /*#__PURE__*/React.createElement("span", {
+    }) : /*#__PURE__*/React.createElement("span", {
+      style: {
+        position: "absolute",
+        inset: 0,
+        display: "grid",
+        placeItems: "center",
+        background: "var(--blush)",
+        color: "var(--clay)",
+        fontFamily: "var(--font-display)",
+        fontWeight: 700,
+        fontSize: "2rem"
+      }
+    }, (s.name || "?").trim().charAt(0).toUpperCase()), /*#__PURE__*/React.createElement("span", {
       className: "scard-tag"
     }, s.tag), /*#__PURE__*/React.createElement("span", {
       className: "scard-fav" + (fav ? " is-on" : ""),
@@ -249,7 +261,7 @@
     }, /*#__PURE__*/React.createElement("div", {
       className: "empty-ic"
     }, /*#__PURE__*/React.createElement(Ic, {
-      name: "spa",
+      name: "search",
       size: 26
     })), /*#__PURE__*/React.createElement("div", {
       className: "h-md"

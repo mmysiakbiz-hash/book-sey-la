@@ -45,8 +45,8 @@ export function StudioCard({
           <img src={src} alt={name + " — " + category} loading="lazy"
             style={{ width: "100%", height: "100%", objectFit: "cover", filter: "var(--photo-filter)", display: "block" }} />
         ) : (
-          <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--clay)" }}>
-            <Icon name="spa" size={34} />
+          <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "var(--clay)", fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "2.4rem", letterSpacing: "0.02em" }}>
+            {(name || "?").trim().charAt(0).toUpperCase()}
           </div>
         )}
         {badge && (

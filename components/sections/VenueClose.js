@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/core/Button";
 import { Icon } from "@/components/brand/Icon";
+import { StudioMap } from "@/components/booking/StudioMap";
 // VenueClose — reviews, visit info (hours + map), booking CTA, powered-by footer.
 
 
@@ -106,9 +107,17 @@ function VenueClose({ studio }) {
             )}
             <Button size="lg" href="#services" as="a">Book a treatment</Button>
           </div>
-          <div className="vn-map" aria-hidden="true">
-            <span className="vn-map-pin"><Icon name="pin" size={20} color="var(--surface)" /></span>
-            <span className="vn-map-label">{location.split(",")[0]}</span>
+          <div className="vn-map">
+            {(studio && typeof studio.lat === "number" && typeof studio.lng === "number") ? (
+              <div style={{ position: "absolute", inset: 0 }}>
+                <StudioMap studios={[{ lat: studio.lat, lng: studio.lng, name: studio.name, location }]} />
+              </div>
+            ) : (
+              <>
+                <span className="vn-map-pin"><Icon name="pin" size={20} color="var(--surface)" /></span>
+                <span className="vn-map-label">{location.split(",")[0]}</span>
+              </>
+            )}
           </div>
         </div>
       </section>
