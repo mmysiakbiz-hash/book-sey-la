@@ -64,7 +64,16 @@ export async function POST(req) {
     .select("id", { count: "exact", head: true })
     .eq("studio_id", body.studioId)
     .eq("customer_id", user.id);
-  const isNewClient = (priorCount || 0) === 0;
+  let isNewClient = (priorCount || 0) === 0;
+  // A studio's own existing clients (imported into the panel, or previously
+  // noted/tagged) are NOT platform-acquired — so they carry no commission even
+  // on their first online booking.
+  if (isNewClient) {
+    try {
+      const { data: regular } = await supabase.rpc("is_studio_regular", { sid: body.studioId, em: user.email || "" });
+      if (regular) isNewClient = false;
+    } catch (e) { /* non-fatal — default to new-client */ }
+  }
   const price = body.priceEur != null ? Number(body.priceEur) : null;
   const commissionDue = isNewClient && price != null ? Math.round(price * 0.20 * 100) / 100 : 0;
 

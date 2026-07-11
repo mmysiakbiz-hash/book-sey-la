@@ -34,8 +34,16 @@ export async function POST(req) {
   const { data: studio } = await supabase.from("studios").select("id, name, slug").eq("owner_id", user.id).limit(1).maybeSingle();
   if (!studio) return NextResponse.json({ error: "no_studio" }, { status: 400 });
 
+  const valid = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
+  // Recipients = everyone the studio knows: past bookers PLUS imported/noted
+  // clients from client_notes (so an owner can announce they're live to their
+  // whole existing base, not just people who already booked online).
   const { data: rows } = await supabase.from("bookings").select("guest_email").eq("studio_id", studio.id);
-  let emails = Array.from(new Set((rows || []).map((r) => (r.guest_email || "").trim().toLowerCase()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))));
+  const { data: known } = await supabase.from("client_notes").select("client_email").eq("studio_id", studio.id);
+  let emails = Array.from(new Set([
+    ...(rows || []).map((r) => (r.guest_email || "").trim().toLowerCase()),
+    ...(known || []).map((r) => (r.client_email || "").trim().toLowerCase()),
+  ].filter(valid)));
 
   // Optional segment: only clients tagged `tag`.
   if (tag) {

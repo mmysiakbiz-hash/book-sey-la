@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { Logo } from "@/components/brand/Logo";
-import { sendMagicLink } from "@/lib/auth";
+import { sendMagicLink, signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
 import { billingStatus } from "@/lib/billing";
 import { downloadCSV } from "@/lib/csv";
@@ -11,7 +11,7 @@ import {
   getStudioBookings, setBookingStatus, rescheduleBooking,
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
-  createOwnerBooking, getStudioClients, saveClientNote, saveClientTags,
+  createOwnerBooking, getStudioClients, saveClientNote, saveClientTags, importClients,
   getTimeOff, addTimeOff, deleteTimeOff,
   getLoyalty, saveLoyalty, redeemLoyalty, sendMarketing,
   getWaitlist, setWaitlistStatus, deleteWaitlistEntry,
@@ -265,9 +265,10 @@ export default function OwnerPanel() {
             {live ? <>Live at <a href={publicUrl} style={{ color: "var(--accent-link)" }}>{publicUrl}</a></> : "Draft — not visible to clients yet"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {publicUrl && <a style={softBtn} href={publicUrl} target="_blank" rel="noreferrer">Preview</a>}
           {view === "setup" && <button style={softBtn} onClick={saveExit} disabled={saving}>Save &amp; exit</button>}
+          <button style={softBtn} onClick={async () => { await signOut(); location.href = "/"; }}>Log out</button>
         </div>
       </div>
 
@@ -303,6 +304,7 @@ export default function OwnerPanel() {
         <Waitlist2 rows={waitlist} onStatus={async (id, s) => { await setWaitlistStatus(id, s); loadWaitlist(studio.id); }} onDelete={async (id) => { await deleteWaitlistEntry(id); loadWaitlist(studio.id); }} />
       ) : view === "clients" && studio ? (
         <Clients2 clients={clients} loyalty={loyalty}
+          onImport={async (text) => { const r = await importClients(studio.id, text); loadClients(studio.id); return r; }}
           onSaveNote={(email, note) => saveClientNote(studio.id, email, note)}
           onSaveTags={async (email, tags) => { await saveClientTags(studio.id, email, tags); loadClients(studio.id); }}
           onSaveLoyalty={async (p) => { const r = await saveLoyalty(studio.id, p); loadClients(studio.id); return r; }}
@@ -913,7 +915,36 @@ function BlockTime({ onAdd, onDone }) {
   );
 }
 
-function Clients2({ clients, loyalty, onSaveNote, onSaveTags, onSaveLoyalty, onRedeem }) {
+function ImportClients({ onImport }) {
+  const [text, setText] = React.useState("");
+  const [state, setState] = React.useState("idle"); // idle | saving | done
+  const [msg, setMsg] = React.useState("");
+  const inp = { width: "100%", boxSizing: "border-box", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "11px 13px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)", resize: "vertical" };
+  const primaryBtn = { background: "var(--clay)", color: "var(--surface)", border: "none", borderRadius: "var(--radius-pill)", padding: "10px 18px", fontFamily: "var(--font-body)", fontWeight: 600, cursor: "pointer" };
+  async function run() {
+    setState("saving"); setMsg("");
+    const r = await onImport(text);
+    if (r && r.error) { setState("idle"); setMsg("Couldn't import — please try again."); return; }
+    setState("done"); setMsg(`Added ${r && r.added != null ? r.added : ""} client${r && r.added === 1 ? "" : "s"}. They won't count as new clients, so no commission on their first online booking.`);
+    setText("");
+  }
+  return (
+    <details style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "12px 14px" }}>
+      <summary style={{ cursor: "pointer", fontWeight: 700, color: "var(--cocoa)" }}>Import your existing clients</summary>
+      <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", margin: "10px 0 8px" }}>
+        Paste your clients — one per line, e.g. <code>jane@email.com</code> or <code>Jane Doe &lt;jane@email.com&gt;</code>.
+        They're saved as your regulars: <b>no new-client commission</b> on their first online booking, and you can message them below.
+      </p>
+      <textarea style={inp} rows={4} placeholder={"jane@email.com\nMarc Bibi <marc@email.com>"} value={text} onChange={(e) => setText(e.target.value)} />
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
+        <button style={primaryBtn} onClick={run} disabled={state === "saving" || !text.trim()}>{state === "saving" ? "Importing…" : "Import clients"}</button>
+        {msg && <span style={{ fontSize: "var(--text-sm)", color: state === "done" ? "var(--eucalyptus)" : "var(--clay)" }}>{msg}</span>}
+      </div>
+    </details>
+  );
+}
+
+function Clients2({ clients, loyalty, onImport, onSaveNote, onSaveTags, onSaveLoyalty, onRedeem }) {
   const [open, setOpen] = React.useState(null); // client key with note editor open
   const [draft, setDraft] = React.useState("");
   const [tagInput, setTagInput] = React.useState("");
@@ -936,6 +967,7 @@ function Clients2({ clients, loyalty, onSaveNote, onSaveTags, onSaveLoyalty, onR
 
   return (
     <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
+      <ImportClients onImport={onImport} />
       <MarketingComposer count={clients.length} tags={allTags} />
       <LoyaltyEditor loyalty={loyalty} onSave={onSaveLoyalty} />
       {clients.length > 0 && (
