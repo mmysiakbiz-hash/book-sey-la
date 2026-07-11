@@ -32,6 +32,10 @@ const field = { width: "100%", boxSizing: "border-box", border: "1.5px solid var
 const label = { display: "block", fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--cocoa)", margin: "0 0 6px" };
 const primaryBtn = { background: "var(--clay)", color: "var(--surface)", border: "none", borderRadius: "var(--radius-pill)", padding: "12px 22px", fontFamily: "var(--font-body)", fontWeight: 600, fontSize: "1rem", cursor: "pointer" };
 const softBtn = { background: "transparent", color: "var(--cocoa)", border: "1.5px solid var(--border-strong)", borderRadius: "var(--radius-pill)", padding: "12px 20px", fontFamily: "var(--font-body)", fontWeight: 600, cursor: "pointer" };
+// Native <select> styling: hide the OS control and draw our own chevron so the
+// closed dropdown matches the rest of the design. Spread onto a select's style.
+const CHEVRON_SVG = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%2323201E'%20stroke-width='1.8'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E";
+const selectChevron = { appearance: "none", WebkitAppearance: "none", MozAppearance: "none", backgroundImage: `url("${CHEVRON_SVG}")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 36, cursor: "pointer" };
 
 export default function OwnerPanel() {
   const [phase, setPhase] = React.useState("loading"); // loading | login | wizard | nosupabase
@@ -63,7 +67,7 @@ export default function OwnerPanel() {
       address: "", island: "", lat: "", lng: "",
       hours: DAYS.map((_, i) => ({ day_of_week: i, open: i < 6 ? "09:00" : "", close: i < 6 ? "18:00" : "" })),
       services: [{ name: "", duration_min: 60, price_eur: "" }],
-      staff: [{ name: "", role: "" }],
+      staff: [{ name: "", role: "", photo_url: "", services: [] }],
       packages: [],
       photos: [],
       socials: { instagram: "", facebook: "", tiktok: "", website: "" }, whatsapp: "",
@@ -81,7 +85,7 @@ export default function OwnerPanel() {
       address: s.address || "", island: s.island || "", lat: s.lat ?? "", lng: s.lng ?? "",
       hours: hoursByDay,
       services: (s.services && s.services.length ? [...s.services].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", duration_min: x.duration_min || 60, price_eur: x.price_eur ?? "" })) : [{ name: "", duration_min: 60, price_eur: "" }]),
-      staff: (s.staff && s.staff.length ? s.staff.filter((x) => x.active !== false).map((x) => ({ id: x.id, name: x.name || "", role: x.role || "" })) : [{ name: "", role: "" }]),
+      staff: (s.staff && s.staff.length ? s.staff.filter((x) => x.active !== false).map((x) => ({ id: x.id, name: x.name || "", role: x.role || "", photo_url: x.photo_url || "", services: Array.isArray(x.services) ? x.services : [] })) : [{ name: "", role: "", photo_url: "", services: [] }]),
       packages: (s.packages && s.packages.length ? [...s.packages].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", kind: x.kind || "package", price_eur: x.price_eur ?? "", credits: x.credits ?? "", description: x.description || "" })) : []),
       photos: Array.isArray(s.photos) ? s.photos : [],
       socials: Object.assign({ instagram: "", facebook: "", tiktok: "", website: "" }, s.socials || {}),
@@ -124,6 +128,16 @@ export default function OwnerPanel() {
     setClients(rows); setLoyalty(lp);
   }
   async function loadWaitlist(studioId) { setWaitlist(await getWaitlist(studioId)); }
+  // Re-fetch the studio (e.g. after saving the team) so freshly-created rows —
+  // with their new ids — show up in the per-staff hours editor.
+  async function reloadStudio() {
+    const res = await getMyStudio();
+    if (res && res.studio) {
+      setStudio(res.studio);
+      hydrate(res.studio);
+      setCatalog({ services: res.studio.services || [], staff: res.studio.staff || [] });
+    }
+  }
 
   React.useEffect(() => {
     load();
@@ -207,6 +221,18 @@ export default function OwnerPanel() {
     }
     setSaving(false);
     if (urls.length) { const nextPhotos = [...f.photos, ...urls]; set({ photos: nextPhotos }); await updateStudio(s.id, { photos: nextPhotos }); }
+  }
+
+  // Upload one photo for a specific team member; returns its public URL (or null).
+  async function uploadStaffPhoto(file) {
+    const s = await ensureStudio();
+    if (!s || !file) return null;
+    setSaving(true);
+    const r = await uploadPhoto(s.id, file);
+    setSaving(false);
+    if (r.url) return r.url;
+    flash("Upload failed: " + r.error);
+    return null;
   }
 
   async function publish() {
@@ -330,7 +356,7 @@ export default function OwnerPanel() {
         {step === 0 && (
           <Section title="The basics" hint="What's your studio called, and what do you do?">
             <L t="Studio name"><input style={field} value={f.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. Kreol Spa" /></L>
-            <L t="Category"><select style={field} value={f.category} onChange={(e) => set({ category: e.target.value })}><option value="">Choose…</option>{CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select></L>
+            <L t="Category"><select style={{ ...field, ...selectChevron }} value={f.category} onChange={(e) => set({ category: e.target.value })}><option value="">Choose…</option>{CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select></L>
           </Section>
         )}
 
@@ -344,7 +370,7 @@ export default function OwnerPanel() {
         {step === 2 && (
           <Section title="Location" hint="Where can clients find you?">
             <L t="Address"><input style={field} value={f.address} onChange={(e) => set({ address: e.target.value })} placeholder="Beau Vallon, Mahé" /></L>
-            <L t="Island"><select style={field} value={f.island} onChange={(e) => set({ island: e.target.value })}><option value="">Choose…</option>{ISLANDS.map((c) => <option key={c} value={c}>{c}</option>)}</select></L>
+            <L t="Island"><select style={{ ...field, ...selectChevron }} value={f.island} onChange={(e) => set({ island: e.target.value })}><option value="">Choose…</option>{ISLANDS.map((c) => <option key={c} value={c}>{c}</option>)}</select></L>
             <div style={{ display: "flex", gap: 12 }}>
               <L t="Latitude (optional)"><input style={field} value={f.lat} onChange={(e) => set({ lat: e.target.value })} placeholder="-4.62" /></L>
               <L t="Longitude (optional)"><input style={field} value={f.lng} onChange={(e) => set({ lng: e.target.value })} placeholder="55.42" /></L>
@@ -356,11 +382,11 @@ export default function OwnerPanel() {
           <Section title="Opening hours" hint="Leave a day blank to mark it closed.">
             <div style={{ display: "grid", gap: 8 }}>
               {f.hours.map((h, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ width: 96, fontSize: "var(--text-sm)", color: "var(--cocoa-80)" }}>{DAYS[i]}</span>
-                  <input style={{ ...field, padding: "9px 10px" }} type="time" value={h.open} onChange={(e) => { const hs = f.hours.slice(); hs[i] = { ...hs[i], open: e.target.value }; set({ hours: hs }); }} />
-                  <span style={{ color: "var(--cocoa-40)" }}>–</span>
-                  <input style={{ ...field, padding: "9px 10px" }} type="time" value={h.close} onChange={(e) => { const hs = f.hours.slice(); hs[i] = { ...hs[i], close: e.target.value }; set({ hours: hs }); }} />
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "96px 1fr 14px 1fr", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-80)" }}>{DAYS[i]}</span>
+                  <input style={{ ...field, padding: "9px 10px", width: "100%" }} type="time" value={h.open} onChange={(e) => { const hs = f.hours.slice(); hs[i] = { ...hs[i], open: e.target.value }; set({ hours: hs }); }} />
+                  <span style={{ color: "var(--cocoa-40)", textAlign: "center" }}>–</span>
+                  <input style={{ ...field, padding: "9px 10px", width: "100%" }} type="time" value={h.close} onChange={(e) => { const hs = f.hours.slice(); hs[i] = { ...hs[i], close: e.target.value }; set({ hours: hs }); }} />
                 </div>
               ))}
             </div>
@@ -380,17 +406,15 @@ export default function OwnerPanel() {
         )}
 
         {step === 5 && (
-          <Section title="Your team" hint="The people clients can book with (optional).">
-            <Rows items={f.staff} onChange={(staff) => set({ staff })} blank={{ name: "", role: "" }} render={(row, upd) => (
-              <>
-                <input style={{ ...field, flex: 2 }} placeholder="Name" value={row.name} onChange={(e) => upd({ name: e.target.value })} />
-                <input style={{ ...field, flex: 2 }} placeholder="Role (e.g. Barber)" value={row.role} onChange={(e) => upd({ role: e.target.value })} />
-              </>
-            )} addLabel="Add team member" />
+          <Section title="Your team" hint="The people clients can book with (optional). Add a photo and pick which services each person offers.">
+            <TeamEditor staff={f.staff} serviceNames={f.services.map((s) => (s.name || "").trim()).filter(Boolean)} onChange={(staff) => set({ staff })} onUploadPhoto={uploadStaffPhoto} uploading={saving} />
+            <button style={{ ...softBtn, marginTop: 14, padding: "8px 16px", fontSize: "var(--text-sm)" }} onClick={async () => { if (await persist(5)) { await reloadStudio(); flash("Team saved"); } }} disabled={saving}>
+              {saving ? "Saving…" : "Save team & set individual hours"}
+            </button>
             {studio && (studio.staff || []).filter((s) => s.active !== false).length > 0 && (
               <div style={{ marginTop: 24, borderTop: "1px solid var(--line)", paddingTop: 18 }}>
                 <h4 style={{ margin: "0 0 4px", fontSize: "var(--text-body)", color: "var(--cocoa)" }}>Individual working hours</h4>
-                <p style={{ margin: "0 0 12px", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>Optional — override the studio hours for a specific person. Save the team first to see new members here.</p>
+                <p style={{ margin: "0 0 12px", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>Optional — override the studio hours for a specific person. Use “Save team” above first so everyone appears here.</p>
                 <div style={{ display: "grid", gap: 10 }}>
                   {(studio.staff || []).filter((s) => s.active !== false).map((st) => (
                     <StaffHours key={st.id} studioId={studio.id} staff={st} studioHours={f.hours}
@@ -432,11 +456,11 @@ export default function OwnerPanel() {
         )}
 
         {step === 8 && (
-          <Section title="Memberships & packages" hint="Optional. Advertise multi-visit packages or memberships on your page. Redeemed in-studio (no online payment yet).">
+          <Section title="Memberships & packages" hint="Optional — skip this if you don’t use them. This is where you advertise multi-visit deals or memberships, e.g. “5 haircuts for SCR 1000” or “Unlimited yoga — SCR 900/month”. Clients see them on your page and pay in-studio (no online payment yet).">
             <Rows items={f.packages} onChange={(packages) => set({ packages })} blank={{ name: "", kind: "package", price_eur: "", credits: "", description: "" }} render={(row, upd) => (
               <>
-                <input style={{ ...field, flex: 2 }} placeholder="e.g. 5-visit pack" value={row.name} onChange={(e) => upd({ name: e.target.value })} />
-                <select style={{ ...field, width: 130 }} value={row.kind} onChange={(e) => upd({ kind: e.target.value })}>
+                <input style={{ ...field, flex: 2 }} placeholder="e.g. 5-haircut pack" value={row.name} onChange={(e) => upd({ name: e.target.value })} />
+                <select style={{ ...field, ...selectChevron, width: 130 }} value={row.kind} onChange={(e) => upd({ kind: e.target.value })}>
                   <option value="package">Package</option>
                   <option value="membership">Membership</option>
                 </select>
@@ -522,7 +546,7 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
     <div style={{ maxWidth: 640 }}>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
         {staffNames.length > 1 && (
-          <select value={staffFilter} onChange={(e) => setStaffFilter(e.target.value)} style={{ ...field, width: "auto", padding: "8px 10px", fontSize: "var(--text-sm)", marginRight: "auto" }}>
+          <select value={staffFilter} onChange={(e) => setStaffFilter(e.target.value)} style={{ ...field, ...selectChevron, width: "auto", padding: "8px 28px 8px 10px", fontSize: "var(--text-sm)", marginRight: "auto" }}>
             <option value="">All staff</option>
             {staffNames.map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
@@ -712,7 +736,7 @@ function Classes({ studioId, classes, onRefresh }) {
             <label style={{ flex: 1 }}><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Price SCR</span><input style={{ ...inp, width: "100%" }} type="number" value={form.price} onChange={(e) => upd({ price: e.target.value })} /></label>
           </div>
           <label><span style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)" }}>Repeat</span>
-            <select style={{ ...inp, width: "100%" }} value={form.repeat} onChange={(e) => upd({ repeat: Number(e.target.value) })}>
+            <select style={{ ...inp, ...selectChevron, width: "100%" }} value={form.repeat} onChange={(e) => upd({ repeat: Number(e.target.value) })}>
               <option value={1}>Just this date</option>
               <option value={4}>Weekly · 4 weeks</option>
               <option value={8}>Weekly · 8 weeks</option>
@@ -781,12 +805,12 @@ function AddAppointment({ catalog, onAdd, onDone }) {
         <input style={inp} placeholder="Client name" value={f.name} onChange={(e) => set({ name: e.target.value })} />
         <input style={inp} placeholder="Phone (optional)" value={f.phone} onChange={(e) => set({ phone: e.target.value })} />
         {services.length > 0 && (
-          <select style={inp} value={f.serviceId} onChange={(e) => set({ serviceId: e.target.value })}>
+          <select style={{ ...inp, ...selectChevron }} value={f.serviceId} onChange={(e) => set({ serviceId: e.target.value })}>
             {services.map((s) => <option key={s.id} value={s.id}>{s.name}{s.price_eur != null ? ` · SCR ${Math.round(s.price_eur)}` : ""}</option>)}
           </select>
         )}
         {staff.length > 0 && (
-          <select style={inp} value={f.staffId} onChange={(e) => set({ staffId: e.target.value })}>
+          <select style={{ ...inp, ...selectChevron }} value={f.staffId} onChange={(e) => set({ staffId: e.target.value })}>
             <option value="">Any professional</option>
             {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -858,7 +882,7 @@ function MarketingComposer({ count, tags, selectedEmails = [] }) {
             style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" }} />
           <label style={{ fontSize: "var(--text-sm)", color: "var(--cocoa)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             Send to
-            <select value={effectiveSeg} onChange={(e) => setSeg(e.target.value)} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "6px 10px", font: "inherit", fontFamily: "var(--font-body)" }}>
+            <select value={effectiveSeg} onChange={(e) => setSeg(e.target.value)} style={{ ...selectChevron, border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "6px 28px 6px 10px", font: "inherit", fontFamily: "var(--font-body)", backgroundColor: "var(--surface)", color: "var(--cocoa)" }}>
               {hasSel && <option value="__selected__">selected clients ({selectedEmails.length})</option>}
               <option value="">everyone ({count})</option>
               {(tags || []).map((t) => <option key={t} value={t}>tag: {t}</option>)}
@@ -1151,6 +1175,63 @@ function Rows({ items, onChange, render, blank, addLabel }) {
         </div>
       ))}
       <button onClick={() => onChange([...items, { ...blank }])} style={{ ...softBtn, justifySelf: "start", padding: "8px 16px", fontSize: "var(--text-sm)" }}>+ {addLabel}</button>
+    </div>
+  );
+}
+
+// Team editor: per member — photo, name, role, and which services they offer.
+function TeamEditor({ staff, serviceNames, onChange, onUploadPhoto, uploading }) {
+  const blank = { name: "", role: "", photo_url: "", services: [] };
+  const upd = (i, patch) => onChange(staff.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const remove = (i) => onChange(staff.length > 1 ? staff.filter((_, j) => j !== i) : [{ ...blank }]);
+  const toggleSvc = (i, name) => {
+    const cur = Array.isArray(staff[i].services) ? staff[i].services : [];
+    upd(i, { services: cur.includes(name) ? cur.filter((s) => s !== name) : [...cur, name] });
+  };
+
+  async function pickPhoto(i, e) {
+    const file = (e.target.files || [])[0];
+    e.target.value = "";
+    if (!file) return;
+    const url = await onUploadPhoto(file);
+    if (url) upd(i, { photo_url: url });
+  }
+
+  const avaWrap = { position: "relative", width: 56, height: 56, borderRadius: "50%", overflow: "hidden", flex: "none", border: "1px solid var(--line)", background: "var(--blush)", display: "grid", placeItems: "center", cursor: "pointer" };
+  const svcChip = (on) => ({ padding: "5px 11px", borderRadius: "var(--radius-pill)", border: "1px solid " + (on ? "var(--clay)" : "var(--border)"), background: on ? "var(--clay)" : "var(--surface)", color: on ? "var(--surface)" : "var(--cocoa-80)", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" });
+
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      {staff.map((row, i) => (
+        <div key={i} style={{ border: "1px solid var(--line)", borderRadius: 12, padding: 14, display: "grid", gap: 12 }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <label style={avaWrap} title="Add photo">
+              {row.photo_url
+                ? <img src={row.photo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <span style={{ color: "var(--clay)", fontWeight: 700, fontSize: 20 }}>{(row.name || "?").slice(0, 1).toUpperCase()}</span>}
+              <input type="file" accept="image/*" onChange={(e) => pickPhoto(i, e)} style={{ display: "none" }} disabled={uploading} />
+            </label>
+            <div style={{ display: "flex", gap: 8, flex: 1, flexWrap: "wrap" }}>
+              <input style={{ ...field, flex: 2, minWidth: 140 }} placeholder="Name" value={row.name} onChange={(e) => upd(i, { name: e.target.value })} />
+              <input style={{ ...field, flex: 2, minWidth: 140 }} placeholder="Role (e.g. Barber)" value={row.role} onChange={(e) => upd(i, { role: e.target.value })} />
+            </div>
+            <button aria-label="Remove" onClick={() => remove(i)} style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-40)", width: 38, height: 38, borderRadius: 10, cursor: "pointer", flex: "none" }}>×</button>
+          </div>
+          {serviceNames.length > 0 ? (
+            <div>
+              <div style={{ fontSize: "var(--text-xs)", color: "var(--cocoa-60)", marginBottom: 6 }}>Offers {(!row.services || row.services.length === 0) ? "all services" : `${row.services.length} service${row.services.length === 1 ? "" : "s"}`} — tap to choose:</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {serviceNames.map((name) => (
+                  <button key={name} type="button" style={svcChip(row.services && row.services.includes(name))} onClick={() => toggleSvc(i, name)}>{name}</button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p style={{ margin: 0, color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>Add services in the previous step to assign them to this person. With none selected, they’re bookable for everything.</p>
+          )}
+        </div>
+      ))}
+      <button onClick={() => onChange([...staff, { ...blank }])} style={{ ...softBtn, justifySelf: "start", padding: "8px 16px", fontSize: "var(--text-sm)" }}>+ Add team member</button>
     </div>
   );
 }

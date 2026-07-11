@@ -9,37 +9,20 @@ import { scr } from "@/lib/money";
 
 
 
-const GROUPS = [
-  { name: "Massage", items: [
-    { name: "Coconut & Frangipani signature", desc: "Warm oil full-body massage with island botanicals.", dur: "60 min", price: "SCR 55", tag: "Most booked" },
-    { name: "Deep-tissue recovery", desc: "Firmer pressure for shoulders, back and legs.", dur: "60 min", price: "SCR 58" },
-    { name: "Hot stone therapy", desc: "Volcanic stones to melt deep tension.", dur: "75 min", price: "SCR 65" },
-  ]},
-  { name: "Face", items: [
-    { name: "Signature island facial", desc: "Cleanse, clay mask and lymphatic massage.", dur: "50 min", price: "SCR 48" },
-    { name: "Express glow facial", desc: "A quick reset before dinner.", dur: "30 min", price: "SCR 32" },
-  ]},
-  { name: "Body & rituals", items: [
-    { name: "Sea salt & clay body wrap", desc: "Exfoliate, wrap and hydrate.", dur: "60 min", price: "SCR 52" },
-    { name: "Couples' frangipani ritual", desc: "Side-by-side massage for two.", dur: "60 min", price: "SCR 105", tag: "For two" },
-  ]},
-];
-
 function VenueServices({ studio }) {
-  // Build tabbed groups from live services when available; demo fallback otherwise.
+  // Tabbed groups built from the studio's real services. No demo fallback — a
+  // studio with no services yet shows an honest empty state, never fake ones.
   const groups = React.useMemo(() => {
-    if (studio && studio.services && studio.services.length) {
-      const map = new Map();
-      for (const it of studio.services) {
-        const g = it.group || "Treatments";
-        if (!map.has(g)) map.set(g, []);
-        map.get(g).push({ id: it.id, name: it.name, dur: it.dur, price: it.price, desc: it.desc, durationMin: it.durationMin, priceEur: it.priceEur });
-      }
-      return [...map.entries()].map(([name, items]) => ({ name, items }));
+    if (!(studio && studio.services && studio.services.length)) return [];
+    const map = new Map();
+    for (const it of studio.services) {
+      const g = it.group || "Treatments";
+      if (!map.has(g)) map.set(g, []);
+      map.get(g).push({ id: it.id, name: it.name, dur: it.dur, price: it.price, desc: it.desc, durationMin: it.durationMin, priceEur: it.priceEur });
     }
-    return GROUPS;
+    return [...map.entries()].map(([name, items]) => ({ name, items }));
   }, [studio]);
-  const [active, setActive] = React.useState(groups[0].name);
+  const [active, setActive] = React.useState(groups[0] ? groups[0].name : "");
   const group = groups.find(g => g.name === active) || groups[0];
   const [selected, setSelected] = React.useState(null);
   const studioId = studio && studio.id;
@@ -61,14 +44,21 @@ function VenueServices({ studio }) {
             <div className="sey-eyebrow vn-eyebrow">The menu</div>
             <h2 className="vn-sec-title">Choose your <em className="sey-accent-italic">treatment</em></h2>
           </div>
-          <div className="vn-tabs" role="tablist" aria-label="Service groups">
-            {groups.map(g => (
-              <button key={g.name} role="tab" aria-selected={active===g.name}
-                className={"vn-tab" + (active===g.name ? " is-active" : "")}
-                onClick={() => setActive(g.name)}>{g.name}</button>
-            ))}
-          </div>
+          {groups.length > 1 && (
+            <div className="vn-tabs" role="tablist" aria-label="Service groups">
+              {groups.map(g => (
+                <button key={g.name} role="tab" aria-selected={active===g.name}
+                  className={"vn-tab" + (active===g.name ? " is-active" : "")}
+                  onClick={() => setActive(g.name)}>{g.name}</button>
+              ))}
+            </div>
+          )}
         </div>
+        {!group ? (
+          <p style={{ color: "var(--text-muted)", margin: "8px 0 0" }}>
+            {unclaimed ? "This studio hasn’t added its treatment menu yet." : "No services listed yet — check back soon."}
+          </p>
+        ) : (
         <ul className="vn-menu">
           {group.items.map(s => (
             <li className="vn-srv" key={s.name}>
@@ -89,6 +79,7 @@ function VenueServices({ studio }) {
             </li>
           ))}
         </ul>
+        )}
         {studio && Array.isArray(studio.packages) && studio.packages.length > 0 && (
           <div style={{ marginTop: 40 }}>
             <div className="sey-eyebrow vn-eyebrow">Save more</div>

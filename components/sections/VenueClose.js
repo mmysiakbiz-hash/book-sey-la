@@ -12,6 +12,36 @@ const HOURS = [
   ["Sunday", "10:00 – 15:00"],
 ];
 
+// The map area: use stored coordinates when present, otherwise geocode the
+// address client-side (best-effort) so the studio still shows a real map.
+function VenueMap({ lat, lng, name, location }) {
+  const hasCoords = typeof lat === "number" && typeof lng === "number";
+  const [geo, setGeo] = React.useState(hasCoords ? { lat, lng } : null);
+  React.useEffect(() => {
+    if (hasCoords || !location) return;
+    let cancelled = false;
+    fetch(`/api/geocode?q=${encodeURIComponent(location + ", Seychelles")}`)
+      .then((r) => r.json())
+      .then((g) => { if (!cancelled && g && typeof g.lat === "number" && typeof g.lng === "number") setGeo({ lat: g.lat, lng: g.lng }); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [hasCoords, location]);
+
+  if (geo) {
+    return (
+      <div style={{ position: "absolute", inset: 0 }}>
+        <StudioMap studios={[{ lat: geo.lat, lng: geo.lng, name, location }]} />
+      </div>
+    );
+  }
+  return (
+    <>
+      <span className="vn-map-pin"><Icon name="pin" size={20} color="var(--surface)" /></span>
+      <span className="vn-map-label">{location.split(",")[0]}</span>
+    </>
+  );
+}
+
 const avatar = (u) =>
   u && u.includes("images.unsplash") && !u.includes("?")
     ? u + "?auto=format&fit=crop&w=100&h=100&q=70"
@@ -108,16 +138,7 @@ function VenueClose({ studio }) {
             <Button size="lg" href="#services" as="a">Book a treatment</Button>
           </div>
           <div className="vn-map">
-            {(studio && typeof studio.lat === "number" && typeof studio.lng === "number") ? (
-              <div style={{ position: "absolute", inset: 0 }}>
-                <StudioMap studios={[{ lat: studio.lat, lng: studio.lng, name: studio.name, location }]} />
-              </div>
-            ) : (
-              <>
-                <span className="vn-map-pin"><Icon name="pin" size={20} color="var(--surface)" /></span>
-                <span className="vn-map-label">{location.split(",")[0]}</span>
-              </>
-            )}
+            <VenueMap lat={studio && studio.lat} lng={studio && studio.lng} name={studio && studio.name} location={location} />
           </div>
         </div>
       </section>
