@@ -23,6 +23,9 @@ export async function POST(req) {
   const body = await req.json().catch(() => null);
   const message = body && typeof body.message === "string" ? body.message.trim() : "";
   const tag = body && typeof body.tag === "string" ? body.tag.trim() : "";
+  const pickedEmails = body && Array.isArray(body.emails)
+    ? body.emails.map((e) => String(e || "").trim().toLowerCase()).filter(Boolean)
+    : null;
   if (!message) return NextResponse.json({ error: "empty_message" }, { status: 400 });
 
   // Act as the owner — RLS scopes reads to studios/bookings they own.
@@ -45,8 +48,15 @@ export async function POST(req) {
     ...(known || []).map((r) => (r.client_email || "").trim().toLowerCase()),
   ].filter(valid)));
 
+  // Explicit recipient list (owner picked specific clients) wins — restricted to
+  // the studio's own known clients so it can't be used to email arbitrary people.
+  if (pickedEmails && pickedEmails.length) {
+    const known = new Set(emails);
+    emails = pickedEmails.filter((e) => known.has(e));
+  }
+
   // Optional segment: only clients tagged `tag`.
-  if (tag) {
+  if (!pickedEmails && tag) {
     const { data: tagged } = await supabase.from("client_notes").select("client_email").eq("studio_id", studio.id).contains("tags", [tag]);
     const allow = new Set((tagged || []).map((t) => (t.client_email || "").toLowerCase()));
     emails = emails.filter((e) => allow.has(e));

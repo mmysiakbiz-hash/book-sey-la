@@ -5,6 +5,7 @@ import { sendMagicLink, signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
 import { billingStatus } from "@/lib/billing";
 import { downloadCSV } from "@/lib/csv";
+import { BlockCalendar } from "@/components/studio/BlockCalendar";
 import {
   getMyStudio, createDraftStudio, updateStudio,
   saveServices, saveStaff, saveHours, saveStaffHours, savePackages, uploadPhoto, publishStudio,
@@ -534,7 +535,7 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
         <button onClick={() => { setAdding((v) => !v); setBlocking(false); }} style={{ ...primaryBtn, padding: "9px 18px", fontSize: "var(--text-sm)" }}>{adding ? "Close" : "+ Add appointment"}</button>
       </div>
       {adding && <AddAppointment catalog={catalog} onAdd={onAdd} onDone={() => { setAdding(false); onRefresh(); }} />}
-      {blocking && <BlockTime onAdd={onAddTimeOff} onDone={() => { setBlocking(false); onRefresh(); }} />}
+      {blocking && <BlockCalendar blocked={timeOff} onAdd={onAddTimeOff} onDone={() => { onRefresh(); }} />}
       {Array.isArray(timeOff) && timeOff.length > 0 && (
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: ".04em", color: "var(--text-caption)", margin: "0 0 6px" }}>Blocked time</div>
@@ -811,17 +812,25 @@ function Waitlist2({ rows, onStatus, onDelete }) {
   );
 }
 
-function MarketingComposer({ count, tags }) {
+function MarketingComposer({ count, tags, selectedEmails = [] }) {
   const [open, setOpen] = React.useState(false);
   const [msg, setMsg] = React.useState("");
   const [seg, setSeg] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [result, setResult] = React.useState("");
+  const hasSel = selectedEmails.length > 0;
+  // Default to the ticked clients when there's a selection, so it never
+  // silently blasts everyone.
+  const effectiveSeg = seg === "" && hasSel ? "__selected__" : seg;
   async function send() {
     if (!msg.trim()) return;
-    if (typeof window !== "undefined" && !window.confirm(seg ? `Email this to clients tagged “${seg}”?` : `Email this to your clients (up to ${count})?`)) return;
+    const useSelected = effectiveSeg === "__selected__";
+    if (useSelected && !selectedEmails.length) { setResult("Tick some clients first."); return; }
+    const who = useSelected ? `${selectedEmails.length} selected client${selectedEmails.length === 1 ? "" : "s"}`
+      : effectiveSeg ? `clients tagged “${effectiveSeg}”` : `your clients (up to ${count})`;
+    if (typeof window !== "undefined" && !window.confirm(`Email this to ${who}?`)) return;
     setBusy(true); setResult("");
-    const r = await sendMarketing(msg, seg);
+    const r = await sendMarketing(msg, useSelected ? "" : effectiveSeg, useSelected ? selectedEmails : undefined);
     setBusy(false);
     if (r && r.ok) { setResult(`Sent to ${r.sent}/${r.recipients} clients.`); setMsg(""); }
     else setResult("Couldn't send" + (r && r.error ? ` (${r.error})` : "") + ".");
@@ -836,15 +845,15 @@ function MarketingComposer({ count, tags }) {
         <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
           <textarea rows={4} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={"e.g. 20% off cuts this week — book your slot!"}
             style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", fontFamily: "var(--font-body)", color: "var(--cocoa)", background: "var(--surface)" }} />
-          {tags && tags.length > 0 && (
-            <label style={{ fontSize: "var(--text-sm)", color: "var(--cocoa)", display: "flex", alignItems: "center", gap: 8 }}>
-              Send to
-              <select value={seg} onChange={(e) => setSeg(e.target.value)} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "6px 10px", font: "inherit", fontFamily: "var(--font-body)" }}>
-                <option value="">everyone</option>
-                {tags.map((t) => <option key={t} value={t}>tag: {t}</option>)}
-              </select>
-            </label>
-          )}
+          <label style={{ fontSize: "var(--text-sm)", color: "var(--cocoa)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            Send to
+            <select value={effectiveSeg} onChange={(e) => setSeg(e.target.value)} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "6px 10px", font: "inherit", fontFamily: "var(--font-body)" }}>
+              {hasSel && <option value="__selected__">selected clients ({selectedEmails.length})</option>}
+              <option value="">everyone ({count})</option>
+              {(tags || []).map((t) => <option key={t} value={t}>tag: {t}</option>)}
+            </select>
+            {!hasSel && <span style={{ fontSize: "var(--text-xs)", color: "var(--text-caption)" }}>tip: tick clients in the list to message just them</span>}
+          </label>
           <button style={{ ...primaryBtn, justifySelf: "start", padding: "9px 18px", fontSize: "var(--text-sm)" }} onClick={send} disabled={busy || !msg.trim()}>{busy ? "Sending…" : "Send to clients"}</button>
           {result && <span style={{ fontSize: "var(--text-sm)", color: "var(--eucalyptus)", fontWeight: 600 }}>{result}</span>}
         </div>
@@ -949,7 +958,10 @@ function Clients2({ clients, loyalty, onImport, onSaveNote, onSaveTags, onSaveLo
   const [draft, setDraft] = React.useState("");
   const [tagInput, setTagInput] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const [sel, setSel] = React.useState(() => new Set()); // selected client emails (message recipients)
   const allTags = React.useMemo(() => Array.from(new Set((clients || []).flatMap((c) => c.tags || []))).sort(), [clients]);
+  const emailClients = React.useMemo(() => (clients || []).filter((c) => c.email).map((c) => c.email), [clients]);
+  const toggleSel = (email) => setSel((s) => { const n = new Set(s); n.has(email) ? n.delete(email) : n.add(email); return n; });
 
   const req = loyalty && loyalty.stamps_required ? loyalty.stamps_required : 0;
   const active = !!(loyalty && loyalty.active && req);
@@ -968,7 +980,7 @@ function Clients2({ clients, loyalty, onImport, onSaveNote, onSaveTags, onSaveLo
   return (
     <div style={{ maxWidth: 640, display: "grid", gap: 8 }}>
       <ImportClients onImport={onImport} />
-      <MarketingComposer count={clients.length} tags={allTags} />
+      <MarketingComposer count={clients.length} tags={allTags} selectedEmails={Array.from(sel)} />
       <LoyaltyEditor loyalty={loyalty} onSave={onSaveLoyalty} />
       {clients.length > 0 && (
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -979,10 +991,20 @@ function Clients2({ clients, loyalty, onImport, onSaveNote, onSaveTags, onSaveLo
             style={{ border: "1px solid var(--border-strong)", background: "none", borderRadius: 999, padding: "6px 14px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--cocoa)" }}>Export CSV</button>
         </div>
       )}
-      {clients.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No clients yet — they appear here after their first booking.</p>}
+      {clients.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No clients yet — import your existing list above, or they appear here after their first booking.</p>}
+      {emailClients.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "var(--text-sm)", color: "var(--cocoa-60)", padding: "2px 2px 6px" }}>
+          <span>{sel.size > 0 ? `${sel.size} selected — pick “selected” in Message clients` : "Tick clients to message just them"}</span>
+          <button onClick={() => setSel(sel.size === emailClients.length ? new Set() : new Set(emailClients))}
+            style={{ border: "none", background: "none", color: "var(--clay)", fontWeight: 600, cursor: "pointer", fontSize: "var(--text-sm)" }}>
+            {sel.size === emailClients.length ? "Clear all" : "Select all"}
+          </button>
+        </div>
+      )}
       {clients.map((c) => (
         <div key={c.key} style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            {c.email && <input type="checkbox" checked={sel.has(c.email)} onChange={() => toggleSel(c.email)} aria-label={"Select " + c.name} style={{ width: 16, height: 16, accentColor: "var(--clay)", flex: "none", cursor: "pointer" }} />}
             <span style={{ flex: 1, minWidth: 160 }}>
               <span style={{ fontWeight: 600, color: "var(--cocoa)" }}>{c.name}</span>
               <span style={{ display: "block", color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>{c.email || c.phone || "—"}</span>
