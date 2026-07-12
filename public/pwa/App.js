@@ -1623,7 +1623,8 @@
     notif,
     setNotif,
     isOwner,
-    onSwitchToPro
+    onSwitchToPro,
+    visitCount
   }) {
     if (!user) return /*#__PURE__*/React.createElement(Login, {
       onDone: setUser
@@ -1737,9 +1738,9 @@
       }
     }, /*#__PURE__*/React.createElement("div", {
       className: "h-md"
-    }, "4.9"), /*#__PURE__*/React.createElement("div", {
+    }, visitCount || 0), /*#__PURE__*/React.createElement("div", {
       className: "tiny muted"
-    }, "Your rating"))), /*#__PURE__*/React.createElement("div", {
+    }, "Visits"))), /*#__PURE__*/React.createElement("div", {
       className: "block--flush"
     }, rows.map(r => /*#__PURE__*/React.createElement("div", {
       className: "arow",
@@ -1757,8 +1758,7 @@
       size: 18,
       color: "var(--cocoa-40)"
     }))), /*#__PURE__*/React.createElement("div", {
-      className: "arow",
-      onClick: () => setNotif(!notif)
+      className: "arow"
     }, /*#__PURE__*/React.createElement("span", {
       className: "arow-ic"
     }, /*#__PURE__*/React.createElement(Ic, {
@@ -1766,27 +1766,13 @@
       size: 20
     })), /*#__PURE__*/React.createElement("span", {
       className: "arow-lb"
-    }, "Push reminders"), /*#__PURE__*/React.createElement("span", {
+    }, "Email reminders", /*#__PURE__*/React.createElement("span", {
       style: {
-        width: 46,
-        height: 28,
-        borderRadius: 999,
-        background: notif ? "var(--ink)" : "var(--line-strong)",
-        position: "relative",
-        transition: "background .2s"
+        display: "block",
+        fontSize: "0.78rem",
+        color: "var(--cocoa-60)"
       }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        position: "absolute",
-        top: 3,
-        left: notif ? 21 : 3,
-        width: 22,
-        height: 22,
-        borderRadius: "50%",
-        background: "#fff",
-        transition: "left .2s"
-      }
-    })))), /*#__PURE__*/React.createElement("button", {
+    }, "Confirmations & reminders go to ", user.email || "your email")))), /*#__PURE__*/React.createElement("button", {
       className: "btn btn--soft btn--full",
       style: {
         marginTop: 18
@@ -2234,46 +2220,29 @@
   function NotifSettings({
     nav
   }) {
-    const EVENTS = [{
+    // Honest: today everything is sent by EMAIL (Brevo). In-app push and SMS
+    // aren't wired yet, so we don't show toggles that wouldn't do anything.
+    const EMAILS = [{
       id: "confirm",
-      lb: "Booking confirmation"
+      lb: "Booking confirmation",
+      s: "Sent as soon as you book"
     }, {
       id: "r24",
-      lb: "Reminder · 24h before"
-    }, {
-      id: "r2",
-      lb: "Reminder · 2h before"
+      lb: "Reminder before your visit",
+      s: "A nudge ahead of your appointment"
     }, {
       id: "change",
-      lb: "Changes & cancellations"
+      lb: "Changes & cancellations",
+      s: "If a booking moves or is cancelled"
     }, {
       id: "wait",
-      lb: "Waitlist — a slot opened"
-    }, {
-      id: "promo",
-      lb: "Offers & promotions"
+      lb: "Waitlist — a spot opened",
+      s: "When a full class frees up"
     }];
-    const CH = ["push", "sms", "email"];
-    const [prefs, setPrefs] = useState(() => {
-      const base = {};
-      EVENTS.forEach(e => base[e.id] = {
-        push: true,
-        sms: e.id !== "promo",
-        email: e.id === "confirm" || e.id === "change"
-      });
-      return base;
-    });
-    const toggle = (e, c) => setPrefs(p => ({
-      ...p,
-      [e]: {
-        ...p[e],
-        [c]: !p[e][c]
-      }
-    }));
     return /*#__PURE__*/React.createElement("div", {
       className: "sheet-full"
     }, /*#__PURE__*/React.createElement(TopBar, {
-      title: "Notification settings",
+      title: "Notifications",
       onBack: nav.pop
     }), /*#__PURE__*/React.createElement("div", {
       className: "app-scroll"
@@ -2285,27 +2254,31 @@
     }, /*#__PURE__*/React.createElement("p", {
       className: "muted",
       style: {
-        margin: "0 0 10px"
+        margin: "0 0 14px"
       }
-    }, "Choose how each update reaches you. Reminders help you never miss a visit."), /*#__PURE__*/React.createElement("div", {
-      className: "notifmatrix-head"
-    }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", null, "Push"), /*#__PURE__*/React.createElement("span", null, "SMS"), /*#__PURE__*/React.createElement("span", null, "Email")), EVENTS.map(e => /*#__PURE__*/React.createElement("div", {
-      className: "notifrow",
+    }, "Right now we keep you posted by ", /*#__PURE__*/React.createElement("b", null, "email"), ". These are the updates we send:"), /*#__PURE__*/React.createElement("div", {
+      className: "block--flush"
+    }, EMAILS.map(e => /*#__PURE__*/React.createElement("div", {
+      className: "arow",
       key: e.id
     }, /*#__PURE__*/React.createElement("span", {
-      className: "notifrow-lb"
-    }, e.lb), CH.map(c => /*#__PURE__*/React.createElement("span", {
-      key: c,
-      className: "minicheck" + (prefs[e.id][c] ? " is-on" : ""),
-      role: "checkbox",
-      "aria-checked": prefs[e.id][c],
-      "aria-label": e.lb + " " + c,
-      onClick: () => toggle(e.id, c)
-    }, prefs[e.id][c] && /*#__PURE__*/React.createElement(Ic, {
+      className: "arow-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "bell",
+      size: 20
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "arow-lb"
+    }, e.lb, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "block",
+        fontSize: "0.78rem",
+        color: "var(--cocoa-60)"
+      }
+    }, e.s)), /*#__PURE__*/React.createElement(Ic, {
       name: "check",
-      size: 14,
-      color: "var(--cream)"
-    }))))), /*#__PURE__*/React.createElement("div", {
+      size: 18,
+      color: "var(--eucalyptus)"
+    })))), /*#__PURE__*/React.createElement("div", {
       className: "paynote",
       style: {
         marginTop: 16
@@ -2314,7 +2287,7 @@
       name: "shield",
       size: 16,
       color: "var(--eucalyptus)"
-    }), " We'll always send a confirmation and any cancellation, even if muted, so you're never caught out."))));
+    }), " Push notifications and SMS aren\u2019t available yet \u2014 they\u2019re on the way. Email confirmations and reminders work today."))));
   }
 
   // ---------- LANGUAGE ----------
@@ -3042,7 +3015,8 @@
       notif: notif,
       setNotif: setNotif,
       isOwner: !!ownerStudio,
-      onSwitchToPro: () => setOwnerMode("pro")
+      onSwitchToPro: () => setOwnerMode("pro"),
+      visitCount: myVisits.length
     });
 
     // top overlay

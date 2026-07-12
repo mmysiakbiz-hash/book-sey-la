@@ -776,7 +776,7 @@
   }
 
   // ---------- ACCOUNT + LOGIN/OTP ----------
-  function Account({ user, setUser, favs, nav, notif, setNotif, isOwner, onSwitchToPro }) {
+  function Account({ user, setUser, favs, nav, notif, setNotif, isOwner, onSwitchToPro, visitCount }) {
     if (!user) return <Login onDone={setUser} />;
     const rows = [
       { ic: "sparkle", lb: "Rewards & stamps", go: () => nav.push("rewards") },
@@ -807,7 +807,7 @@
                 <div className="h-md">{favs.length}</div><div className="tiny muted">Saved</div>
               </div>
               <div style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", padding: "14px", textAlign: "center" }}>
-                <div className="h-md">4.9</div><div className="tiny muted">Your rating</div>
+                <div className="h-md">{visitCount || 0}</div><div className="tiny muted">Visits</div>
               </div>
             </div>
             <div className="block--flush">
@@ -818,12 +818,9 @@
                   <Ic name="chevronRight" size={18} color="var(--cocoa-40)" />
                 </div>
               ))}
-              <div className="arow" onClick={() => setNotif(!notif)}>
+              <div className="arow">
                 <span className="arow-ic"><Ic name="bell" size={20} /></span>
-                <span className="arow-lb">Push reminders</span>
-                <span style={{ width: 46, height: 28, borderRadius: 999, background: notif ? "var(--ink)" : "var(--line-strong)", position: "relative", transition: "background .2s" }}>
-                  <span style={{ position: "absolute", top: 3, left: notif ? 21 : 3, width: 22, height: 22, borderRadius: "50%", background: "#fff", transition: "left .2s" }} />
-                </span>
+                <span className="arow-lb">Email reminders<span style={{ display: "block", fontSize: "0.78rem", color: "var(--cocoa-60)" }}>Confirmations &amp; reminders go to {user.email || "your email"}</span></span>
               </div>
             </div>
             <button className="btn btn--soft btn--full" style={{ marginTop: 18 }} onClick={() => { if (window.SEY_BOOK) window.SEY_BOOK.signOut(); setUser(null); }}>
@@ -1030,37 +1027,29 @@
 
   // ---------- NOTIFICATION SETTINGS ----------
   function NotifSettings({ nav }) {
-    const EVENTS = [
-      { id: "confirm", lb: "Booking confirmation" },
-      { id: "r24", lb: "Reminder · 24h before" },
-      { id: "r2", lb: "Reminder · 2h before" },
-      { id: "change", lb: "Changes & cancellations" },
-      { id: "wait", lb: "Waitlist — a slot opened" },
-      { id: "promo", lb: "Offers & promotions" },
+    // Honest: today everything is sent by EMAIL (Brevo). In-app push and SMS
+    // aren't wired yet, so we don't show toggles that wouldn't do anything.
+    const EMAILS = [
+      { id: "confirm", lb: "Booking confirmation", s: "Sent as soon as you book" },
+      { id: "r24", lb: "Reminder before your visit", s: "A nudge ahead of your appointment" },
+      { id: "change", lb: "Changes & cancellations", s: "If a booking moves or is cancelled" },
+      { id: "wait", lb: "Waitlist — a spot opened", s: "When a full class frees up" },
     ];
-    const CH = ["push", "sms", "email"];
-    const [prefs, setPrefs] = useState(() => {
-      const base = {}; EVENTS.forEach((e) => base[e.id] = { push: true, sms: e.id !== "promo", email: e.id === "confirm" || e.id === "change" });
-      return base;
-    });
-    const toggle = (e, c) => setPrefs((p) => ({ ...p, [e]: { ...p[e], [c]: !p[e][c] } }));
     return (
       <div className="sheet-full">
-        <TopBar title="Notification settings" onBack={nav.pop} />
+        <TopBar title="Notifications" onBack={nav.pop} />
         <div className="app-scroll"><div className="screen" style={{ paddingTop: 6 }}>
-          <p className="muted" style={{ margin: "0 0 10px" }}>Choose how each update reaches you. Reminders help you never miss a visit.</p>
-          <div className="notifmatrix-head"><span /><span>Push</span><span>SMS</span><span>Email</span></div>
-          {EVENTS.map((e) => (
-            <div className="notifrow" key={e.id}>
-              <span className="notifrow-lb">{e.lb}</span>
-              {CH.map((c) => (
-                <span key={c} className={"minicheck" + (prefs[e.id][c] ? " is-on" : "")} role="checkbox" aria-checked={prefs[e.id][c]} aria-label={e.lb + " " + c} onClick={() => toggle(e.id, c)}>
-                  {prefs[e.id][c] && <Ic name="check" size={14} color="var(--cream)" />}
-                </span>
-              ))}
-            </div>
-          ))}
-          <div className="paynote" style={{ marginTop: 16 }}><Ic name="shield" size={16} color="var(--eucalyptus)" /> We'll always send a confirmation and any cancellation, even if muted, so you're never caught out.</div>
+          <p className="muted" style={{ margin: "0 0 14px" }}>Right now we keep you posted by <b>email</b>. These are the updates we send:</p>
+          <div className="block--flush">
+            {EMAILS.map((e) => (
+              <div className="arow" key={e.id}>
+                <span className="arow-ic"><Ic name="bell" size={20} /></span>
+                <span className="arow-lb">{e.lb}<span style={{ display: "block", fontSize: "0.78rem", color: "var(--cocoa-60)" }}>{e.s}</span></span>
+                <Ic name="check" size={18} color="var(--eucalyptus)" />
+              </div>
+            ))}
+          </div>
+          <div className="paynote" style={{ marginTop: 16 }}><Ic name="shield" size={16} color="var(--eucalyptus)" /> Push notifications and SMS aren’t available yet — they’re on the way. Email confirmations and reminders work today.</div>
         </div></div>
       </div>
     );
@@ -1405,7 +1394,7 @@
     if (tab === "home") base = <Home nav={nav} favs={favs} toggleFav={toggleFav} setTab={switchTab} notif={notif} visits={myVisits} />;
     else if (tab === "search") base = <Search nav={nav} favs={favs} toggleFav={toggleFav} />;
     else if (tab === "bookings") base = <Bookings bookings={bookings} nav={nav} onManage={setManage} reviewed={reviewed} />;
-    else base = <Account user={user} setUser={setUser} favs={favs} nav={nav} notif={notif} setNotif={setNotif} isOwner={!!ownerStudio} onSwitchToPro={() => setOwnerMode("pro")} />;
+    else base = <Account user={user} setUser={setUser} favs={favs} nav={nav} notif={notif} setNotif={setNotif} isOwner={!!ownerStudio} onSwitchToPro={() => setOwnerMode("pro")} visitCount={myVisits.length} />;
 
     // top overlay
     const top = stack[stack.length - 1];
