@@ -780,9 +780,14 @@
     }
 
     return (
-      <div className="app-scroll" style={{ paddingBottom: 24 }}>
-        <div className="screen" style={{ paddingTop: 40 }}>
-          <div className="brand" style={{ fontSize: "1.4rem", marginBottom: 28 }}><b>sey.la</b><span>|</span><i>book</i></div>
+      <div className="login-hero">
+        <div className="login-bg" />
+        <div className="login-scrim" />
+        <div className="login-top">
+          <div className="brand login-brand"><b>sey.la</b><span>|</span><i>book</i></div>
+          <div className="login-tag">Beauty &amp; wellness,<br />booked across the islands.</div>
+        </div>
+        <div className="login-card">
           {estate === "sent" ? (
             <>
               <h1 className="h-lg">Check your email</h1>
@@ -792,15 +797,15 @@
           ) : (
             <>
               <h1 className="h-lg">Log in or sign up</h1>
-              <p className="muted" style={{ marginTop: 8 }}>Enter your email — we'll send a magic link. No password, and booking is always free.</p>
-              <div className="field" style={{ marginTop: 22 }}>
+              <p className="muted" style={{ marginTop: 6 }}>Enter your email — we'll send a magic link. No password, and booking is always free.</p>
+              <div className="field" style={{ marginTop: 18 }}>
                 <input type="email" inputMode="email" autoComplete="email" placeholder="you@email.com" value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") sendLink(); }} />
               </div>
-              <button className="btn btn--primary btn--full" style={{ marginTop: 18 }} disabled={estate === "sending" || !email.trim()} onClick={sendLink}>{estate === "sending" ? "Sending…" : "Send magic link"}</button>
+              <button className="btn btn--primary btn--full" style={{ marginTop: 14 }} disabled={estate === "sending" || !email.trim()} onClick={sendLink}>{estate === "sending" ? "Sending…" : "Send magic link"}</button>
               {estate === "error" && <p className="tiny" style={{ color: "var(--clay)", marginTop: 12 }}>Couldn't send the link ({emsg}). Please try again.</p>}
-              <p className="tiny muted" style={{ marginTop: 16, lineHeight: 1.5 }}>By continuing you agree to the Terms and Privacy Policy.</p>
+              <p className="tiny muted" style={{ marginTop: 14, lineHeight: 1.5 }}>By continuing you agree to the Terms and Privacy Policy.</p>
             </>
           )}
         </div>

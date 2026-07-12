@@ -1666,22 +1666,20 @@
       }
     }
     return /*#__PURE__*/React.createElement("div", {
-      className: "app-scroll",
-      style: {
-        paddingBottom: 24
-      }
+      className: "login-hero"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "screen",
-      style: {
-        paddingTop: 40
-      }
+      className: "login-bg"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "login-scrim"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "login-top"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "brand",
-      style: {
-        fontSize: "1.4rem",
-        marginBottom: 28
-      }
-    }, /*#__PURE__*/React.createElement("b", null, "sey.la"), /*#__PURE__*/React.createElement("span", null, "|"), /*#__PURE__*/React.createElement("i", null, "book")), estate === "sent" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h1", {
+      className: "brand login-brand"
+    }, /*#__PURE__*/React.createElement("b", null, "sey.la"), /*#__PURE__*/React.createElement("span", null, "|"), /*#__PURE__*/React.createElement("i", null, "book")), /*#__PURE__*/React.createElement("div", {
+      className: "login-tag"
+    }, "Beauty & wellness,", /*#__PURE__*/React.createElement("br", null), "booked across the islands.")), /*#__PURE__*/React.createElement("div", {
+      className: "login-card"
+    }, estate === "sent" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h1", {
       className: "h-lg"
     }, "Check your email"), /*#__PURE__*/React.createElement("p", {
       className: "muted",
@@ -1699,12 +1697,12 @@
     }, "Log in or sign up"), /*#__PURE__*/React.createElement("p", {
       className: "muted",
       style: {
-        marginTop: 8
+        marginTop: 6
       }
     }, "Enter your email \u2014 we'll send a magic link. No password, and booking is always free."), /*#__PURE__*/React.createElement("div", {
       className: "field",
       style: {
-        marginTop: 22
+        marginTop: 18
       }
     }, /*#__PURE__*/React.createElement("input", {
       type: "email",
@@ -1719,7 +1717,7 @@
     })), /*#__PURE__*/React.createElement("button", {
       className: "btn btn--primary btn--full",
       style: {
-        marginTop: 18
+        marginTop: 14
       },
       disabled: estate === "sending" || !email.trim(),
       onClick: sendLink
@@ -1732,7 +1730,7 @@
     }, "Couldn't send the link (", emsg, "). Please try again."), /*#__PURE__*/React.createElement("p", {
       className: "tiny muted",
       style: {
-        marginTop: 16,
+        marginTop: 14,
         lineHeight: 1.5
       }
     }, "By continuing you agree to the Terms and Privacy Policy."))));

@@ -271,6 +271,19 @@ body {
 .apptrow-time { font-weight: 700; color: var(--ink); font-size: 0.95rem; flex: 0 0 auto; min-width: 46px; }
 .ofield { flex: 1; box-sizing: border-box; border: 1.5px solid var(--line-strong); border-radius: var(--radius-md); padding: 11px 12px; font: inherit; color: var(--ink); background: var(--surface); }
 
+/* ---- Login hero (full-screen photo + form card) ---- */
+.login-hero { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; background: #2A2420; }
+.login-bg { position: absolute; inset: 0;
+  background-image: linear-gradient(135deg, rgba(120,74,48,0.35), rgba(40,36,32,0.35)), url("https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=1200&q=70");
+  background-size: cover; background-position: center; }
+.login-scrim { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(28,25,23,0.15) 0%, rgba(28,25,23,0.35) 45%, rgba(28,25,23,0.85) 100%); }
+.login-top { position: relative; z-index: 2; padding: calc(52px + env(safe-area-inset-top,0px)) 26px 0; }
+.login-brand { font-size: 1.35rem; }
+.login-brand b, .login-brand i, .login-brand span { color: var(--cream); }
+.login-brand span { opacity: 0.6; }
+.login-tag { margin-top: 18px; color: #fff; font-family: var(--font-display, inherit); font-size: 2rem; font-weight: 700; line-height: 1.12; letter-spacing: -0.02em; text-shadow: 0 2px 20px rgba(0,0,0,0.3); }
+.login-card { position: relative; z-index: 2; margin-top: auto; background: var(--surface); border-radius: 26px 26px 0 0; padding: 28px 24px calc(28px + env(safe-area-inset-bottom,0px)); box-shadow: 0 -12px 40px rgba(0,0,0,0.22); }
+
 /* ---- OTP ---- */
 .otp { display: flex; gap: 10px; justify-content: center; margin: 24px 0; }
 .otp input { width: 48px; height: 58px; text-align: center; font-size: 1.5rem; font-weight: 700; color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); outline: none; }
