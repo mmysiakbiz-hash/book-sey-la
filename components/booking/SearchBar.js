@@ -73,7 +73,10 @@ export function SearchBar({
         .sey-search-field input::placeholder { color: var(--cocoa-40); }
         .sey-search-divider { width: 1px; background: var(--line); margin: 8px 0; flex: none; }
         @media (max-width: 640px) {
-          .sey-searchbar { flex-direction: column; border-radius: var(--radius-lg); padding: 10px; }
+          /* Override the inline pill radius/padding (inline styles beat plain
+             selectors) — otherwise the 999px radius on the now-tall column form
+             curves its sides inward and the full-width fields bulge past them. */
+          .sey-searchbar { flex-direction: column; border-radius: var(--radius-lg) !important; padding: 10px !important; }
           .sey-search-field { border: 1px solid var(--line); }
           .sey-search-divider { display: none; }
           .sey-searchbar > button { width: 100%; }
