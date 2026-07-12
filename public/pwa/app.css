@@ -250,6 +250,11 @@ body {
 .pin-marker { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; cursor: pointer; }
 .pin-price { background: var(--ink); color: var(--cream); font-size: 0.78rem; font-weight: 700; padding: 5px 10px; border-radius: var(--radius-pill); white-space: nowrap; box-shadow: var(--shadow-md); }
 .pin-marker.is-active .pin-price { background: var(--clay); transform: scale(1.08); }
+/* Real OSM map (Leaflet). */
+.map-live { height: 100%; background: #E8EAE6; }
+.map-live .leaflet-container { height: 100%; width: 100%; font: inherit; background: #E8EAE6; }
+.sey-pin span { display: block; width: 24px; height: 24px; border-radius: 50% 50% 50% 0; background: var(--clay); transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.sey-pin.is-active span { background: var(--ink); transform: rotate(-45deg) scale(1.15); }
 
 /* ---- OTP ---- */
 .otp { display: flex; gap: 10px; justify-content: center; margin: 24px 0; }

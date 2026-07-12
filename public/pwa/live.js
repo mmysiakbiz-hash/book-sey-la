@@ -64,6 +64,7 @@
         dur: (s.duration_min || 60) + " min",
         durMin: s.duration_min || 60,
         price: Number(s.price_eur) || 0,
+        poa: s.price_eur == null,     // "price on request" — no price set
       };
     });
     // Opening hours — App reads s.hours as [[label, "9:00 – 18:00"], …] and s.todayIdx.
@@ -102,13 +103,16 @@
       gallery: photos.map(withSuffix),
       hours: hours,
       todayIdx: todayIdx,
-      x: 28 + ((i * 13) % 48),
-      y: 22 + ((i * 17) % 52),
+      // Real coordinates for the map (null when the studio hasn't set a location).
+      lat: r.lat != null ? Number(r.lat) : null,
+      lng: r.lng != null ? Number(r.lng) : null,
       tag: r.status === "verified" ? "Verified" : "Popular",
       // App reads the group label as g.g, so use the `g` key (matches the demo shape).
       services: items.length ? [{ g: r.category || "Services", items: items }] : [],
       staff: (r.staff || []).filter(function (p) { return p.active !== false; }).map(function (p) {
-        return { id: p.id, name: p.name, role: p.role || "", rating: null, av: "" };
+        return { id: p.id, name: p.name, role: p.role || "", rating: null,
+                 av: p.photo_url || "",
+                 services: Array.isArray(p.services) ? p.services : [] };
       }),
     };
   }
@@ -129,7 +133,7 @@
   }
 
   var url = SUPABASE_URL + "/rest/v1/studios?select=" +
-    encodeURIComponent("id,slug,name,category,island,address,bio,tagline,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort),staff(id,name,role,active),business_hours(day_of_week,open_min,close_min),reviews(rating,text,guest_name,created_at)") +
+    encodeURIComponent("id,slug,name,category,island,address,lat,lng,bio,tagline,photos,google_rating,google_review_count,status,services(id,name,duration_min,price_eur,category,sort),staff(id,name,role,active,photo_url,services),business_hours(day_of_week,open_min,close_min),reviews(rating,text,guest_name,created_at)") +
     "&status=in.(active,verified)&order=google_rating.desc";
 
   var fetchStudios = fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: "Bearer " + SUPABASE_ANON } })

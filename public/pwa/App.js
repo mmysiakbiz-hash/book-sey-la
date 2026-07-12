@@ -27,6 +27,119 @@
     } catch {}
   };
 
+  // ---------- real map (Leaflet + OpenStreetMap, loaded on demand) ----------
+  const SEY_CENTER = [-4.62, 55.45]; // Mahé
+  let _leafletPromise = null;
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve(window.L);
+    if (_leafletPromise) return _leafletPromise;
+    _leafletPromise = new Promise((resolve, reject) => {
+      if (!document.querySelector("link[data-leaflet]")) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        link.setAttribute("data-leaflet", "1");
+        document.head.appendChild(link);
+      }
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      s.setAttribute("data-leaflet", "1");
+      s.onload = () => resolve(window.L);
+      s.onerror = reject;
+      document.body.appendChild(s);
+    });
+    return _leafletPromise;
+  }
+
+  // A real OSM map with a pin per studio that has coordinates. onSelect(id) fires
+  // when a pin is tapped. Falls back to a friendly note if Leaflet can't load.
+  function MapView({
+    studios,
+    activeId,
+    onSelect
+  }) {
+    const elRef = useRef(null);
+    const mapRef = useRef(null);
+    const [failed, setFailed] = useState(false);
+    const pins = (studios || []).filter(s => typeof s.lat === "number" && typeof s.lng === "number");
+    useEffect(() => {
+      let cancelled = false;
+      loadLeaflet().then(L => {
+        if (cancelled || !elRef.current) return;
+        if (!mapRef.current) {
+          mapRef.current = L.map(elRef.current, {
+            scrollWheelZoom: false,
+            attributionControl: false
+          }).setView(SEY_CENTER, 11);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19
+          }).addTo(mapRef.current);
+        }
+        const map = mapRef.current;
+        (map._seyMarkers || []).forEach(m => map.removeLayer(m));
+        map._seyMarkers = [];
+        const coords = [];
+        pins.forEach(s => {
+          const icon = L.divIcon({
+            className: "sey-pin" + (s.id === activeId ? " is-active" : ""),
+            html: "<span></span>",
+            iconSize: [24, 24],
+            iconAnchor: [12, 22]
+          });
+          const m = L.marker([s.lat, s.lng], {
+            icon
+          }).addTo(map);
+          m.on("click", () => onSelect && onSelect(s.id));
+          map._seyMarkers.push(m);
+          coords.push([s.lat, s.lng]);
+        });
+        if (coords.length === 1) map.setView(coords[0], 14);else if (coords.length > 1) map.fitBounds(coords, {
+          padding: [40, 40],
+          maxZoom: 14
+        });
+        setTimeout(() => {
+          try {
+            map.invalidateSize();
+          } catch (e) {}
+        }, 60);
+      }).catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [studios, activeId]);
+    useEffect(() => () => {
+      if (mapRef.current) {
+        try {
+          mapRef.current.remove();
+        } catch (e) {}
+        mapRef.current = null;
+      }
+    }, []);
+    if (failed) return /*#__PURE__*/React.createElement("div", {
+      className: "map",
+      style: {
+        display: "grid",
+        placeItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "muted tiny",
+      style: {
+        padding: 20,
+        textAlign: "center"
+      }
+    }, "Map couldn\u2019t load. Check your connection and try again."));
+    return /*#__PURE__*/React.createElement("div", {
+      ref: elRef,
+      className: "map-live",
+      style: {
+        position: "absolute",
+        inset: 0
+      }
+    });
+  }
+
   // ---------- small pieces ----------
   function TopBar({
     title,
@@ -352,37 +465,26 @@
         flex: 1,
         position: "relative"
       }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "map"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "map-water"
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "map-road",
+    }, /*#__PURE__*/React.createElement(MapView, {
+      studios: list,
+      activeId: active,
+      onSelect: setActive
+    }), list.every(s => typeof s.lat !== "number" || typeof s.lng !== "number") && /*#__PURE__*/React.createElement("div", {
       style: {
-        left: "20%",
-        top: 0,
-        width: 3,
-        height: "100%"
+        position: "absolute",
+        left: 14,
+        right: 14,
+        top: 14
       }
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "map-road",
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "muted tiny",
       style: {
-        left: 0,
-        top: "48%",
-        width: "100%",
-        height: 3
+        background: "rgba(252,248,242,0.94)",
+        padding: "8px 12px",
+        borderRadius: 999,
+        textAlign: "center"
       }
-    }), list.map(s => /*#__PURE__*/React.createElement("div", {
-      key: s.id,
-      className: "pin-marker" + (active === s.id ? " is-active" : ""),
-      style: {
-        left: s.x + "%",
-        top: s.y + "%"
-      },
-      onClick: () => setActive(s.id)
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "pin-price"
-    }, "\u2605 ", s.rating)))), active && (() => {
+    }, "Studios appear on the map once they\u2019ve set their location.")), active && (() => {
       const s = list.find(x => x.id === active) || D.STUDIOS.find(x => x.id === active);
       return /*#__PURE__*/React.createElement("div", {
         style: {
@@ -546,7 +648,7 @@
       }
     }, /*#__PURE__*/React.createElement("span", {
       className: "srv-price"
-    }, "SCR ", it.price), /*#__PURE__*/React.createElement(Ic, {
+    }, it.poa ? "On request" : "SCR " + it.price), /*#__PURE__*/React.createElement(Ic, {
       name: "chevronRight",
       size: 18,
       color: "var(--cocoa-40)"
@@ -685,6 +787,9 @@
     const chosen = allItems.filter(it => picked.includes(it.id));
     const total = chosen.reduce((n, it) => n + it.price, 0);
     const deposit = pay === "now" ? Math.max(5, Math.round(total * 0.2)) : 0;
+    // Only offer staff who perform every chosen service (empty list = does all).
+    const chosenNames = chosen.map(c => c.name);
+    const eligibleStaff = staffPool.filter(p => !(p.services && p.services.length) || chosenNames.every(n => p.services.includes(n)));
     const staffName = staff === "any" ? "Any professional" : (staffPool.find(p => p.id === staff) || {}).name;
     const TITLES = ["Choose services", "Choose professional", "Pick a time", "Review"];
     function confirm() {
@@ -836,7 +941,7 @@
         className: "srv-name"
       }, it.name), /*#__PURE__*/React.createElement("div", {
         className: "srv-meta"
-      }, it.dur, " \xB7 SCR ", it.price)), /*#__PURE__*/React.createElement("button", {
+      }, it.dur, " \xB7 ", it.poa ? "On request" : "SCR " + it.price)), /*#__PURE__*/React.createElement("button", {
         className: "srv-add" + (on ? " is-on" : ""),
         onClick: () => setPicked(on ? picked.filter(p => p !== it.id) : [...picked, it.id])
       }, on ? "Added ✓" : "Add"));
@@ -863,7 +968,7 @@
       name: "check",
       size: 18,
       color: "var(--ink)"
-    })), staffPool.map(p => /*#__PURE__*/React.createElement("button", {
+    })), eligibleStaff.map(p => /*#__PURE__*/React.createElement("button", {
       key: p.id,
       className: "staffcard" + (staff === p.id ? " is-on" : ""),
       onClick: () => setStaff(p.id)
