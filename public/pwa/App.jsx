@@ -1033,6 +1033,220 @@
     );
   }
 
+  // ---------- OWNER (STUDIO PRO) MODE ----------
+  // A simplified pro app for studio owners: a day-by-day agenda of bookings,
+  // reschedule / cancel, and a message-your-clients composer. (Full setup —
+  // services, hours, team, billing — stays on the web panel.)
+  const MTZ = "Indian/Mahe";
+  const mDayKey = (d) => d.toLocaleDateString("en-CA", { timeZone: MTZ });
+  const mDayLabel = (d) => d.toLocaleDateString("en-GB", { timeZone: MTZ, weekday: "short", day: "numeric", month: "short" });
+  const mTime = (d) => d.toLocaleTimeString("en-GB", { timeZone: MTZ, hour: "2-digit", minute: "2-digit" });
+
+  function OwnerApp({ studio, onLogout }) {
+    const [agenda, setAgenda] = useState(null);
+    const [sel, setSel] = useState(0);
+    const [view, setView] = useState("agenda"); // agenda | message
+    const [sheet, setSheet] = useState(null);    // booking action sheet
+    const [toast, setToast] = useState(null);
+    const showToast = (m) => { setToast(m); setTimeout(() => setToast(null), 1800); };
+
+    const days = React.useMemo(() => Array.from({ length: 14 }, (_, i) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + i); return d; }), []);
+
+    async function reload() {
+      const rows = window.SEY_BOOK ? await window.SEY_BOOK.getStudioAgenda(studio.id) : [];
+      setAgenda(rows);
+    }
+    useEffect(() => { reload(); /* eslint-disable-next-line */ }, []);
+
+    const dayList = (agenda || []).filter((b) => mDayKey(b.start) === mDayKey(days[sel])).sort((a, b) => a.start - b.start);
+    const countFor = (d) => (agenda || []).filter((b) => mDayKey(b.start) === mDayKey(d)).length;
+
+    if (view === "message") return <OwnerMessage studio={studio} onBack={() => setView("agenda")} showToast={showToast} toast={toast} />;
+
+    return (
+      <div className="app">
+        <div className="topbar">
+          <div className="topbar-title" style={{ fontWeight: 700 }}>{studio.name || "Your studio"}</div>
+          <div className="topbar-spacer" />
+          <button className="iconbtn iconbtn--plain" onClick={onLogout} aria-label="Log out"><Ic name="logout" /></button>
+        </div>
+
+        {studio.status !== "active" && (
+          <div className="screen" style={{ paddingTop: 6, paddingBottom: 0 }}>
+            <div className="tiny" style={{ background: "var(--blush)", color: "var(--clay)", padding: "10px 12px", borderRadius: 12 }}>
+              Your page isn’t published yet. Finish setup on book.sey.la to go live.
+            </div>
+          </div>
+        )}
+
+        {/* Day strip */}
+        <div className="ownerdays">
+          {days.map((d, i) => (
+            <button key={i} className={"ownerday" + (i === sel ? " is-on" : "")} onClick={() => setSel(i)}>
+              <span className="ownerday-dow">{i === 0 ? "Today" : d.toLocaleDateString("en-GB", { timeZone: MTZ, weekday: "short" })}</span>
+              <span className="ownerday-num">{d.toLocaleDateString("en-GB", { timeZone: MTZ, day: "numeric" })}</span>
+              {countFor(d) > 0 && <span className="ownerday-dot" />}
+            </button>
+          ))}
+        </div>
+
+        <div className="app-scroll">
+          <div className="screen" style={{ paddingTop: 10 }}>
+            <div className="sec-title" style={{ marginBottom: 10 }}>
+              <h2 className="h-md">{mDayLabel(days[sel])}</h2>
+              <span className="muted tiny">{dayList.length} booking{dayList.length === 1 ? "" : "s"}</span>
+            </div>
+
+            {agenda === null ? (
+              <p className="muted tiny">Loading…</p>
+            ) : dayList.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 10px" }}>
+                <span className="empty-ic"><Ic name="calendar" size={26} color="var(--cocoa-40)" /></span>
+                <div className="h-md" style={{ marginTop: 12 }}>No bookings</div>
+                <p className="muted" style={{ marginTop: 4 }}>Nothing booked for this day yet.</p>
+              </div>
+            ) : (
+              <div className="slist">
+                {dayList.map((b) => (
+                  <button key={b.id} className="apptrow" onClick={() => setSheet(b)}>
+                    <div className="apptrow-time">{mTime(b.start)}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="appt-name">{b.client}</div>
+                      <div className="srv-meta">{b.service}{b.staff ? " · " + b.staff : ""}{b.price != null ? " · SCR " + Math.round(b.price) : ""}</div>
+                    </div>
+                    <Ic name="chevronRight" size={18} color="var(--cocoa-40)" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="ownerbar">
+          <button className="btn btn--primary btn--full" onClick={() => setView("message")}><Ic name="bell" size={18} color="var(--cream)" /> Message clients</button>
+        </div>
+
+        {sheet && <OwnerBookingSheet booking={sheet} onClose={() => setSheet(null)}
+          onReschedule={async (startISO, dur) => { const r = await window.SEY_BOOK.ownerReschedule(sheet.id, startISO, dur); if (r.error) { showToast("Couldn’t move: " + r.error); } else { showToast("Rescheduled"); setSheet(null); reload(); } }}
+          onCancel={async () => { const r = await window.SEY_BOOK.ownerCancel(sheet.id); if (r.error) { showToast("Couldn’t cancel"); } else { showToast("Cancelled"); setSheet(null); reload(); } }} />}
+        {toast && <div className="toast">{toast}</div>}
+      </div>
+    );
+  }
+
+  function OwnerBookingSheet({ booking, onClose, onReschedule, onCancel }) {
+    const [mode, setMode] = useState("actions"); // actions | reschedule
+    const dur = booking.end && booking.start ? Math.round((booking.end - booking.start) / 60000) : 60;
+    const [date, setDate] = useState(mDayKey(booking.start));
+    const [time, setTime] = useState(mTime(booking.start));
+    const [busy, setBusy] = useState(false);
+
+    async function doReschedule() {
+      if (!date || !time) return;
+      setBusy(true);
+      const iso = new Date(date + "T" + time + ":00+04:00").toISOString();
+      await onReschedule(iso, dur);
+      setBusy(false);
+    }
+
+    return (
+      <>
+        <div className="sheet-scrim" onClick={onClose} />
+        <div className="sheet">
+          <div className="sheet-grab" />
+          <div style={{ padding: "0 4px 6px" }}>
+            <div className="h-md">{booking.client}</div>
+            <div className="srv-meta">{booking.service}{booking.staff ? " · " + booking.staff : ""} · {mDayLabel(booking.start)} {mTime(booking.start)}</div>
+          </div>
+          {booking.phone && mode === "actions" && <a className="act" href={"tel:" + booking.phone} style={{ textDecoration: "none" }}><span className="act-ic"><Ic name="pin" size={20} /></span>Call {booking.phone}</a>}
+
+          {mode === "actions" ? (
+            <>
+              <button className="act" onClick={() => setMode("reschedule")}><span className="act-ic"><Ic name="calendar" size={20} /></span>Reschedule</button>
+              <button className="act danger" onClick={onCancel}><span className="act-ic" style={{ background: "var(--blush)" }}><Ic name="close" size={19} color="var(--clay)" /></span>Cancel booking</button>
+              <button className="btn btn--soft btn--full" style={{ marginTop: 12 }} onClick={onClose}>Close</button>
+            </>
+          ) : (
+            <div style={{ display: "grid", gap: 10, marginTop: 6 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input className="ofield" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <input className="ofield" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+              </div>
+              <button className="btn btn--primary btn--full" onClick={doReschedule} disabled={busy}>{busy ? "Saving…" : "Save new time"}</button>
+              <button className="btn btn--soft btn--full" onClick={() => setMode("actions")}>Back</button>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
+
+  function OwnerMessage({ studio, onBack, showToast, toast }) {
+    const [clients, setClients] = useState(null);
+    const [sel, setSel] = useState({}); // email -> bool
+    const [msg, setMsg] = useState("");
+    const [busy, setBusy] = useState(false);
+
+    useEffect(() => {
+      (async () => {
+        const list = window.SEY_BOOK ? await window.SEY_BOOK.getStudioClients(studio.id) : [];
+        setClients(list);
+        const all = {}; list.forEach((c) => { all[c.email] = true; });
+        setSel(all);
+      })();
+    }, []);
+
+    const chosen = Object.keys(sel).filter((e) => sel[e]);
+    async function send() {
+      if (!msg.trim() || !chosen.length) return;
+      setBusy(true);
+      const r = await window.SEY_BOOK.messageClients(msg.trim(), chosen);
+      setBusy(false);
+      if (r && (r.ok || r.sent != null)) { showToast("Sent to " + (r.sent != null ? r.sent : chosen.length)); onBack(); }
+      else { showToast("Couldn’t send" + (r && r.error ? ": " + r.error : "")); }
+    }
+
+    return (
+      <div className="app">
+        <div className="topbar">
+          <button className="iconbtn iconbtn--plain topbar-back" onClick={onBack} aria-label="Back"><Ic name="back" /></button>
+          <div className="topbar-title">Message clients</div>
+          <div className="topbar-spacer" />
+        </div>
+        <div className="app-scroll">
+          <div className="screen">
+            <p className="muted" style={{ marginTop: 4 }}>Send an update to your clients — e.g. “We’re now on book.sey.la, reserve your next visit online.” Only your own clients receive it.</p>
+            <div className="field" style={{ marginTop: 14 }}>
+              <textarea rows={4} placeholder="Write your message…" value={msg} onChange={(e) => setMsg(e.target.value)} style={{ width: "100%", boxSizing: "border-box", border: "none", background: "transparent", font: "inherit", color: "var(--ink)", resize: "vertical", outline: "none" }} />
+            </div>
+            <div className="sec-title" style={{ margin: "18px 0 8px" }}>
+              <h2 className="h-md">Recipients ({chosen.length})</h2>
+              {clients && clients.length > 0 && (
+                <a onClick={() => { const allOn = chosen.length === clients.length; const next = {}; clients.forEach((c) => { next[c.email] = !allOn; }); setSel(next); }}>{chosen.length === clients.length ? "Clear all" : "Select all"}</a>
+              )}
+            </div>
+            {clients === null ? <p className="muted tiny">Loading…</p>
+              : clients.length === 0 ? <p className="muted tiny">No clients yet. They appear here once people book with you (or import them on the web panel).</p>
+              : (
+                <div className="block--flush">
+                  {clients.map((c) => (
+                    <div className="arow" key={c.email} onClick={() => setSel((s) => ({ ...s, [c.email]: !s[c.email] }))}>
+                      <span className="arow-lb" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}<span className="tiny muted" style={{ display: "block" }}>{c.email}</span></span>
+                      <span style={{ width: 24, height: 24, borderRadius: 7, border: "1.5px solid " + (sel[c.email] ? "var(--ink)" : "var(--line-strong)"), background: sel[c.email] ? "var(--ink)" : "transparent", display: "grid", placeItems: "center" }}>{sel[c.email] && <Ic name="check" size={15} color="var(--cream)" />}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+          </div>
+        </div>
+        <div className="ownerbar">
+          <button className="btn btn--primary btn--full" onClick={send} disabled={busy || !msg.trim() || !chosen.length}>{busy ? "Sending…" : "Send to " + chosen.length + " client" + (chosen.length === 1 ? "" : "s")}</button>
+        </div>
+        {toast && <div className="toast">{toast}</div>}
+      </div>
+    );
+  }
+
   // ---------- ROOT ----------
   function App() {
     const [tab, setTab] = useState("home");
@@ -1047,6 +1261,7 @@
     const [showSplash, setShowSplash] = useState(true);
     const [user, setUser] = useState(() => load("user", null));
     const [authChecked, setAuthChecked] = useState(false); // resolved the initial session yet?
+    const [ownerStudio, setOwnerStudio] = useState(undefined); // undefined=checking · null=not an owner · {…}=owner
     const [notif, setNotif] = useState(() => load("notif", true));
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
@@ -1068,10 +1283,19 @@
       window.SEY_BOOK.getUser().then((u) => { if (u) setUser(asUser(u)); }).finally(() => setAuthChecked(true));
       const unsub = window.SEY_BOOK.onAuthChange((u, event) => {
         if (u) setUser(asUser(u));
-        else if (event === "SIGNED_OUT") setUser(null);
+        else if (event === "SIGNED_OUT") { setUser(null); setOwnerStudio(undefined); }
       });
       return unsub;
     }, []);
+
+    // Owner detection — if the signed-in user owns a studio, they get the pro app.
+    useEffect(() => {
+      if (!user) { setOwnerStudio(undefined); return; }
+      if (!(window.SEY_BOOK && window.SEY_BOOK.available())) { setOwnerStudio(null); return; }
+      let cancelled = false;
+      window.SEY_BOOK.getMyStudio().then((s) => { if (!cancelled) setOwnerStudio(s || null); }).catch(() => { if (!cancelled) setOwnerStudio(null); });
+      return () => { cancelled = true; };
+    }, [user]);
 
     const showToast = (m) => { setToast(m); setTimeout(() => setToast(null), 1800); };
     const nav = {
@@ -1129,6 +1353,19 @@
           {toast && <div className="toast">{toast}</div>}
         </div>
       );
+    }
+
+    // Owner (studio pro) app. While we're still checking ownership, hold on the
+    // splash so we don't flash the client home before switching.
+    if (ownerStudio === undefined) {
+      return (
+        <div className="app">
+          <div className="splash"><div className="brand" style={{ fontSize: "1.7rem" }}><b>sey.la</b><span>|</span><i>book</i></div><div className="tiny" style={{ opacity: 0.7 }}>Loading your studio…</div></div>
+        </div>
+      );
+    }
+    if (ownerStudio) {
+      return <OwnerApp studio={ownerStudio} onLogout={() => { if (window.SEY_BOOK) window.SEY_BOOK.signOut(); setUser(null); setOwnerStudio(undefined); }} />;
     }
 
     return (

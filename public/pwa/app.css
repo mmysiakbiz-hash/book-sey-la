@@ -256,6 +256,21 @@ body {
 .sey-pin span { display: block; width: 24px; height: 24px; border-radius: 50% 50% 50% 0; background: var(--clay); transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
 .sey-pin.is-active span { background: var(--ink); transform: rotate(-45deg) scale(1.15); }
 
+/* ---- Owner (studio pro) mode ---- */
+.ownerdays { display: flex; gap: 8px; overflow-x: auto; padding: 10px 18px 12px; border-bottom: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
+.ownerdays::-webkit-scrollbar { display: none; }
+.ownerday { flex: 0 0 auto; width: 52px; padding: 8px 0; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; position: relative; color: var(--cocoa-60); }
+.ownerday-dow { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+.ownerday-num { font-size: 1.15rem; font-weight: 700; color: var(--ink); }
+.ownerday.is-on { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+.ownerday.is-on .ownerday-num { color: var(--cream); }
+.ownerday-dot { position: absolute; bottom: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--clay); }
+.ownerday.is-on .ownerday-dot { background: var(--cream); }
+.ownerbar { position: sticky; bottom: 0; padding: 12px 18px calc(12px + env(safe-area-inset-bottom,0px)); background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--line); }
+.apptrow { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; cursor: pointer; }
+.apptrow-time { font-weight: 700; color: var(--ink); font-size: 0.95rem; flex: 0 0 auto; min-width: 46px; }
+.ofield { flex: 1; box-sizing: border-box; border: 1.5px solid var(--line-strong); border-radius: var(--radius-md); padding: 11px 12px; font: inherit; color: var(--ink); background: var(--surface); }
+
 /* ---- OTP ---- */
 .otp { display: flex; gap: 10px; justify-content: center; margin: 24px 0; }
 .otp input { width: 48px; height: 58px; text-align: center; font-size: 1.5rem; font-weight: 700; color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); outline: none; }

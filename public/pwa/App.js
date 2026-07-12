@@ -2264,6 +2264,448 @@
     }, t.lb))));
   }
 
+  // ---------- OWNER (STUDIO PRO) MODE ----------
+  // A simplified pro app for studio owners: a day-by-day agenda of bookings,
+  // reschedule / cancel, and a message-your-clients composer. (Full setup —
+  // services, hours, team, billing — stays on the web panel.)
+  const MTZ = "Indian/Mahe";
+  const mDayKey = d => d.toLocaleDateString("en-CA", {
+    timeZone: MTZ
+  });
+  const mDayLabel = d => d.toLocaleDateString("en-GB", {
+    timeZone: MTZ,
+    weekday: "short",
+    day: "numeric",
+    month: "short"
+  });
+  const mTime = d => d.toLocaleTimeString("en-GB", {
+    timeZone: MTZ,
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+  function OwnerApp({
+    studio,
+    onLogout
+  }) {
+    const [agenda, setAgenda] = useState(null);
+    const [sel, setSel] = useState(0);
+    const [view, setView] = useState("agenda"); // agenda | message
+    const [sheet, setSheet] = useState(null); // booking action sheet
+    const [toast, setToast] = useState(null);
+    const showToast = m => {
+      setToast(m);
+      setTimeout(() => setToast(null), 1800);
+    };
+    const days = React.useMemo(() => Array.from({
+      length: 14
+    }, (_, i) => {
+      const d = new Date();
+      d.setHours(12, 0, 0, 0);
+      d.setDate(d.getDate() + i);
+      return d;
+    }), []);
+    async function reload() {
+      const rows = window.SEY_BOOK ? await window.SEY_BOOK.getStudioAgenda(studio.id) : [];
+      setAgenda(rows);
+    }
+    useEffect(() => {
+      reload(); /* eslint-disable-next-line */
+    }, []);
+    const dayList = (agenda || []).filter(b => mDayKey(b.start) === mDayKey(days[sel])).sort((a, b) => a.start - b.start);
+    const countFor = d => (agenda || []).filter(b => mDayKey(b.start) === mDayKey(d)).length;
+    if (view === "message") return /*#__PURE__*/React.createElement(OwnerMessage, {
+      studio: studio,
+      onBack: () => setView("agenda"),
+      showToast: showToast,
+      toast: toast
+    });
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "topbar"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "topbar-title",
+      style: {
+        fontWeight: 700
+      }
+    }, studio.name || "Your studio"), /*#__PURE__*/React.createElement("div", {
+      className: "topbar-spacer"
+    }), /*#__PURE__*/React.createElement("button", {
+      className: "iconbtn iconbtn--plain",
+      onClick: onLogout,
+      "aria-label": "Log out"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "logout"
+    }))), studio.status !== "active" && /*#__PURE__*/React.createElement("div", {
+      className: "screen",
+      style: {
+        paddingTop: 6,
+        paddingBottom: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "tiny",
+      style: {
+        background: "var(--blush)",
+        color: "var(--clay)",
+        padding: "10px 12px",
+        borderRadius: 12
+      }
+    }, "Your page isn\u2019t published yet. Finish setup on book.sey.la to go live.")), /*#__PURE__*/React.createElement("div", {
+      className: "ownerdays"
+    }, days.map((d, i) => /*#__PURE__*/React.createElement("button", {
+      key: i,
+      className: "ownerday" + (i === sel ? " is-on" : ""),
+      onClick: () => setSel(i)
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "ownerday-dow"
+    }, i === 0 ? "Today" : d.toLocaleDateString("en-GB", {
+      timeZone: MTZ,
+      weekday: "short"
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "ownerday-num"
+    }, d.toLocaleDateString("en-GB", {
+      timeZone: MTZ,
+      day: "numeric"
+    })), countFor(d) > 0 && /*#__PURE__*/React.createElement("span", {
+      className: "ownerday-dot"
+    })))), /*#__PURE__*/React.createElement("div", {
+      className: "app-scroll"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "screen",
+      style: {
+        paddingTop: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "sec-title",
+      style: {
+        marginBottom: 10
+      }
+    }, /*#__PURE__*/React.createElement("h2", {
+      className: "h-md"
+    }, mDayLabel(days[sel])), /*#__PURE__*/React.createElement("span", {
+      className: "muted tiny"
+    }, dayList.length, " booking", dayList.length === 1 ? "" : "s")), agenda === null ? /*#__PURE__*/React.createElement("p", {
+      className: "muted tiny"
+    }, "Loading\u2026") : dayList.length === 0 ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        padding: "40px 10px"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "empty-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "calendar",
+      size: 26,
+      color: "var(--cocoa-40)"
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "h-md",
+      style: {
+        marginTop: 12
+      }
+    }, "No bookings"), /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        marginTop: 4
+      }
+    }, "Nothing booked for this day yet.")) : /*#__PURE__*/React.createElement("div", {
+      className: "slist"
+    }, dayList.map(b => /*#__PURE__*/React.createElement("button", {
+      key: b.id,
+      className: "apptrow",
+      onClick: () => setSheet(b)
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "apptrow-time"
+    }, mTime(b.start)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "appt-name"
+    }, b.client), /*#__PURE__*/React.createElement("div", {
+      className: "srv-meta"
+    }, b.service, b.staff ? " · " + b.staff : "", b.price != null ? " · SCR " + Math.round(b.price) : "")), /*#__PURE__*/React.createElement(Ic, {
+      name: "chevronRight",
+      size: 18,
+      color: "var(--cocoa-40)"
+    })))))), /*#__PURE__*/React.createElement("div", {
+      className: "ownerbar"
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--primary btn--full",
+      onClick: () => setView("message")
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "bell",
+      size: 18,
+      color: "var(--cream)"
+    }), " Message clients")), sheet && /*#__PURE__*/React.createElement(OwnerBookingSheet, {
+      booking: sheet,
+      onClose: () => setSheet(null),
+      onReschedule: async (startISO, dur) => {
+        const r = await window.SEY_BOOK.ownerReschedule(sheet.id, startISO, dur);
+        if (r.error) {
+          showToast("Couldn’t move: " + r.error);
+        } else {
+          showToast("Rescheduled");
+          setSheet(null);
+          reload();
+        }
+      },
+      onCancel: async () => {
+        const r = await window.SEY_BOOK.ownerCancel(sheet.id);
+        if (r.error) {
+          showToast("Couldn’t cancel");
+        } else {
+          showToast("Cancelled");
+          setSheet(null);
+          reload();
+        }
+      }
+    }), toast && /*#__PURE__*/React.createElement("div", {
+      className: "toast"
+    }, toast));
+  }
+  function OwnerBookingSheet({
+    booking,
+    onClose,
+    onReschedule,
+    onCancel
+  }) {
+    const [mode, setMode] = useState("actions"); // actions | reschedule
+    const dur = booking.end && booking.start ? Math.round((booking.end - booking.start) / 60000) : 60;
+    const [date, setDate] = useState(mDayKey(booking.start));
+    const [time, setTime] = useState(mTime(booking.start));
+    const [busy, setBusy] = useState(false);
+    async function doReschedule() {
+      if (!date || !time) return;
+      setBusy(true);
+      const iso = new Date(date + "T" + time + ":00+04:00").toISOString();
+      await onReschedule(iso, dur);
+      setBusy(false);
+    }
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "sheet-scrim",
+      onClick: onClose
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "sheet"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "sheet-grab"
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 4px 6px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "h-md"
+    }, booking.client), /*#__PURE__*/React.createElement("div", {
+      className: "srv-meta"
+    }, booking.service, booking.staff ? " · " + booking.staff : "", " \xB7 ", mDayLabel(booking.start), " ", mTime(booking.start))), booking.phone && mode === "actions" && /*#__PURE__*/React.createElement("a", {
+      className: "act",
+      href: "tel:" + booking.phone,
+      style: {
+        textDecoration: "none"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "act-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "pin",
+      size: 20
+    })), "Call ", booking.phone), mode === "actions" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+      className: "act",
+      onClick: () => setMode("reschedule")
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "act-ic"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "calendar",
+      size: 20
+    })), "Reschedule"), /*#__PURE__*/React.createElement("button", {
+      className: "act danger",
+      onClick: onCancel
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "act-ic",
+      style: {
+        background: "var(--blush)"
+      }
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "close",
+      size: 19,
+      color: "var(--clay)"
+    })), "Cancel booking"), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--soft btn--full",
+      style: {
+        marginTop: 12
+      },
+      onClick: onClose
+    }, "Close")) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gap: 10,
+        marginTop: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      className: "ofield",
+      type: "date",
+      value: date,
+      onChange: e => setDate(e.target.value)
+    }), /*#__PURE__*/React.createElement("input", {
+      className: "ofield",
+      type: "time",
+      value: time,
+      onChange: e => setTime(e.target.value)
+    })), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--primary btn--full",
+      onClick: doReschedule,
+      disabled: busy
+    }, busy ? "Saving…" : "Save new time"), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--soft btn--full",
+      onClick: () => setMode("actions")
+    }, "Back"))));
+  }
+  function OwnerMessage({
+    studio,
+    onBack,
+    showToast,
+    toast
+  }) {
+    const [clients, setClients] = useState(null);
+    const [sel, setSel] = useState({}); // email -> bool
+    const [msg, setMsg] = useState("");
+    const [busy, setBusy] = useState(false);
+    useEffect(() => {
+      (async () => {
+        const list = window.SEY_BOOK ? await window.SEY_BOOK.getStudioClients(studio.id) : [];
+        setClients(list);
+        const all = {};
+        list.forEach(c => {
+          all[c.email] = true;
+        });
+        setSel(all);
+      })();
+    }, []);
+    const chosen = Object.keys(sel).filter(e => sel[e]);
+    async function send() {
+      if (!msg.trim() || !chosen.length) return;
+      setBusy(true);
+      const r = await window.SEY_BOOK.messageClients(msg.trim(), chosen);
+      setBusy(false);
+      if (r && (r.ok || r.sent != null)) {
+        showToast("Sent to " + (r.sent != null ? r.sent : chosen.length));
+        onBack();
+      } else {
+        showToast("Couldn’t send" + (r && r.error ? ": " + r.error : ""));
+      }
+    }
+    return /*#__PURE__*/React.createElement("div", {
+      className: "app"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "topbar"
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "iconbtn iconbtn--plain topbar-back",
+      onClick: onBack,
+      "aria-label": "Back"
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "back"
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "topbar-title"
+    }, "Message clients"), /*#__PURE__*/React.createElement("div", {
+      className: "topbar-spacer"
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "app-scroll"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "screen"
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        marginTop: 4
+      }
+    }, "Send an update to your clients \u2014 e.g. \u201CWe\u2019re now on book.sey.la, reserve your next visit online.\u201D Only your own clients receive it."), /*#__PURE__*/React.createElement("div", {
+      className: "field",
+      style: {
+        marginTop: 14
+      }
+    }, /*#__PURE__*/React.createElement("textarea", {
+      rows: 4,
+      placeholder: "Write your message\u2026",
+      value: msg,
+      onChange: e => setMsg(e.target.value),
+      style: {
+        width: "100%",
+        boxSizing: "border-box",
+        border: "none",
+        background: "transparent",
+        font: "inherit",
+        color: "var(--ink)",
+        resize: "vertical",
+        outline: "none"
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "sec-title",
+      style: {
+        margin: "18px 0 8px"
+      }
+    }, /*#__PURE__*/React.createElement("h2", {
+      className: "h-md"
+    }, "Recipients (", chosen.length, ")"), clients && clients.length > 0 && /*#__PURE__*/React.createElement("a", {
+      onClick: () => {
+        const allOn = chosen.length === clients.length;
+        const next = {};
+        clients.forEach(c => {
+          next[c.email] = !allOn;
+        });
+        setSel(next);
+      }
+    }, chosen.length === clients.length ? "Clear all" : "Select all")), clients === null ? /*#__PURE__*/React.createElement("p", {
+      className: "muted tiny"
+    }, "Loading\u2026") : clients.length === 0 ? /*#__PURE__*/React.createElement("p", {
+      className: "muted tiny"
+    }, "No clients yet. They appear here once people book with you (or import them on the web panel).") : /*#__PURE__*/React.createElement("div", {
+      className: "block--flush"
+    }, clients.map(c => /*#__PURE__*/React.createElement("div", {
+      className: "arow",
+      key: c.email,
+      onClick: () => setSel(s => ({
+        ...s,
+        [c.email]: !s[c.email]
+      }))
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "arow-lb",
+      style: {
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+      }
+    }, c.name, /*#__PURE__*/React.createElement("span", {
+      className: "tiny muted",
+      style: {
+        display: "block"
+      }
+    }, c.email)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 24,
+        height: 24,
+        borderRadius: 7,
+        border: "1.5px solid " + (sel[c.email] ? "var(--ink)" : "var(--line-strong)"),
+        background: sel[c.email] ? "var(--ink)" : "transparent",
+        display: "grid",
+        placeItems: "center"
+      }
+    }, sel[c.email] && /*#__PURE__*/React.createElement(Ic, {
+      name: "check",
+      size: 15,
+      color: "var(--cream)"
+    }))))))), /*#__PURE__*/React.createElement("div", {
+      className: "ownerbar"
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--primary btn--full",
+      onClick: send,
+      disabled: busy || !msg.trim() || !chosen.length
+    }, busy ? "Sending…" : "Send to " + chosen.length + " client" + (chosen.length === 1 ? "" : "s"))), toast && /*#__PURE__*/React.createElement("div", {
+      className: "toast"
+    }, toast));
+  }
+
   // ---------- ROOT ----------
   function App() {
     const [tab, setTab] = useState("home");
@@ -2278,6 +2720,7 @@
     const [showSplash, setShowSplash] = useState(true);
     const [user, setUser] = useState(() => load("user", null));
     const [authChecked, setAuthChecked] = useState(false); // resolved the initial session yet?
+    const [ownerStudio, setOwnerStudio] = useState(undefined); // undefined=checking · null=not an owner · {…}=owner
     const [notif, setNotif] = useState(() => load("notif", true));
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
@@ -2310,10 +2753,34 @@
         if (u) setUser(asUser(u));
       }).finally(() => setAuthChecked(true));
       const unsub = window.SEY_BOOK.onAuthChange((u, event) => {
-        if (u) setUser(asUser(u));else if (event === "SIGNED_OUT") setUser(null);
+        if (u) setUser(asUser(u));else if (event === "SIGNED_OUT") {
+          setUser(null);
+          setOwnerStudio(undefined);
+        }
       });
       return unsub;
     }, []);
+
+    // Owner detection — if the signed-in user owns a studio, they get the pro app.
+    useEffect(() => {
+      if (!user) {
+        setOwnerStudio(undefined);
+        return;
+      }
+      if (!(window.SEY_BOOK && window.SEY_BOOK.available())) {
+        setOwnerStudio(null);
+        return;
+      }
+      let cancelled = false;
+      window.SEY_BOOK.getMyStudio().then(s => {
+        if (!cancelled) setOwnerStudio(s || null);
+      }).catch(() => {
+        if (!cancelled) setOwnerStudio(null);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [user]);
     const showToast = m => {
       setToast(m);
       setTimeout(() => setToast(null), 1800);
@@ -2475,6 +2942,36 @@
       }), toast && /*#__PURE__*/React.createElement("div", {
         className: "toast"
       }, toast));
+    }
+
+    // Owner (studio pro) app. While we're still checking ownership, hold on the
+    // splash so we don't flash the client home before switching.
+    if (ownerStudio === undefined) {
+      return /*#__PURE__*/React.createElement("div", {
+        className: "app"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "splash"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "brand",
+        style: {
+          fontSize: "1.7rem"
+        }
+      }, /*#__PURE__*/React.createElement("b", null, "sey.la"), /*#__PURE__*/React.createElement("span", null, "|"), /*#__PURE__*/React.createElement("i", null, "book")), /*#__PURE__*/React.createElement("div", {
+        className: "tiny",
+        style: {
+          opacity: 0.7
+        }
+      }, "Loading your studio\u2026")));
+    }
+    if (ownerStudio) {
+      return /*#__PURE__*/React.createElement(OwnerApp, {
+        studio: ownerStudio,
+        onLogout: () => {
+          if (window.SEY_BOOK) window.SEY_BOOK.signOut();
+          setUser(null);
+          setOwnerStudio(undefined);
+        }
+      });
     }
     return /*#__PURE__*/React.createElement("div", {
       className: "app"
