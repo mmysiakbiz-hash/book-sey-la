@@ -776,7 +776,7 @@
   }
 
   // ---------- ACCOUNT + LOGIN/OTP ----------
-  function Account({ user, setUser, favs, nav, notif, setNotif }) {
+  function Account({ user, setUser, favs, nav, notif, setNotif, isOwner, onSwitchToPro }) {
     if (!user) return <Login onDone={setUser} />;
     const rows = [
       { ic: "sparkle", lb: "Rewards & stamps", go: () => nav.push("rewards") },
@@ -795,6 +795,13 @@
               <img className="avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=70" alt="" />
               <div><div className="h-md">{user.name}</div><div className="tiny muted">{user.phone}</div></div>
             </div>
+            {isOwner && (
+              <button className="arow" onClick={onSwitchToPro} style={{ width: "100%", background: "var(--ink)", color: "var(--cream)", borderRadius: "var(--radius-lg)", marginBottom: 14 }}>
+                <span className="arow-ic" style={{ background: "rgba(255,255,255,0.14)", color: "var(--cream)" }}><Ic name="calendar" size={20} color="var(--cream)" /></span>
+                <span className="arow-lb" style={{ color: "var(--cream)" }}>Studio dashboard<span style={{ display: "block", fontSize: "0.78rem", opacity: 0.75 }}>Manage your bookings &amp; clients</span></span>
+                <Ic name="chevronRight" size={18} color="var(--cream)" />
+              </button>
+            )}
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", padding: "14px", textAlign: "center" }}>
                 <div className="h-md">{favs.length}</div><div className="tiny muted">Saved</div>
@@ -1112,7 +1119,7 @@
   const mDayLabel = (d) => d.toLocaleDateString("en-GB", { timeZone: MTZ, weekday: "short", day: "numeric", month: "short" });
   const mTime = (d) => d.toLocaleTimeString("en-GB", { timeZone: MTZ, hour: "2-digit", minute: "2-digit" });
 
-  function OwnerApp({ studio, onLogout }) {
+  function OwnerApp({ studio, onLogout, onSwitchToClient }) {
     const [agenda, setAgenda] = useState(null);
     const [sel, setSel] = useState(0);
     const [view, setView] = useState("agenda"); // agenda | message
@@ -1138,6 +1145,7 @@
         <div className="topbar">
           <div className="topbar-title" style={{ fontWeight: 700 }}>{studio.name || "Your studio"}</div>
           <div className="topbar-spacer" />
+          <button className="btn btn--soft btn--sm" style={{ marginRight: 8 }} onClick={onSwitchToClient}>Client view</button>
           <button className="iconbtn iconbtn--plain" onClick={onLogout} aria-label="Log out"><Ic name="logout" /></button>
         </div>
 
@@ -1286,9 +1294,8 @@
         <div className="app-scroll">
           <div className="screen">
             <p className="muted" style={{ marginTop: 4 }}>Send an update to your clients — e.g. “We’re now on book.sey.la, reserve your next visit online.” Only your own clients receive it.</p>
-            <div className="field" style={{ marginTop: 14 }}>
-              <textarea rows={4} placeholder="Write your message…" value={msg} onChange={(e) => setMsg(e.target.value)} style={{ width: "100%", boxSizing: "border-box", border: "none", background: "transparent", font: "inherit", color: "var(--ink)", resize: "vertical", outline: "none" }} />
-            </div>
+            <textarea rows={4} placeholder="Write your message…" value={msg} onChange={(e) => setMsg(e.target.value)}
+              style={{ marginTop: 14, width: "100%", boxSizing: "border-box", border: "1px solid var(--line-strong)", borderRadius: "var(--radius-md)", padding: "12px 14px", font: "inherit", color: "var(--ink)", background: "var(--surface)", resize: "vertical", outline: "none", minHeight: 96, display: "block" }} />
             <div className="sec-title" style={{ margin: "18px 0 8px" }}>
               <h2 className="h-md">Recipients ({chosen.length})</h2>
               {clients && clients.length > 0 && (
@@ -1332,6 +1339,8 @@
     const [user, setUser] = useState(() => load("user", null));
     const [authChecked, setAuthChecked] = useState(false); // resolved the initial session yet?
     const [ownerStudio, setOwnerStudio] = useState(undefined); // undefined=checking · null=not an owner · {…}=owner
+    const [ownerMode, setOwnerMode] = useState(() => load("ownerMode", "pro")); // owners: 'pro' dashboard vs 'client' booking view
+    useEffect(() => save("ownerMode", ownerMode), [ownerMode]);
     const [notif, setNotif] = useState(() => load("notif", true));
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
@@ -1396,7 +1405,7 @@
     if (tab === "home") base = <Home nav={nav} favs={favs} toggleFav={toggleFav} setTab={switchTab} notif={notif} visits={myVisits} />;
     else if (tab === "search") base = <Search nav={nav} favs={favs} toggleFav={toggleFav} />;
     else if (tab === "bookings") base = <Bookings bookings={bookings} nav={nav} onManage={setManage} reviewed={reviewed} />;
-    else base = <Account user={user} setUser={setUser} favs={favs} nav={nav} notif={notif} setNotif={setNotif} />;
+    else base = <Account user={user} setUser={setUser} favs={favs} nav={nav} notif={notif} setNotif={setNotif} isOwner={!!ownerStudio} onSwitchToPro={() => setOwnerMode("pro")} />;
 
     // top overlay
     const top = stack[stack.length - 1];
@@ -1444,8 +1453,10 @@
         </div>
       );
     }
-    if (ownerStudio) {
-      return <OwnerApp studio={ownerStudio} onLogout={() => { if (window.SEY_BOOK) window.SEY_BOOK.signOut(); setUser(null); setOwnerStudio(undefined); }} />;
+    if (ownerStudio && ownerMode === "pro") {
+      return <OwnerApp studio={ownerStudio}
+        onSwitchToClient={() => setOwnerMode("client")}
+        onLogout={() => { if (window.SEY_BOOK) window.SEY_BOOK.signOut(); setUser(null); setOwnerStudio(undefined); }} />;
     }
 
     return (

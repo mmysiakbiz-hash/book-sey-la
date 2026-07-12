@@ -1621,7 +1621,9 @@
     favs,
     nav,
     notif,
-    setNotif
+    setNotif,
+    isOwner,
+    onSwitchToPro
   }) {
     if (!user) return /*#__PURE__*/React.createElement(Login, {
       onDone: setUser
@@ -1671,7 +1673,42 @@
       className: "h-md"
     }, user.name), /*#__PURE__*/React.createElement("div", {
       className: "tiny muted"
-    }, user.phone))), /*#__PURE__*/React.createElement("div", {
+    }, user.phone))), isOwner && /*#__PURE__*/React.createElement("button", {
+      className: "arow",
+      onClick: onSwitchToPro,
+      style: {
+        width: "100%",
+        background: "var(--ink)",
+        color: "var(--cream)",
+        borderRadius: "var(--radius-lg)",
+        marginBottom: 14
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "arow-ic",
+      style: {
+        background: "rgba(255,255,255,0.14)",
+        color: "var(--cream)"
+      }
+    }, /*#__PURE__*/React.createElement(Ic, {
+      name: "calendar",
+      size: 20,
+      color: "var(--cream)"
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "arow-lb",
+      style: {
+        color: "var(--cream)"
+      }
+    }, "Studio dashboard", /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "block",
+        fontSize: "0.78rem",
+        opacity: 0.75
+      }
+    }, "Manage your bookings & clients")), /*#__PURE__*/React.createElement(Ic, {
+      name: "chevronRight",
+      size: 18,
+      color: "var(--cream)"
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 10
@@ -2409,7 +2446,8 @@
   });
   function OwnerApp({
     studio,
-    onLogout
+    onLogout,
+    onSwitchToClient
   }) {
     const [agenda, setAgenda] = useState(null);
     const [sel, setSel] = useState(0);
@@ -2455,6 +2493,12 @@
     }, studio.name || "Your studio"), /*#__PURE__*/React.createElement("div", {
       className: "topbar-spacer"
     }), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--soft btn--sm",
+      style: {
+        marginRight: 8
+      },
+      onClick: onSwitchToClient
+    }, "Client view"), /*#__PURE__*/React.createElement("button", {
       className: "iconbtn iconbtn--plain",
       onClick: onLogout,
       "aria-label": "Log out"
@@ -2745,27 +2789,27 @@
       style: {
         marginTop: 4
       }
-    }, "Send an update to your clients \u2014 e.g. \u201CWe\u2019re now on book.sey.la, reserve your next visit online.\u201D Only your own clients receive it."), /*#__PURE__*/React.createElement("div", {
-      className: "field",
-      style: {
-        marginTop: 14
-      }
-    }, /*#__PURE__*/React.createElement("textarea", {
+    }, "Send an update to your clients \u2014 e.g. \u201CWe\u2019re now on book.sey.la, reserve your next visit online.\u201D Only your own clients receive it."), /*#__PURE__*/React.createElement("textarea", {
       rows: 4,
       placeholder: "Write your message\u2026",
       value: msg,
       onChange: e => setMsg(e.target.value),
       style: {
+        marginTop: 14,
         width: "100%",
         boxSizing: "border-box",
-        border: "none",
-        background: "transparent",
+        border: "1px solid var(--line-strong)",
+        borderRadius: "var(--radius-md)",
+        padding: "12px 14px",
         font: "inherit",
         color: "var(--ink)",
+        background: "var(--surface)",
         resize: "vertical",
-        outline: "none"
+        outline: "none",
+        minHeight: 96,
+        display: "block"
       }
-    })), /*#__PURE__*/React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       className: "sec-title",
       style: {
         margin: "18px 0 8px"
@@ -2845,6 +2889,8 @@
     const [user, setUser] = useState(() => load("user", null));
     const [authChecked, setAuthChecked] = useState(false); // resolved the initial session yet?
     const [ownerStudio, setOwnerStudio] = useState(undefined); // undefined=checking · null=not an owner · {…}=owner
+    const [ownerMode, setOwnerMode] = useState(() => load("ownerMode", "pro")); // owners: 'pro' dashboard vs 'client' booking view
+    useEffect(() => save("ownerMode", ownerMode), [ownerMode]);
     const [notif, setNotif] = useState(() => load("notif", true));
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
@@ -2994,7 +3040,9 @@
       favs: favs,
       nav: nav,
       notif: notif,
-      setNotif: setNotif
+      setNotif: setNotif,
+      isOwner: !!ownerStudio,
+      onSwitchToPro: () => setOwnerMode("pro")
     });
 
     // top overlay
@@ -3105,9 +3153,10 @@
         }
       }, "Loading your studio\u2026")));
     }
-    if (ownerStudio) {
+    if (ownerStudio && ownerMode === "pro") {
       return /*#__PURE__*/React.createElement(OwnerApp, {
         studio: ownerStudio,
+        onSwitchToClient: () => setOwnerMode("client"),
         onLogout: () => {
           if (window.SEY_BOOK) window.SEY_BOOK.signOut();
           setUser(null);
