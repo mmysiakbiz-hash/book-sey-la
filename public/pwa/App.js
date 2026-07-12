@@ -2277,6 +2277,7 @@
     const [manage, setManage] = useState(null); // booking being managed (action sheet)
     const [showSplash, setShowSplash] = useState(true);
     const [user, setUser] = useState(() => load("user", null));
+    const [authChecked, setAuthChecked] = useState(false); // resolved the initial session yet?
     const [notif, setNotif] = useState(() => load("notif", true));
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
@@ -2295,7 +2296,10 @@
     // return). Reflect a signed-in user; only clear on an explicit sign-out so a
     // persisted/demo user is never wiped on load.
     useEffect(() => {
-      if (!(window.SEY_BOOK && window.SEY_BOOK.available())) return;
+      if (!(window.SEY_BOOK && window.SEY_BOOK.available())) {
+        setAuthChecked(true);
+        return;
+      }
       const asUser = u => ({
         name: u.email ? u.email.split("@")[0] : "Guest",
         phone: u.email || "",
@@ -2304,7 +2308,7 @@
       });
       window.SEY_BOOK.getUser().then(u => {
         if (u) setUser(asUser(u));
-      });
+      }).finally(() => setAuthChecked(true));
       const unsub = window.SEY_BOOK.onAuthChange((u, event) => {
         if (u) setUser(asUser(u));else if (event === "SIGNED_OUT") setUser(null);
       });
@@ -2446,6 +2450,31 @@
       });else if (top.name === "language") overlay = /*#__PURE__*/React.createElement(Language, {
         nav: nav
       });
+    }
+
+    // Auth gate — the PWA requires a signed-in account. Until we've resolved the
+    // initial session, hold on the splash; then show login for signed-out visitors.
+    if (!user) {
+      return /*#__PURE__*/React.createElement("div", {
+        className: "app"
+      }, showSplash || !authChecked ? /*#__PURE__*/React.createElement("div", {
+        className: "splash",
+        onAnimationEnd: () => setShowSplash(false)
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "brand",
+        style: {
+          fontSize: "1.7rem"
+        }
+      }, /*#__PURE__*/React.createElement("b", null, "sey.la"), /*#__PURE__*/React.createElement("span", null, "|"), /*#__PURE__*/React.createElement("i", null, "book")), /*#__PURE__*/React.createElement("div", {
+        className: "tiny",
+        style: {
+          opacity: 0.7
+        }
+      }, "Book your island ritual")) : /*#__PURE__*/React.createElement(Login, {
+        onDone: setUser
+      }), toast && /*#__PURE__*/React.createElement("div", {
+        className: "toast"
+      }, toast));
     }
     return /*#__PURE__*/React.createElement("div", {
       className: "app"

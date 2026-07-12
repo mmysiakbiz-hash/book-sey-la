@@ -1046,6 +1046,7 @@
     const [manage, setManage] = useState(null); // booking being managed (action sheet)
     const [showSplash, setShowSplash] = useState(true);
     const [user, setUser] = useState(() => load("user", null));
+    const [authChecked, setAuthChecked] = useState(false); // resolved the initial session yet?
     const [notif, setNotif] = useState(() => load("notif", true));
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
@@ -1062,9 +1063,9 @@
     // return). Reflect a signed-in user; only clear on an explicit sign-out so a
     // persisted/demo user is never wiped on load.
     useEffect(() => {
-      if (!(window.SEY_BOOK && window.SEY_BOOK.available())) return;
+      if (!(window.SEY_BOOK && window.SEY_BOOK.available())) { setAuthChecked(true); return; }
       const asUser = (u) => ({ name: u.email ? u.email.split("@")[0] : "Guest", phone: u.email || "", email: u.email || "", real: true });
-      window.SEY_BOOK.getUser().then((u) => { if (u) setUser(asUser(u)); });
+      window.SEY_BOOK.getUser().then((u) => { if (u) setUser(asUser(u)); }).finally(() => setAuthChecked(true));
       const unsub = window.SEY_BOOK.onAuthChange((u, event) => {
         if (u) setUser(asUser(u));
         else if (event === "SIGNED_OUT") setUser(null);
@@ -1110,6 +1111,24 @@
       else if (top.name === "review") { const bk = bookings.find((b) => b.id === p.bookingId); overlay = <ReviewFlow booking={bk} nav={nav} onSubmit={(id) => setReviewed((r) => [...r, id])} />; }
       else if (top.name === "notifsettings") overlay = <NotifSettings nav={nav} />;
       else if (top.name === "language") overlay = <Language nav={nav} />;
+    }
+
+    // Auth gate — the PWA requires a signed-in account. Until we've resolved the
+    // initial session, hold on the splash; then show login for signed-out visitors.
+    if (!user) {
+      return (
+        <div className="app">
+          {(showSplash || !authChecked) ? (
+            <div className="splash" onAnimationEnd={() => setShowSplash(false)}>
+              <div className="brand" style={{ fontSize: "1.7rem" }}><b>sey.la</b><span>|</span><i>book</i></div>
+              <div className="tiny" style={{ opacity: 0.7 }}>Book your island ritual</div>
+            </div>
+          ) : (
+            <Login onDone={setUser} />
+          )}
+          {toast && <div className="toast">{toast}</div>}
+        </div>
+      );
     }
 
     return (
