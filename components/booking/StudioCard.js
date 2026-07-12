@@ -7,20 +7,21 @@ import { Icon } from "../brand/Icon";
  * photo, rating + review count, area, and bookable service rows with prices.
  */
 export function StudioCard({
-  name = "Kreol Spa",
-  location = "Beau Vallon, Mahé",
-  category = "Spa & massage",
+  name = "Studio",
+  location = "",
+  category = "",
   image,
-  rating = 4.9,
-  reviews = 128,
-  priceFrom = "SCR 45",
+  rating = null,
+  reviews = null,
+  priceFrom = null,
   services = [],
   badge,
-  available = "Today",
+  available = null,
   as = "a",
   style = {},
   ...rest
 }) {
+  const hasRating = rating != null && Number(rating) > 0;
   const src = image
     ? (image.includes("?") ? image : image + "?auto=format&fit=crop&w=800&q=70")
     : null;
@@ -73,12 +74,16 @@ export function StudioCard({
           <h3 style={{ margin: 0, fontSize: "1.18rem", fontWeight: 600, lineHeight: 1.15 }}>{name}</h3>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 7, fontSize: "var(--text-sm)", flexWrap: "wrap" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 700, color: "var(--cocoa)" }}>
-            <Icon name="star" size={15} color="var(--brass)" /> {rating}
-          </span>
-          <span style={{ color: "var(--cocoa-60)" }}>({reviews})</span>
-          <span style={{ color: "var(--cocoa-40)" }}>·</span>
-          <span style={{ color: "var(--cocoa-60)" }}>{location}</span>
+          {hasRating && (
+            <>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 700, color: "var(--cocoa)" }}>
+                <Icon name="star" size={15} color="var(--brass)" /> {rating}
+              </span>
+              {reviews != null && <span style={{ color: "var(--cocoa-60)" }}>({reviews})</span>}
+              {location && <span style={{ color: "var(--cocoa-40)" }}>·</span>}
+            </>
+          )}
+          {location && <span style={{ color: "var(--cocoa-60)" }}>{location}</span>}
         </div>
         <div style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 6 }}>
           <span style={{
@@ -107,7 +112,7 @@ export function StudioCard({
           </div>
         ) : (
           <div style={{ marginTop: "auto", paddingTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>from <b style={{ color: "var(--cocoa)" }}>{priceFrom}</b></span>
+            <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{priceFrom ? <>from <b style={{ color: "var(--cocoa)" }}>{priceFrom}</b></> : "View services"}</span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--clay)" }}>
               Book <Icon name="arrowRight" size={16} color="var(--clay)" />
             </span>
