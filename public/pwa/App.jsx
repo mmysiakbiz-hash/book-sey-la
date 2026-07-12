@@ -113,6 +113,27 @@
     );
   }
 
+  // "Book again" card for the home hub (visited / favourite studios).
+  function RebookCard({ s, last, onOpen, onBookAgain }) {
+    return (
+      <div className="scard rebook">
+        <button className="scard-photo" onClick={onOpen} style={{ border: "none", padding: 0, cursor: "pointer", display: "block", width: "100%" }}>
+          {s.photo
+            ? <img src={s.photo} alt={s.name} loading="lazy" />
+            : <span style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "var(--blush)", color: "var(--clay)", fontWeight: 700, fontSize: "2rem" }}>{(s.name || "?").trim().charAt(0).toUpperCase()}</span>}
+          {typeof s.rating === "number" && <span className="scard-tag" style={{ left: "auto", right: 10 }}>★ {s.rating}</span>}
+        </button>
+        <div className="scard-body">
+          <div className="scard-row"><span className="scard-name">{s.name}</span></div>
+          <div className="srv-meta" style={{ marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {last && last.serviceName ? last.serviceName + (last.staffName ? " · " + last.staffName : "") : s.area}
+          </div>
+          <button className="btn btn--primary btn--full" style={{ marginTop: 12, padding: "11px" }} onClick={onBookAgain}>Book again</button>
+        </div>
+      </div>
+    );
+  }
+
   function ClassCard({ c, onJoin, joined }) {
     const pct = Math.round(((c.cap - c.spots) / c.cap) * 100);
     const low = c.spots <= 3;
@@ -141,10 +162,45 @@
   }
 
   // ---------- HOME ----------
-  function Home({ nav, favs, toggleFav, setTab, notif }) {
+  function Home({ nav, favs, toggleFav, setTab, notif, visits }) {
     const near = D.STUDIOS;
     const rec = D.STUDIOS.slice().sort((a, b) => b.rating - a.rating);
     const hasStudios = D.STUDIOS.length > 0;
+
+    // "Visited & favourites" hub (à la Booksy's Moje Booksy): studios you've booked
+    // before (most recent, with the last service for one-tap re-booking), then any
+    // favourites you haven't visited yet.
+    const hub = React.useMemo(() => {
+      const out = [];
+      const seen = new Set();
+      (visits || []).forEach((v) => {
+        if (seen.has(v.studioSlug)) return;
+        const s = D.STUDIOS.find((x) => x.id === v.studioSlug);
+        if (!s) return;
+        seen.add(v.studioSlug);
+        out.push({ s, last: v });
+      });
+      (favs || []).forEach((id) => {
+        if (seen.has(id)) return;
+        const s = D.STUDIOS.find((x) => x.id === id);
+        if (!s) return;
+        seen.add(id);
+        out.push({ s, last: null });
+      });
+      return out;
+    }, [visits, favs]);
+
+    function bookAgain(entry) {
+      const s = entry.s;
+      let svcId = null;
+      const name = entry.last && entry.last.serviceName;
+      if (name) {
+        const items = (s.services || []).flatMap((g) => g.items);
+        const it = items.find((i) => i.name === name);
+        if (it) svcId = it.id;
+      }
+      nav.push("book", svcId ? { id: s.id, serviceId: svcId } : { id: s.id });
+    }
     return (
       <>
         <TopBar brand right={
@@ -175,6 +231,15 @@
                 ))}
               </div>
             </div>
+
+            {hub.length > 0 && (
+              <div className="block">
+                <div className="sec-title"><h2 className="h-md">Visited &amp; favourites</h2></div>
+                <div className="hscroll">
+                  {hub.map((e) => <RebookCard key={e.s.id} s={e.s} last={e.last} onOpen={() => nav.push("studio", { id: e.s.id })} onBookAgain={() => bookAgain(e)} />)}
+                </div>
+              </div>
+            )}
 
             {hasStudios ? (
             <>
@@ -1302,6 +1367,16 @@
       return () => { cancelled = true; };
     }, [user]);
 
+    // The signed-in customer's real visit history — for the "book again" home hub.
+    const [myVisits, setMyVisits] = useState([]);
+    const [visitsVer, setVisitsVer] = useState(0);
+    useEffect(() => {
+      if (!user || !(window.SEY_BOOK && window.SEY_BOOK.available())) { setMyVisits([]); return; }
+      let cancelled = false;
+      window.SEY_BOOK.getMyBookings().then((rows) => { if (!cancelled) setMyVisits(rows || []); }).catch(() => {});
+      return () => { cancelled = true; };
+    }, [user, visitsVer]);
+
     const showToast = (m) => { setToast(m); setTimeout(() => setToast(null), 1800); };
     const nav = {
       push: (name, props) => setStack((s) => [...s, { name, props: props || {} }]),
@@ -1318,7 +1393,7 @@
 
     // active tab screen
     let base;
-    if (tab === "home") base = <Home nav={nav} favs={favs} toggleFav={toggleFav} setTab={switchTab} notif={notif} />;
+    if (tab === "home") base = <Home nav={nav} favs={favs} toggleFav={toggleFav} setTab={switchTab} notif={notif} visits={myVisits} />;
     else if (tab === "search") base = <Search nav={nav} favs={favs} toggleFav={toggleFav} />;
     else if (tab === "bookings") base = <Bookings bookings={bookings} nav={nav} onManage={setManage} reviewed={reviewed} />;
     else base = <Account user={user} setUser={setUser} favs={favs} nav={nav} notif={notif} setNotif={setNotif} />;

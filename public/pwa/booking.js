@@ -113,6 +113,31 @@
     }
   }
 
+  // The signed-in customer's own bookings (RLS: customer_id = auth.uid()), most
+  // recent first — powers the "visited & favourites / book again" home hub.
+  async function getMyBookings() {
+    if (!client) return [];
+    try {
+      var res = await client.from("bookings")
+        .select("id, during, status, price_eur, studios(slug,name), services(id,name), staff(name)")
+        .order("during", { ascending: false });
+      var rows = (res && res.data) || [];
+      return rows.map(function (b) {
+        var m = (b.during || "").match(/["\[]?\s*"?([^",\]]+)/);
+        return {
+          id: b.id,
+          start: m ? new Date(m[1]) : null,
+          status: b.status,
+          price: b.price_eur != null ? Number(b.price_eur) : null,
+          studioSlug: (b.studios && b.studios.slug) || null,
+          studioName: (b.studios && b.studios.name) || "",
+          serviceName: (b.services && b.services.name) || "",
+          staffName: (b.staff && b.staff.name) || "",
+        };
+      }).filter(function (b) { return b.studioSlug; });
+    } catch (e) { return []; }
+  }
+
   // ---- Owner (studio pro) mode ----------------------------------------------
   // The signed-in user owns a studio? Return it (RLS: owner_id = auth.uid()).
   async function getMyStudio() {
@@ -215,6 +240,7 @@
     signOut: signOut,
     onAuthChange: onAuthChange,
     createBooking: createBooking,
+    getMyBookings: getMyBookings,
     getMyStudio: getMyStudio,
     getStudioAgenda: getStudioAgenda,
     ownerReschedule: ownerReschedule,
