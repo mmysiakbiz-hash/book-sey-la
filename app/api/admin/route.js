@@ -13,11 +13,18 @@
 //     action "booking"      → { bookingId, op: cancel|complete }
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["draft", "unclaimed", "active", "verified", "rejected"];
+
+// Constant-time token compare (avoids leaking length/prefix via timing).
+function tokenMatches(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length || !a) return false;
+  try { return timingSafeEqual(Buffer.from(a), Buffer.from(b)); } catch { return false; }
+}
 
 function startOf(during) {
   const m = (during || "").match(/["\[]?\s*"?([^",\]]+)/);
@@ -27,7 +34,7 @@ function startOf(during) {
 // Returns an auth context ({ via, user? }) if the caller is an admin, else null.
 async function authorize(req, body, { url, anon, service, db }) {
   const adminToken = process.env.ADMIN_TOKEN;
-  if (adminToken && body && typeof body.token === "string" && body.token && body.token === adminToken) {
+  if (adminToken && body && tokenMatches(body.token, adminToken)) {
     return { via: "token" };
   }
   const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");

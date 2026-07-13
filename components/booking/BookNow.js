@@ -5,12 +5,34 @@ import { Icon } from "@/components/brand/Icon";
 import { useUser } from "@/lib/useUser";
 import { createBooking } from "@/lib/bookings";
 
-const TIMES = ["10:00", "12:00", "14:30", "16:00", "17:30"];
-const fmtDay = (d) => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const MTZ = "Indian/Mahe";
+const fmtDay = (d) => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: MTZ });
+const hhmmToMin = (s) => { const m = /(\d{1,2}):(\d{2})/.exec(s || ""); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+const minToHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
+// Build the bookable time slots for a given day from the studio's real opening
+// hours (array of [weekdayLabel, "9:00 – 18:00"]); past times on today are dropped.
+function slotsForDay(day, hours) {
+  if (!Array.isArray(hours) || !hours.length) return [];
+  const label = day.toLocaleDateString("en-GB", { weekday: "short", timeZone: MTZ });
+  const row = hours.find((h) => Array.isArray(h) && h[0] === label);
+  if (!row) return []; // closed that day
+  const parts = String(row[1]).split(/[–-]/);
+  const open = hhmmToMin(parts[0]);
+  const close = hhmmToMin(parts[1]);
+  if (open == null || close == null || close <= open) return [];
+  const now = new Date();
+  const todayKey = now.toLocaleDateString("en-CA", { timeZone: MTZ });
+  const isToday = day.toLocaleDateString("en-CA", { timeZone: MTZ }) === todayKey;
+  const nowMin = isToday ? hhmmToMin(now.toLocaleTimeString("en-GB", { timeZone: MTZ, hour: "2-digit", minute: "2-digit" })) : -1;
+  const out = [];
+  for (let m = open; m + 30 <= close; m += 30) { if (m > nowMin) out.push(minToHHMM(m)); }
+  return out;
+}
 
 // BookNow — a compact date/time picker that writes a real booking to Supabase.
 // Login-gated (bookings RLS requires an authenticated customer).
-export function BookNow({ studioId, service, team = [], onClose }) {
+export function BookNow({ studioId, service, team = [], hours = [], onClose }) {
   const { user, loading } = useUser();
   const [staffId, setStaffId] = React.useState("any");
   // Only offer staff who perform this service (empty services list = does everything).
@@ -28,10 +50,15 @@ export function BookNow({ studioId, service, team = [], onClose }) {
     });
   }, []);
   const [dayIdx, setDayIdx] = React.useState(0);
-  const [time, setTime] = React.useState(TIMES[2]);
+  const [time, setTime] = React.useState(null);
   const [phone, setPhone] = React.useState("");
   const [state, setState] = React.useState("idle"); // idle | booking | done | error
   const [msg, setMsg] = React.useState("");
+
+  // Real slots for the selected day, from the studio's opening hours.
+  const slots = React.useMemo(() => slotsForDay(days[dayIdx], hours), [days, dayIdx, hours]);
+  // Keep the picked time valid as the day (and thus slot set) changes.
+  React.useEffect(() => { setTime((t) => (t && slots.includes(t) ? t : (slots[0] || null))); }, [slots]);
 
   // Prefill the WhatsApp number from the profile if we have one.
   React.useEffect(() => {
@@ -40,13 +67,13 @@ export function BookNow({ studioId, service, team = [], onClose }) {
   }, [user]);
 
   async function book() {
+    if (!time) return;
     setState("booking");
     // Interpret the picked day + time as MAHÉ local time (UTC+4, no DST) — not the
     // visitor's browser timezone. Otherwise a client abroad books the wrong slot.
     const d = days[dayIdx];
-    const [h, m] = time.split(":").map(Number);
-    const pad = (n) => String(n).padStart(2, "0");
-    const mahe = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(h)}:${pad(m)}:00+04:00`;
+    const dateStr = d.toLocaleDateString("en-CA", { timeZone: MTZ }); // YYYY-MM-DD in Mahé
+    const mahe = `${dateStr}T${time}:00+04:00`;
     const res = await createBooking({
       studioId,
       serviceId: service.id,
@@ -104,11 +131,17 @@ export function BookNow({ studioId, service, team = [], onClose }) {
             ))}
           </div>
           <div style={{ marginTop: 12, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: ".04em", color: "var(--text-caption)" }}>Time</div>
-          <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-            {TIMES.map((t) => (
-              <button key={t} style={chip(t === time)} onClick={() => setTime(t)}>{t}</button>
-            ))}
-          </div>
+          {slots.length > 0 ? (
+            <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+              {slots.map((t) => (
+                <button key={t} style={chip(t === time)} onClick={() => setTime(t)}>{t}</button>
+              ))}
+            </div>
+          ) : (
+            <div style={{ marginTop: 6, fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
+              {Array.isArray(hours) && hours.length ? "Closed on this day — try another." : "No online times yet — contact the studio to book."}
+            </div>
+          )}
 
           {eligibleTeam.length > 0 && (
             <>
@@ -134,7 +167,7 @@ export function BookNow({ studioId, service, team = [], onClose }) {
             {loading ? (
               <Button size="lg" disabled>…</Button>
             ) : user ? (
-              <Button size="lg" onClick={book} disabled={state === "booking"}>
+              <Button size="lg" onClick={book} disabled={state === "booking" || !time}>
                 {state === "booking" ? "Booking…" : "Confirm booking"}
               </Button>
             ) : (

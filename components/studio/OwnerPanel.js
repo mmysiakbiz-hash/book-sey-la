@@ -84,7 +84,7 @@ export default function OwnerPanel() {
       name: s.name || "", category: s.category || "", tagline: s.tagline || "", bio: s.bio || "",
       address: s.address || "", island: s.island || "", lat: s.lat ?? "", lng: s.lng ?? "",
       hours: hoursByDay,
-      services: (s.services && s.services.length ? [...s.services].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", duration_min: x.duration_min || 60, price_eur: x.price_eur ?? "" })) : [{ name: "", duration_min: 60, price_eur: "" }]),
+      services: (s.services && s.services.length ? [...s.services].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ id: x.id, name: x.name || "", duration_min: x.duration_min || 60, price_eur: x.price_eur ?? "" })) : [{ name: "", duration_min: 60, price_eur: "" }]),
       staff: (s.staff && s.staff.length ? s.staff.filter((x) => x.active !== false).map((x) => ({ id: x.id, name: x.name || "", role: x.role || "", photo_url: x.photo_url || "", services: Array.isArray(x.services) ? x.services : [] })) : [{ name: "", role: "", photo_url: "", services: [] }]),
       packages: (s.packages && s.packages.length ? [...s.packages].sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((x) => ({ name: x.name || "", kind: x.kind || "package", price_eur: x.price_eur ?? "", credits: x.credits ?? "", description: x.description || "" })) : []),
       photos: Array.isArray(s.photos) ? s.photos : [],
@@ -605,7 +605,7 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
                       <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{b.service}</div>
                       <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{b.client}{b.staff ? ` · ${b.staff}` : ""}{b.price != null ? ` · SCR ${Math.round(b.price)}` : ""}</div>
                     </div>
-                    <button onClick={() => setMoving(isMoving ? null : { id: b.id, date: b.start ? b.start.toISOString().slice(0, 10) : "", time: b.start ? b.start.toTimeString().slice(0, 5) : "", durationMin: durMin })}
+                    <button onClick={() => setMoving(isMoving ? null : { id: b.id, date: b.start ? b.start.toLocaleDateString("en-CA", { timeZone: "Indian/Mahe" }) : "", time: b.start ? b.start.toLocaleTimeString("en-GB", { timeZone: "Indian/Mahe", hour: "2-digit", minute: "2-digit" }) : "", durationMin: durMin })}
                       style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>Move</button>
                     <button onClick={() => act(b.id, "cancelled")} disabled={busy === b.id}
                       style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>
@@ -616,7 +616,7 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
                         <input type="date" value={moving.date} onChange={(e) => setMoving({ ...moving, date: e.target.value })} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "7px 10px", font: "inherit", fontFamily: "var(--font-body)" }} />
                         <input type="time" value={moving.time} onChange={(e) => setMoving({ ...moving, time: e.target.value })} style={{ border: "1.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "7px 10px", font: "inherit", fontFamily: "var(--font-body)" }} />
                         <button style={{ ...primaryBtn, padding: "7px 14px", fontSize: "var(--text-xs)" }} disabled={busy === b.id || !moving.date || !moving.time}
-                          onClick={async () => { setBusy(b.id); await onReschedule(b.id, { startISO: new Date(`${moving.date}T${moving.time}`).toISOString(), durationMin: moving.durationMin }); setBusy(null); setMoving(null); }}>Save</button>
+                          onClick={async () => { setBusy(b.id); await onReschedule(b.id, { startISO: new Date(`${moving.date}T${moving.time}:00+04:00`).toISOString(), durationMin: moving.durationMin }); setBusy(null); setMoving(null); }}>Save</button>
                       </div>
                     )}
                   </div>
@@ -789,7 +789,7 @@ function AddAppointment({ catalog, onAdd, onDone }) {
     const r = await onAdd({
       name: f.name, phone: f.phone,
       serviceId: f.serviceId || null, staffId: f.staffId || null,
-      startISO: new Date(`${f.date}T${f.time}`).toISOString(),
+      startISO: new Date(`${f.date}T${f.time}:00+04:00`).toISOString(),
       durationMin: svc ? svc.duration_min : 60,
       priceEur: svc && svc.price_eur != null ? svc.price_eur : null,
     });
@@ -937,7 +937,7 @@ function BlockTime({ onAdd, onDone }) {
     setErr("");
     if (!f.date || !f.from || !f.to) { setErr("Pick a date and a from/to time."); return; }
     setBusy(true);
-    const r = await onAdd({ startISO: new Date(`${f.date}T${f.from}`).toISOString(), endISO: new Date(`${f.date}T${f.to}`).toISOString(), reason: f.reason });
+    const r = await onAdd({ startISO: new Date(`${f.date}T${f.from}:00+04:00`).toISOString(), endISO: new Date(`${f.date}T${f.to}:00+04:00`).toISOString(), reason: f.reason });
     setBusy(false);
     if (r && r.error) { setErr("Couldn't block: " + r.error); return; }
     onDone();

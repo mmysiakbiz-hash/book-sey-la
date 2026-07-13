@@ -127,7 +127,7 @@ export default function AccountPage() {
                 <span style={{ fontSize: "var(--text-h2)", fontWeight: 700 }}>€{wallet.balance.toFixed(0)}</span>
               </div>
               {wallet.transactions.length === 0 ? (
-                <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", margin: "10px 0 0" }}>No credit yet — invite a studio to earn €15 toward your bookings.</p>
+                <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", margin: "10px 0 0" }}>No credit yet — invite a studio to sey.la and earn €15 in referral credit.</p>
               ) : (
                 <div style={{ display: "grid", gap: 8, marginTop: 12, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
                   {wallet.transactions.map((t) => (

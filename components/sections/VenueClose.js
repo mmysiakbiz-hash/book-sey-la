@@ -53,8 +53,8 @@ function VenueClose({ studio }) {
   const mark = parts.length > 1 ? parts.slice(0, -1).join(" ") : name;
   const word = parts.length > 1 ? parts[parts.length - 1] : "";
   const location = (studio && studio.location) || "Beau Vallon, Mahé";
-  const rating = studio && studio.rating != null ? studio.rating : 4.9;
-  const reviewCount = studio && studio.reviewCount != null ? studio.reviewCount : 214;
+  const rating = studio && studio.rating != null ? studio.rating : null;
+  const reviewCount = studio && studio.reviewCount != null ? studio.reviewCount : null;
 
   // Live Google reviews (defensive shape). No demo fallback: when a studio has
   // no published reviews we hide the whole section rather than show fake ones.
@@ -69,8 +69,8 @@ function VenueClose({ studio }) {
     .filter((r) => r.text);
   const hasReviews = reviews.length > 0;
 
-  // Real opening hours when configured, otherwise the tasteful default.
-  const hours = (studio && Array.isArray(studio.hours) && studio.hours.length) ? studio.hours : HOURS;
+  // Real opening hours only — never invent a schedule when none is configured.
+  const hours = (studio && Array.isArray(studio.hours)) ? studio.hours : [];
 
   // Social / contact links from the configurator.
   const socials = (studio && studio.socials) || {};
@@ -93,11 +93,13 @@ function VenueClose({ studio }) {
               <div className="sey-eyebrow vn-eyebrow">Loved by guests</div>
               <h2 className="vn-sec-title">What people <em className="sey-accent-italic">say.</em></h2>
             </div>
-            <div className="vn-score">
-              <span className="vn-score-num">{rating}</span>
-              <span className="vn-score-stars">{[0,1,2,3,4].map(i=><Icon key={i} name="star" size={16} color="var(--brass)" />)}</span>
-              <span className="vn-score-count">{reviewCount} reviews</span>
-            </div>
+            {rating != null && (
+              <div className="vn-score">
+                <span className="vn-score-num">{rating}</span>
+                <span className="vn-score-stars">{[0,1,2,3,4].map(i=><Icon key={i} name="star" size={16} color="var(--brass)" />)}</span>
+                <span className="vn-score-count">{reviewCount || reviews.length} reviews</span>
+              </div>
+            )}
           </div>
           <div className="vn-reviews">
             {reviews.map((r, i) => (
@@ -123,11 +125,13 @@ function VenueClose({ studio }) {
             <div className="sey-eyebrow vn-eyebrow">Visit us</div>
             <h2 className="vn-sec-title">{location.split(",")[0]}, <em className="sey-accent-italic">{(location.split(",")[1] || "Mahé").trim()}.</em></h2>
             <p className="vn-address"><Icon name="pin" size={18} color="var(--clay)" /> {location}, Seychelles</p>
+            {hours.length > 0 && (
             <table className="vn-hours">
               <tbody>
                 {hours.map(([d,h]) => (<tr key={d}><th>{d}</th><td>{h}</td></tr>))}
               </tbody>
             </table>
+            )}
             {socialLinks.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 14, margin: "4px 0 20px" }}>
                 {socialLinks.map((s) => (

@@ -103,7 +103,7 @@ function VenueServices({ studio }) {
           </div>
         )}
         {selected && !unclaimed && (
-          <BookNow studioId={studioId} service={selected} team={studio && studio.team} onClose={() => setSelected(null)} />
+          <BookNow studioId={studioId} service={selected} team={studio && studio.team} hours={studio && studio.hours} onClose={() => setSelected(null)} />
         )}
       </div>
     </section>
