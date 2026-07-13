@@ -281,9 +281,9 @@ body {
 .map-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
   background: var(--shell); border-radius: 20px 20px 0 0; box-shadow: 0 -8px 24px rgba(28,25,23,0.16);
   display: flex; flex-direction: column; min-height: 0; }
-.map-sheet-drag { flex: none; padding: 10px 0 8px; cursor: grab; touch-action: none; user-select: none; }
+.map-sheet-drag { flex: none; padding: 16px 0 12px; cursor: grab; touch-action: none; user-select: none; }
 .map-sheet-drag:active { cursor: grabbing; }
-.map-list-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 0 auto 8px; }
+.map-list-grab { width: 48px; height: 5px; border-radius: 3px; background: var(--line-strong); margin: 0 auto 10px; }
 .map-sheet-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
   padding: 4px 16px calc(96px + env(safe-area-inset-bottom,0px)); }
 .map-sheet-scroll .slist { display: grid; gap: 14px; }

@@ -286,7 +286,7 @@
     const paneRef = useRef(null);
     const dragRef = useRef(null);
     const [paneH, setPaneH] = useState(0);
-    const [frac, setFrac] = useState(0.45); // sheet height as a fraction of the pane
+    const [frac, setFrac] = useState(0.55); // sheet height as a fraction of the pane (rests high enough to grab)
     const [dragging, setDragging] = useState(false);
 
     useEffect(() => {
@@ -305,10 +305,10 @@
         if (e.cancelable) e.preventDefault();
         const y = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
         const dy = dragRef.current.y - y;
-        const nf = Math.min(0.92, Math.max(0.14, dragRef.current.frac + dy / (dragRef.current.h || 1)));
+        const nf = Math.min(0.92, Math.max(0.34, dragRef.current.frac + dy / (dragRef.current.h || 1)));
         setFrac(nf);
       };
-      const up = () => { dragRef.current = null; setDragging(false); setFrac((f) => (f < 0.3 ? 0.14 : f < 0.7 ? 0.5 : 0.92)); };
+      const up = () => { dragRef.current = null; setDragging(false); setFrac((f) => (f < 0.45 ? 0.34 : f < 0.72 ? 0.58 : 0.92)); };
       window.addEventListener("pointermove", move, { passive: false });
       window.addEventListener("pointerup", up);
       window.addEventListener("touchmove", move, { passive: false });
@@ -326,7 +326,7 @@
       dragRef.current = { y: clientY, frac, h };
       setDragging(true);
     };
-    const sheetH = paneH ? Math.round(frac * paneH) : Math.round(frac * (window.innerHeight - 220));
+    const sheetH = paneH ? Math.round(frac * paneH) : Math.round(0.55 * (window.innerHeight - 220));
 
     return (
       <>
