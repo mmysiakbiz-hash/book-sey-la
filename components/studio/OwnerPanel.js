@@ -607,7 +607,7 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
                     </div>
                     <button onClick={() => setMoving(isMoving ? null : { id: b.id, date: b.start ? b.start.toLocaleDateString("en-CA", { timeZone: "Indian/Mahe" }) : "", time: b.start ? b.start.toLocaleTimeString("en-GB", { timeZone: "Indian/Mahe", hour: "2-digit", minute: "2-digit" }) : "", durationMin: durMin })}
                       style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>Move</button>
-                    <button onClick={() => act(b.id, "cancelled")} disabled={busy === b.id}
+                    <button onClick={() => { if (typeof window !== "undefined" && !window.confirm(`Cancel ${b.client || "this client"}'s ${b.service || "booking"}? This frees the slot.`)) return; act(b.id, "cancelled"); }} disabled={busy === b.id}
                       style={{ border: "1px solid var(--line)", background: "var(--surface)", color: "var(--cocoa-60)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer" }}>
                       {busy === b.id ? "…" : "Cancel"}
                     </button>
