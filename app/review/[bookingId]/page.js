@@ -71,7 +71,7 @@ export default function ReviewPage({ params }) {
 
         {state === "done" && (
           <>
-            <h1 style={{ fontSize: "var(--text-h3)", margin: "0 0 8px" }}>Thank you 🌴</h1>
+            <h1 style={{ fontSize: "var(--text-h3)", margin: "0 0 8px" }}>Thank you</h1>
             <p style={{ color: "var(--text-muted)", margin: 0 }}>Your review helps other islanders find great studios. See you next time.</p>
           </>
         )}
