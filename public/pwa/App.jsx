@@ -279,6 +279,55 @@
     const [active, setActive] = useState(null);
     const list = cat === "all" ? D.STUDIOS : D.STUDIOS.filter((s) => s.cat === cat);
     const cats = [{ id: "all", label: "All" }].concat(D.CATEGORIES.map((c) => ({ id: c.id, label: c.label })));
+
+    // Draggable map sheet (Airbnb-style). Heights are in PIXELS off the measured
+    // pane height (percentages don't resolve reliably here), and the drag is
+    // tracked on window so the finger can leave the small handle.
+    const paneRef = useRef(null);
+    const dragRef = useRef(null);
+    const [paneH, setPaneH] = useState(0);
+    const [frac, setFrac] = useState(0.45); // sheet height as a fraction of the pane
+    const [dragging, setDragging] = useState(false);
+
+    useEffect(() => {
+      if (mode !== "map") return;
+      const measure = () => { if (paneRef.current) setPaneH(paneRef.current.clientHeight); };
+      measure();
+      const t = setTimeout(measure, 80);
+      window.addEventListener("resize", measure);
+      return () => { clearTimeout(t); window.removeEventListener("resize", measure); };
+    }, [mode]);
+
+    useEffect(() => {
+      if (!dragging) return;
+      const move = (e) => {
+        if (!dragRef.current) return;
+        if (e.cancelable) e.preventDefault();
+        const y = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
+        const dy = dragRef.current.y - y;
+        const nf = Math.min(0.92, Math.max(0.14, dragRef.current.frac + dy / (dragRef.current.h || 1)));
+        setFrac(nf);
+      };
+      const up = () => { dragRef.current = null; setDragging(false); setFrac((f) => (f < 0.3 ? 0.14 : f < 0.7 ? 0.5 : 0.92)); };
+      window.addEventListener("pointermove", move, { passive: false });
+      window.addEventListener("pointerup", up);
+      window.addEventListener("touchmove", move, { passive: false });
+      window.addEventListener("touchend", up);
+      return () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("touchmove", move);
+        window.removeEventListener("touchend", up);
+      };
+    }, [dragging]);
+
+    const startDrag = (clientY) => {
+      const h = paneRef.current ? paneRef.current.clientHeight : (paneH || window.innerHeight);
+      dragRef.current = { y: clientY, frac, h };
+      setDragging(true);
+    };
+    const sheetH = paneH ? Math.round(frac * paneH) : Math.round(frac * (window.innerHeight - 220));
+
     return (
       <>
         <TopBar title="Browse" />
@@ -304,27 +353,33 @@
             </div>
           </div>
         ) : (
-          // Airbnb-style: map on top, a scrollable list sheet below (both visible).
-          <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <div style={{ position: "relative", flex: "1 1 52%", minHeight: 120 }}>
+          // Airbnb-style: full map behind, a draggable list sheet over it.
+          <div ref={paneRef} style={{ flex: 1, position: "relative", minHeight: 0 }}>
+            <div style={{ position: "absolute", inset: 0 }}>
               <MapView studios={list} activeId={active} onSelect={setActive} />
-              {list.every((s) => typeof s.lat !== "number" || typeof s.lng !== "number") && (
-                <div style={{ position: "absolute", left: 14, right: 14, top: 14 }}>
-                  <div className="muted tiny" style={{ background: "rgba(252,248,242,0.94)", padding: "8px 12px", borderRadius: 999, textAlign: "center" }}>Studios appear on the map once they’ve set their location.</div>
-                </div>
-              )}
             </div>
-            <div className="map-list">
-              <div className="map-list-grab" />
-              <div className="muted tiny" style={{ margin: "0 4px 10px" }}>{list.length} studio{list.length === 1 ? "" : "s"}</div>
-              <div className="slist">
-                {list.map((s) => <StudioCard key={s.id} s={s} onOpen={() => nav.push("studio", { id: s.id })} fav={favs.includes(s.id)} onFav={toggleFav} />)}
+            {list.every((s) => typeof s.lat !== "number" || typeof s.lng !== "number") && (
+              <div style={{ position: "absolute", left: 14, right: 14, top: 14 }}>
+                <div className="muted tiny" style={{ background: "rgba(252,248,242,0.94)", padding: "8px 12px", borderRadius: 999, textAlign: "center" }}>Studios appear on the map once they’ve set their location.</div>
+              </div>
+            )}
+            <div className="map-sheet" style={{ height: sheetH + "px", transition: dragging ? "none" : "height .22s ease" }}>
+              <div className="map-sheet-drag"
+                onPointerDown={(e) => startDrag(e.clientY)}
+                onTouchStart={(e) => { if (e.touches[0]) startDrag(e.touches[0].clientY); }}>
+                <div className="map-list-grab" />
+                <div className="muted tiny" style={{ textAlign: "center", marginTop: -2 }}>{list.length} studio{list.length === 1 ? "" : "s"} · drag to expand</div>
+              </div>
+              <div className="map-sheet-scroll">
+                <div className="slist">
+                  {list.map((s) => <StudioCard key={s.id} s={s} onOpen={() => nav.push("studio", { id: s.id })} fav={favs.includes(s.id)} onFav={toggleFav} />)}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Airbnb-style floating toggle between the list and the map */}
+        {/* Floating toggle between the full list and the map */}
         <button className="map-toggle" onClick={() => { setActive(null); setMode(mode === "list" ? "map" : "list"); }}>
           {mode === "list"
             ? <><Ic name="pin" size={17} color="var(--cream)" /> Map</>

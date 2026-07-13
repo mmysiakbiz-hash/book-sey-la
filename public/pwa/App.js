@@ -530,6 +530,68 @@
       id: c.id,
       label: c.label
     })));
+
+    // Draggable map sheet (Airbnb-style). Heights are in PIXELS off the measured
+    // pane height (percentages don't resolve reliably here), and the drag is
+    // tracked on window so the finger can leave the small handle.
+    const paneRef = useRef(null);
+    const dragRef = useRef(null);
+    const [paneH, setPaneH] = useState(0);
+    const [frac, setFrac] = useState(0.45); // sheet height as a fraction of the pane
+    const [dragging, setDragging] = useState(false);
+    useEffect(() => {
+      if (mode !== "map") return;
+      const measure = () => {
+        if (paneRef.current) setPaneH(paneRef.current.clientHeight);
+      };
+      measure();
+      const t = setTimeout(measure, 80);
+      window.addEventListener("resize", measure);
+      return () => {
+        clearTimeout(t);
+        window.removeEventListener("resize", measure);
+      };
+    }, [mode]);
+    useEffect(() => {
+      if (!dragging) return;
+      const move = e => {
+        if (!dragRef.current) return;
+        if (e.cancelable) e.preventDefault();
+        const y = e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
+        const dy = dragRef.current.y - y;
+        const nf = Math.min(0.92, Math.max(0.14, dragRef.current.frac + dy / (dragRef.current.h || 1)));
+        setFrac(nf);
+      };
+      const up = () => {
+        dragRef.current = null;
+        setDragging(false);
+        setFrac(f => f < 0.3 ? 0.14 : f < 0.7 ? 0.5 : 0.92);
+      };
+      window.addEventListener("pointermove", move, {
+        passive: false
+      });
+      window.addEventListener("pointerup", up);
+      window.addEventListener("touchmove", move, {
+        passive: false
+      });
+      window.addEventListener("touchend", up);
+      return () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("touchmove", move);
+        window.removeEventListener("touchend", up);
+      };
+    }, [dragging]);
+    const startDrag = clientY => {
+      const h = paneRef.current ? paneRef.current.clientHeight : paneH || window.innerHeight;
+      dragRef.current = {
+        y: clientY,
+        frac,
+        h
+      };
+      setDragging(true);
+    };
+    const sheetH = paneH ? Math.round(frac * paneH) : Math.round(frac * (window.innerHeight - 220));
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(TopBar, {
       title: "Browse"
     }), /*#__PURE__*/React.createElement("div", {
@@ -581,26 +643,24 @@
       onFav: toggleFav
     }))))) :
     /*#__PURE__*/
-    // Airbnb-style: map on top, a scrollable list sheet below (both visible).
+    // Airbnb-style: full map behind, a draggable list sheet over it.
     React.createElement("div", {
+      ref: paneRef,
       style: {
         flex: 1,
         position: "relative",
-        display: "flex",
-        flexDirection: "column",
         minHeight: 0
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        position: "relative",
-        flex: "1 1 52%",
-        minHeight: 120
+        position: "absolute",
+        inset: 0
       }
     }, /*#__PURE__*/React.createElement(MapView, {
       studios: list,
       activeId: active,
       onSelect: setActive
-    }), list.every(s => typeof s.lat !== "number" || typeof s.lng !== "number") && /*#__PURE__*/React.createElement("div", {
+    })), list.every(s => typeof s.lat !== "number" || typeof s.lng !== "number") && /*#__PURE__*/React.createElement("div", {
       style: {
         position: "absolute",
         left: 14,
@@ -615,16 +675,29 @@
         borderRadius: 999,
         textAlign: "center"
       }
-    }, "Studios appear on the map once they\u2019ve set their location."))), /*#__PURE__*/React.createElement("div", {
-      className: "map-list"
+    }, "Studios appear on the map once they\u2019ve set their location.")), /*#__PURE__*/React.createElement("div", {
+      className: "map-sheet",
+      style: {
+        height: sheetH + "px",
+        transition: dragging ? "none" : "height .22s ease"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "map-sheet-drag",
+      onPointerDown: e => startDrag(e.clientY),
+      onTouchStart: e => {
+        if (e.touches[0]) startDrag(e.touches[0].clientY);
+      }
     }, /*#__PURE__*/React.createElement("div", {
       className: "map-list-grab"
     }), /*#__PURE__*/React.createElement("div", {
       className: "muted tiny",
       style: {
-        margin: "0 4px 10px"
+        textAlign: "center",
+        marginTop: -2
       }
-    }, list.length, " studio", list.length === 1 ? "" : "s"), /*#__PURE__*/React.createElement("div", {
+    }, list.length, " studio", list.length === 1 ? "" : "s", " \xB7 drag to expand")), /*#__PURE__*/React.createElement("div", {
+      className: "map-sheet-scroll"
+    }, /*#__PURE__*/React.createElement("div", {
       className: "slist"
     }, list.map(s => /*#__PURE__*/React.createElement(StudioCard, {
       key: s.id,
@@ -634,7 +707,7 @@
       }),
       fav: favs.includes(s.id),
       onFav: toggleFav
-    }))))), /*#__PURE__*/React.createElement("button", {
+    })))))), /*#__PURE__*/React.createElement("button", {
       className: "map-toggle",
       onClick: () => {
         setActive(null);
