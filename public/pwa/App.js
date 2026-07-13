@@ -530,6 +530,36 @@
       id: c.id,
       label: c.label
     })));
+
+    // Draggable map sheet (Airbnb-style): drag the handle to resize map vs list.
+    const paneRef = useRef(null);
+    const dragRef = useRef(null);
+    const [frac, setFrac] = useState(0.45); // sheet height as a fraction of the map pane
+    const [dragging, setDragging] = useState(false);
+    const onGrabDown = e => {
+      const h = paneRef.current ? paneRef.current.clientHeight : window.innerHeight;
+      dragRef.current = {
+        y: e.clientY,
+        frac,
+        h
+      };
+      setDragging(true);
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (x) {}
+    };
+    const onGrabMove = e => {
+      if (!dragRef.current) return;
+      const dy = dragRef.current.y - e.clientY;
+      const nf = Math.min(0.92, Math.max(0.16, dragRef.current.frac + dy / dragRef.current.h));
+      setFrac(nf);
+    };
+    const onGrabUp = () => {
+      if (!dragRef.current) return;
+      dragRef.current = null;
+      setDragging(false);
+      setFrac(f => f < 0.33 ? 0.16 : f < 0.72 ? 0.5 : 0.92);
+    };
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(TopBar, {
       title: "Browse"
     }), /*#__PURE__*/React.createElement("div", {
@@ -581,26 +611,24 @@
       onFav: toggleFav
     }))))) :
     /*#__PURE__*/
-    // Airbnb-style: map on top, a scrollable list sheet below (both visible).
+    // Airbnb-style: full map with a draggable list sheet over it (both visible).
     React.createElement("div", {
+      ref: paneRef,
       style: {
         flex: 1,
         position: "relative",
-        display: "flex",
-        flexDirection: "column",
         minHeight: 0
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        position: "relative",
-        flex: "1 1 52%",
-        minHeight: 120
+        position: "absolute",
+        inset: 0
       }
     }, /*#__PURE__*/React.createElement(MapView, {
       studios: list,
       activeId: active,
       onSelect: setActive
-    }), list.every(s => typeof s.lat !== "number" || typeof s.lng !== "number") && /*#__PURE__*/React.createElement("div", {
+    })), list.every(s => typeof s.lat !== "number" || typeof s.lng !== "number") && /*#__PURE__*/React.createElement("div", {
       style: {
         position: "absolute",
         left: 14,
@@ -615,16 +643,29 @@
         borderRadius: 999,
         textAlign: "center"
       }
-    }, "Studios appear on the map once they\u2019ve set their location."))), /*#__PURE__*/React.createElement("div", {
-      className: "map-list"
+    }, "Studios appear on the map once they\u2019ve set their location.")), /*#__PURE__*/React.createElement("div", {
+      className: "map-sheet",
+      style: {
+        height: frac * 100 + "%",
+        transition: dragging ? "none" : "height .2s ease"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "map-sheet-drag",
+      onPointerDown: onGrabDown,
+      onPointerMove: onGrabMove,
+      onPointerUp: onGrabUp,
+      onPointerCancel: onGrabUp
     }, /*#__PURE__*/React.createElement("div", {
       className: "map-list-grab"
     }), /*#__PURE__*/React.createElement("div", {
       className: "muted tiny",
       style: {
-        margin: "0 4px 10px"
+        textAlign: "center",
+        marginTop: -2
       }
-    }, list.length, " studio", list.length === 1 ? "" : "s"), /*#__PURE__*/React.createElement("div", {
+    }, list.length, " studio", list.length === 1 ? "" : "s")), /*#__PURE__*/React.createElement("div", {
+      className: "map-sheet-scroll"
+    }, /*#__PURE__*/React.createElement("div", {
       className: "slist"
     }, list.map(s => /*#__PURE__*/React.createElement(StudioCard, {
       key: s.id,
@@ -634,7 +675,7 @@
       }),
       fav: favs.includes(s.id),
       onFav: toggleFav
-    }))))), /*#__PURE__*/React.createElement("button", {
+    })))))), /*#__PURE__*/React.createElement("button", {
       className: "map-toggle",
       onClick: () => {
         setActive(null);
