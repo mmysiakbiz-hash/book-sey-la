@@ -579,10 +579,22 @@
       }),
       fav: favs.includes(s.id),
       onFav: toggleFav
-    }))))) : /*#__PURE__*/React.createElement("div", {
+    }))))) :
+    /*#__PURE__*/
+    // Airbnb-style: map on top, a scrollable list sheet below (both visible).
+    React.createElement("div", {
       style: {
         flex: 1,
-        position: "relative"
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "relative",
+        flex: "1 1 52%",
+        minHeight: 120
       }
     }, /*#__PURE__*/React.createElement(MapView, {
       studios: list,
@@ -603,24 +615,26 @@
         borderRadius: 999,
         textAlign: "center"
       }
-    }, "Studios appear on the map once they\u2019ve set their location.")), active && (() => {
-      const s = list.find(x => x.id === active) || D.STUDIOS.find(x => x.id === active);
-      return /*#__PURE__*/React.createElement("div", {
-        style: {
-          position: "absolute",
-          left: 14,
-          right: 14,
-          bottom: 92
-        }
-      }, /*#__PURE__*/React.createElement(StudioCard, {
-        s: s,
-        onOpen: () => nav.push("studio", {
-          id: s.id
-        }),
-        fav: favs.includes(s.id),
-        onFav: toggleFav
-      }));
-    })()), /*#__PURE__*/React.createElement("button", {
+    }, "Studios appear on the map once they\u2019ve set their location."))), /*#__PURE__*/React.createElement("div", {
+      className: "map-list"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "map-list-grab"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "muted tiny",
+      style: {
+        margin: "0 4px 10px"
+      }
+    }, list.length, " studio", list.length === 1 ? "" : "s"), /*#__PURE__*/React.createElement("div", {
+      className: "slist"
+    }, list.map(s => /*#__PURE__*/React.createElement(StudioCard, {
+      key: s.id,
+      s: s,
+      onOpen: () => nav.push("studio", {
+        id: s.id
+      }),
+      fav: favs.includes(s.id),
+      onFav: toggleFav
+    }))))), /*#__PURE__*/React.createElement("button", {
       className: "map-toggle",
       onClick: () => {
         setActive(null);

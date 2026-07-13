@@ -277,6 +277,12 @@ body {
   background: var(--ink); color: var(--cream); font: inherit; font-weight: 600; font-size: 0.95rem; cursor: pointer;
   box-shadow: 0 6px 20px rgba(28,25,23,0.35); }
 .map-toggle:active { transform: translateX(-50%) scale(0.97); }
+/* Map-mode list sheet (map above, list below) */
+.map-list { flex: 1 1 48%; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--shell); border-radius: 20px 20px 0 0; margin-top: -18px; position: relative; z-index: 5;
+  padding: 8px 16px calc(96px + env(safe-area-inset-bottom,0px)); box-shadow: 0 -8px 24px rgba(28,25,23,0.12); }
+.map-list-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 0 auto 12px; }
+.map-list .slist { display: grid; gap: 14px; }
 
 /* ---- Login hero (full-screen photo + form card) ---- */
 .login-hero { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; background: #2A2420; }

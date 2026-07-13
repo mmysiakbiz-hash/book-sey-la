@@ -304,18 +304,23 @@
             </div>
           </div>
         ) : (
-          <div style={{ flex: 1, position: "relative" }}>
-            <MapView studios={list} activeId={active} onSelect={setActive} />
-            {list.every((s) => typeof s.lat !== "number" || typeof s.lng !== "number") && (
-              <div style={{ position: "absolute", left: 14, right: 14, top: 14 }}>
-                <div className="muted tiny" style={{ background: "rgba(252,248,242,0.94)", padding: "8px 12px", borderRadius: 999, textAlign: "center" }}>Studios appear on the map once they’ve set their location.</div>
+          // Airbnb-style: map on top, a scrollable list sheet below (both visible).
+          <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <div style={{ position: "relative", flex: "1 1 52%", minHeight: 120 }}>
+              <MapView studios={list} activeId={active} onSelect={setActive} />
+              {list.every((s) => typeof s.lat !== "number" || typeof s.lng !== "number") && (
+                <div style={{ position: "absolute", left: 14, right: 14, top: 14 }}>
+                  <div className="muted tiny" style={{ background: "rgba(252,248,242,0.94)", padding: "8px 12px", borderRadius: 999, textAlign: "center" }}>Studios appear on the map once they’ve set their location.</div>
+                </div>
+              )}
+            </div>
+            <div className="map-list">
+              <div className="map-list-grab" />
+              <div className="muted tiny" style={{ margin: "0 4px 10px" }}>{list.length} studio{list.length === 1 ? "" : "s"}</div>
+              <div className="slist">
+                {list.map((s) => <StudioCard key={s.id} s={s} onOpen={() => nav.push("studio", { id: s.id })} fav={favs.includes(s.id)} onFav={toggleFav} />)}
               </div>
-            )}
-            {active && (() => { const s = list.find((x) => x.id === active) || D.STUDIOS.find((x) => x.id === active); return (
-              <div style={{ position: "absolute", left: 14, right: 14, bottom: 92 }}>
-                <StudioCard s={s} onOpen={() => nav.push("studio", { id: s.id })} fav={favs.includes(s.id)} onFav={toggleFav} />
-              </div>
-            ); })()}
+            </div>
           </div>
         )}
 
