@@ -281,11 +281,7 @@
     const cats = [{ id: "all", label: "All" }].concat(D.CATEGORIES.map((c) => ({ id: c.id, label: c.label })));
     return (
       <>
-        <TopBar title="Browse" right={
-          <button className="iconbtn iconbtn--plain" onClick={() => setMode(mode === "list" ? "map" : "list")} aria-label="Toggle map">
-            <Ic name={mode === "list" ? "pin" : "filter"} />
-          </button>
-        } />
+        <TopBar title="Browse" />
         <div className="screen" style={{ paddingTop: 4, paddingBottom: 10 }}>
           <button className="searchfield" onClick={() => {}}>
             <Ic name="search" size={20} color="var(--cocoa-60)" />
@@ -316,18 +312,33 @@
               </div>
             )}
             {active && (() => { const s = list.find((x) => x.id === active) || D.STUDIOS.find((x) => x.id === active); return (
-              <div style={{ position: "absolute", left: 14, right: 14, bottom: 14 }}>
+              <div style={{ position: "absolute", left: 14, right: 14, bottom: 92 }}>
                 <StudioCard s={s} onOpen={() => nav.push("studio", { id: s.id })} fav={favs.includes(s.id)} onFav={toggleFav} />
               </div>
             ); })()}
           </div>
         )}
+
+        {/* Airbnb-style floating toggle between the list and the map */}
+        <button className="map-toggle" onClick={() => { setActive(null); setMode(mode === "list" ? "map" : "list"); }}>
+          {mode === "list"
+            ? <><Ic name="pin" size={17} color="var(--cream)" /> Map</>
+            : <><Ic name="filter" size={17} color="var(--cream)" /> List</>}
+        </button>
       </>
     );
   }
 
   // ---------- STUDIO PROFILE ----------
-  function Studio({ id, nav, favs, toggleFav }) {
+  function Studio({ id, nav, favs, toggleFav, showToast }) {
+    async function share(name) {
+      const url = `https://book.sey.la/studio/${id}`;
+      try {
+        if (navigator.share) { await navigator.share({ title: name, text: `Book ${name} on sey.la | book`, url }); return; }
+        await navigator.clipboard.writeText(url);
+        showToast && showToast("Link copied");
+      } catch (e) { /* user cancelled share — ignore */ }
+    }
     const s = D.STUDIOS.find((x) => x.id === id);
     const classes = D.CLASSES.filter((c) => c.studioId === id);
     const [tab, setTab] = useState("services");
@@ -336,7 +347,7 @@
         <div style={{ position: "relative" }}>
           <img src={s.photo.replace("w=600", "w=800")} alt={s.name} style={{ width: "100%", height: 230, objectFit: "cover", filter: "var(--photo-filter)" }} />
           <button className="iconbtn topbar-back" style={{ position: "absolute", top: 14, left: 14 }} onClick={nav.pop} aria-label="Back"><Ic name="back" /></button>
-          <button className="iconbtn" style={{ position: "absolute", top: 14, right: 14 }} aria-label="Share"><Ic name="share" size={19} /></button>
+          <button className="iconbtn" style={{ position: "absolute", top: 14, right: 14 }} aria-label="Share" onClick={() => share(s.name)}><Ic name="share" size={19} /></button>
           <button className="iconbtn" style={{ position: "absolute", top: 14, right: 66 }} onClick={() => toggleFav(s.id)} aria-label="Save">
             <Ic name="heart" size={19} fill={favs.includes(s.id) ? "var(--clay)" : "none"} color={favs.includes(s.id) ? "var(--clay)" : "var(--ink)"} />
           </button>
@@ -1006,6 +1017,7 @@
 
   // ---------- BOOKING ACTION SHEET (cancel / reschedule) ----------
   function BookingActions({ booking, onClose, onCancel, onReschedule, onViewStudio }) {
+    const [confirming, setConfirming] = useState(false);
     return (
       <>
         <div className="sheet-scrim" onClick={onClose} />
@@ -1016,10 +1028,20 @@
             <div className="bk-name">{booking.service}</div>
             <div className="bk-sub muted">{booking.studio}</div>
           </div>
-          <button className="act" onClick={onReschedule}><span className="act-ic"><Ic name="calendar" size={20} /></span>Reschedule</button>
-          <button className="act" onClick={onViewStudio}><span className="act-ic"><Ic name="pin" size={20} /></span>View studio</button>
-          <button className="act danger" onClick={onCancel}><span className="act-ic" style={{ background: "var(--blush)" }}><Ic name="close" size={19} color="var(--clay)" /></span>Cancel booking</button>
-          <button className="btn btn--soft btn--full" style={{ marginTop: 12 }} onClick={onClose}>Keep booking</button>
+          {confirming ? (
+            <>
+              <p className="muted" style={{ margin: "4px 4px 14px" }}>Cancel this booking? This can’t be undone.</p>
+              <button className="btn btn--full" style={{ background: "var(--clay)", color: "#fff" }} onClick={onCancel}>Yes, cancel booking</button>
+              <button className="btn btn--soft btn--full" style={{ marginTop: 10 }} onClick={() => setConfirming(false)}>Keep booking</button>
+            </>
+          ) : (
+            <>
+              <button className="act" onClick={onReschedule}><span className="act-ic"><Ic name="calendar" size={20} /></span>Reschedule</button>
+              <button className="act" onClick={onViewStudio}><span className="act-ic"><Ic name="pin" size={20} /></span>View studio</button>
+              <button className="act danger" onClick={() => setConfirming(true)}><span className="act-ic" style={{ background: "var(--blush)" }}><Ic name="close" size={19} color="var(--clay)" /></span>Cancel booking</button>
+              <button className="btn btn--soft btn--full" style={{ marginTop: 12 }} onClick={onClose}>Keep booking</button>
+            </>
+          )}
         </div>
       </>
     );
@@ -1195,7 +1217,7 @@
 
         {sheet && <OwnerBookingSheet booking={sheet} onClose={() => setSheet(null)}
           onReschedule={async (startISO, dur) => { const r = await window.SEY_BOOK.ownerReschedule(sheet.id, startISO, dur); if (r.error) { showToast("Couldn’t move: " + r.error); } else { showToast("Rescheduled"); setSheet(null); reload(); } }}
-          onCancel={async () => { if (!window.confirm(`Cancel ${sheet.client || "this client"}'s ${sheet.service || "booking"}? This frees the slot — let them know if needed.`)) return; const r = await window.SEY_BOOK.ownerCancel(sheet.id); if (r.error) { showToast("Couldn’t cancel"); } else { showToast("Cancelled"); setSheet(null); reload(); } }} />}
+          onCancel={async () => { const r = await window.SEY_BOOK.ownerCancel(sheet.id); if (r.error) { showToast("Couldn’t cancel"); } else { showToast("Cancelled"); setSheet(null); reload(); } }} />}
         {toast && <div className="toast">{toast}</div>}
       </div>
     );
@@ -1235,8 +1257,14 @@
           {mode === "actions" ? (
             <>
               <button className="act" onClick={() => setMode("reschedule")}><span className="act-ic"><Ic name="calendar" size={20} /></span>Reschedule</button>
-              <button className="act danger" onClick={onCancel}><span className="act-ic" style={{ background: "var(--blush)" }}><Ic name="close" size={19} color="var(--clay)" /></span>Cancel booking</button>
+              <button className="act danger" onClick={() => setMode("confirmCancel")}><span className="act-ic" style={{ background: "var(--blush)" }}><Ic name="close" size={19} color="var(--clay)" /></span>Cancel booking</button>
               <button className="btn btn--soft btn--full" style={{ marginTop: 12 }} onClick={onClose}>Close</button>
+            </>
+          ) : mode === "confirmCancel" ? (
+            <>
+              <p className="muted" style={{ margin: "4px 4px 14px" }}>Cancel {booking.client || "this client"}’s {booking.service || "booking"}? This frees the slot — let them know if needed.</p>
+              <button className="btn btn--full" style={{ background: "var(--clay)", color: "#fff" }} onClick={onCancel} disabled={busy}>{busy ? "Cancelling…" : "Yes, cancel booking"}</button>
+              <button className="btn btn--soft btn--full" style={{ marginTop: 10 }} onClick={() => setMode("actions")}>Keep booking</button>
             </>
           ) : (
             <div style={{ display: "grid", gap: 10, marginTop: 6 }}>
@@ -1406,7 +1434,7 @@
     let overlay = null;
     if (top) {
       const p = top.props;
-      if (top.name === "studio") overlay = <Studio id={p.id} nav={nav} favs={favs} toggleFav={toggleFav} />;
+      if (top.name === "studio") overlay = <Studio id={p.id} nav={nav} favs={favs} toggleFav={toggleFav} showToast={showToast} />;
       else if (top.name === "search") overlay = <div className="sheet-full"><TopBar title="Browse" onBack={nav.pop} /><div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}><Search nav={nav} favs={favs} toggleFav={toggleFav} initialCat={p.cat} /></div></div>;
       else if (top.name === "book") overlay = <BookFlow id={p.id} serviceId={p.serviceId} nav={nav} addBooking={addBooking} />;
       else if (top.name === "classJoin") overlay = <ClassJoin id={p.id} nav={nav} joinClass={joinClass} joinedIds={joined} />;
@@ -1468,7 +1496,7 @@
         {manage && (
           <BookingActions booking={manage}
             onClose={() => setManage(null)}
-            onCancel={() => { if (window.confirm("Cancel this booking? This can’t be undone.")) cancelBooking(manage.id); }}
+            onCancel={() => cancelBooking(manage.id)}
             onViewStudio={() => { const m = manage; setManage(null); nav.push("studio", { id: m.studioId }); }}
             onReschedule={() => { const m = manage; setManage(null); nav.push("book", { id: m.studioId }); showToast("Pick a new time"); }}
           />

@@ -531,14 +531,7 @@
       label: c.label
     })));
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(TopBar, {
-      title: "Browse",
-      right: /*#__PURE__*/React.createElement("button", {
-        className: "iconbtn iconbtn--plain",
-        onClick: () => setMode(mode === "list" ? "map" : "list"),
-        "aria-label": "Toggle map"
-      }, /*#__PURE__*/React.createElement(Ic, {
-        name: mode === "list" ? "pin" : "filter"
-      }))
+      title: "Browse"
     }), /*#__PURE__*/React.createElement("div", {
       className: "screen",
       style: {
@@ -617,7 +610,7 @@
           position: "absolute",
           left: 14,
           right: 14,
-          bottom: 14
+          bottom: 92
         }
       }, /*#__PURE__*/React.createElement(StudioCard, {
         s: s,
@@ -627,7 +620,21 @@
         fav: favs.includes(s.id),
         onFav: toggleFav
       }));
-    })()));
+    })()), /*#__PURE__*/React.createElement("button", {
+      className: "map-toggle",
+      onClick: () => {
+        setActive(null);
+        setMode(mode === "list" ? "map" : "list");
+      }
+    }, mode === "list" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Ic, {
+      name: "pin",
+      size: 17,
+      color: "var(--cream)"
+    }), " Map") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Ic, {
+      name: "filter",
+      size: 17,
+      color: "var(--cream)"
+    }), " List")));
   }
 
   // ---------- STUDIO PROFILE ----------
@@ -635,8 +642,24 @@
     id,
     nav,
     favs,
-    toggleFav
+    toggleFav,
+    showToast
   }) {
+    async function share(name) {
+      const url = `https://book.sey.la/studio/${id}`;
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: name,
+            text: `Book ${name} on sey.la | book`,
+            url
+          });
+          return;
+        }
+        await navigator.clipboard.writeText(url);
+        showToast && showToast("Link copied");
+      } catch (e) {/* user cancelled share — ignore */}
+    }
     const s = D.STUDIOS.find(x => x.id === id);
     const classes = D.CLASSES.filter(c => c.studioId === id);
     const [tab, setTab] = useState("services");
@@ -673,7 +696,8 @@
         top: 14,
         right: 14
       },
-      "aria-label": "Share"
+      "aria-label": "Share",
+      onClick: () => share(s.name)
     }, /*#__PURE__*/React.createElement(Ic, {
       name: "share",
       size: 19
@@ -2162,6 +2186,7 @@
     onReschedule,
     onViewStudio
   }) {
+    const [confirming, setConfirming] = useState(false);
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "sheet-scrim",
       onClick: onClose
@@ -2179,7 +2204,25 @@
       className: "bk-name"
     }, booking.service), /*#__PURE__*/React.createElement("div", {
       className: "bk-sub muted"
-    }, booking.studio)), /*#__PURE__*/React.createElement("button", {
+    }, booking.studio)), confirming ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        margin: "4px 4px 14px"
+      }
+    }, "Cancel this booking? This can\u2019t be undone."), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--full",
+      style: {
+        background: "var(--clay)",
+        color: "#fff"
+      },
+      onClick: onCancel
+    }, "Yes, cancel booking"), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--soft btn--full",
+      style: {
+        marginTop: 10
+      },
+      onClick: () => setConfirming(false)
+    }, "Keep booking")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
       className: "act",
       onClick: onReschedule
     }, /*#__PURE__*/React.createElement("span", {
@@ -2197,7 +2240,7 @@
       size: 20
     })), "View studio"), /*#__PURE__*/React.createElement("button", {
       className: "act danger",
-      onClick: onCancel
+      onClick: () => setConfirming(true)
     }, /*#__PURE__*/React.createElement("span", {
       className: "act-ic",
       style: {
@@ -2213,7 +2256,7 @@
         marginTop: 12
       },
       onClick: onClose
-    }, "Keep booking")));
+    }, "Keep booking"))));
   }
 
   // ---------- NOTIFICATION SETTINGS ----------
@@ -2592,7 +2635,6 @@
         }
       },
       onCancel: async () => {
-        if (!window.confirm(`Cancel ${sheet.client || "this client"}'s ${sheet.service || "booking"}? This frees the slot — let them know if needed.`)) return;
         const r = await window.SEY_BOOK.ownerCancel(sheet.id);
         if (r.error) {
           showToast("Couldn’t cancel");
@@ -2685,7 +2727,7 @@
       size: 20
     })), "Reschedule"), /*#__PURE__*/React.createElement("button", {
       className: "act danger",
-      onClick: onCancel
+      onClick: () => setMode("confirmCancel")
     }, /*#__PURE__*/React.createElement("span", {
       className: "act-ic",
       style: {
@@ -2701,7 +2743,26 @@
         marginTop: 12
       },
       onClick: onClose
-    }, "Close")) : /*#__PURE__*/React.createElement("div", {
+    }, "Close")) : mode === "confirmCancel" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+      className: "muted",
+      style: {
+        margin: "4px 4px 14px"
+      }
+    }, "Cancel ", booking.client || "this client", "\u2019s ", booking.service || "booking", "? This frees the slot \u2014 let them know if needed."), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--full",
+      style: {
+        background: "var(--clay)",
+        color: "#fff"
+      },
+      onClick: onCancel,
+      disabled: busy
+    }, busy ? "Cancelling…" : "Yes, cancel booking"), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn--soft btn--full",
+      style: {
+        marginTop: 10
+      },
+      onClick: () => setMode("actions")
+    }, "Keep booking")) : /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gap: 10,
@@ -3054,7 +3115,8 @@
         id: p.id,
         nav: nav,
         favs: favs,
-        toggleFav: toggleFav
+        toggleFav: toggleFav,
+        showToast: showToast
       });else if (top.name === "search") overlay = /*#__PURE__*/React.createElement("div", {
         className: "sheet-full"
       }, /*#__PURE__*/React.createElement(TopBar, {
@@ -3188,9 +3250,7 @@
     }, toast), manage && /*#__PURE__*/React.createElement(BookingActions, {
       booking: manage,
       onClose: () => setManage(null),
-      onCancel: () => {
-        if (window.confirm("Cancel this booking? This can’t be undone.")) cancelBooking(manage.id);
-      },
+      onCancel: () => cancelBooking(manage.id),
       onViewStudio: () => {
         const m = manage;
         setManage(null);
