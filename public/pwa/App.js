@@ -654,7 +654,8 @@
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         position: "absolute",
-        inset: 0
+        inset: 0,
+        zIndex: 0
       }
     }, /*#__PURE__*/React.createElement(MapView, {
       studios: list,

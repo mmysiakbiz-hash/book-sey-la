@@ -355,7 +355,8 @@
         ) : (
           // Airbnb-style: full map behind, a draggable list sheet over it.
           <div ref={paneRef} style={{ flex: 1, position: "relative", minHeight: 0 }}>
-            <div style={{ position: "absolute", inset: 0 }}>
+            {/* zIndex:0 traps Leaflet's high internal z-indexes so the sheet/toggle sit above the map */}
+            <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
               <MapView studios={list} activeId={active} onSelect={setActive} />
             </div>
             {list.every((s) => typeof s.lat !== "number" || typeof s.lng !== "number") && (
