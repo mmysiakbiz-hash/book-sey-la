@@ -102,7 +102,7 @@
         <div className="scard-body">
           <div className="scard-row">
             <span className="scard-name">{s.name}</span>
-            <Stars r={s.rating} />
+            {typeof s.rating === "number" && <Stars r={s.rating} />}
           </div>
           <div className="scard-meta">
             <Ic name="pin" size={13} color="var(--cocoa-40)" />{s.area}
@@ -162,7 +162,7 @@
   }
 
   // ---------- HOME ----------
-  function Home({ nav, favs, toggleFav, setTab, notif, visits }) {
+  function Home({ nav, favs, toggleFav, setTab, hasNotifs, visits }) {
     const near = D.STUDIOS;
     const rec = D.STUDIOS.slice().sort((a, b) => b.rating - a.rating);
     const hasStudios = D.STUDIOS.length > 0;
@@ -205,7 +205,7 @@
       <>
         <TopBar brand right={
           <button className="iconbtn iconbtn--plain bell" aria-label="Notifications" onClick={() => nav.push("notif")}>
-            <Ic name="bell" />{notif && <span className="dot" />}
+            <Ic name="bell" />{hasNotifs && <span className="dot" />}
           </button>
         } />
         <div className="app-scroll">
@@ -346,8 +346,8 @@
             <span className="scard-tag" style={{ position: "static", display: "inline-block", marginBottom: 8 }}>{s.tag}</span>
             <h1 className="h-lg">{s.name}</h1>
             <div className="scard-meta" style={{ marginTop: 8, fontSize: "0.9rem" }}>
-              <Stars r={s.rating} /> <b style={{ color: "var(--ink)" }}>{s.rating}</b> ({s.reviews})
-              <i className="dotsep" /><Ic name="pin" size={13} color="var(--cocoa-40)" />{s.area}
+              {typeof s.rating === "number" && <React.Fragment><Stars r={s.rating} /> <b style={{ color: "var(--ink)" }}>{s.rating}</b>{s.reviews ? ` (${s.reviews})` : ""}<i className="dotsep" /></React.Fragment>}
+              <Ic name="pin" size={13} color="var(--cocoa-40)" />{s.area}
             </div>
             <p className="muted" style={{ marginTop: 12, lineHeight: 1.55 }}>{s.about}</p>
 
@@ -1226,6 +1226,11 @@
             <div className="srv-meta">{booking.service}{booking.staff ? " · " + booking.staff : ""} · {mDayLabel(booking.start)} {mTime(booking.start)}</div>
           </div>
           {booking.phone && mode === "actions" && <a className="act" href={"tel:" + booking.phone} style={{ textDecoration: "none" }}><span className="act-ic"><Ic name="pin" size={20} /></span>Call {booking.phone}</a>}
+          {booking.phone && mode === "actions" && (() => {
+            const digits = String(booking.phone).replace(/[^0-9]/g, "");
+            const text = `Hi ${booking.client || "there"}, about your ${booking.service || "appointment"} on ${mDayLabel(booking.start)} at ${mTime(booking.start)} — `;
+            return <a className="act" href={`https://wa.me/${digits}?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}><span className="act-ic" style={{ background: "#25D36622", color: "#128C7E" }}><Ic name="bell" size={19} color="#128C7E" /></span>Message on WhatsApp</a>;
+          })()}
 
           {mode === "actions" ? (
             <>
@@ -1391,7 +1396,7 @@
 
     // active tab screen
     let base;
-    if (tab === "home") base = <Home nav={nav} favs={favs} toggleFav={toggleFav} setTab={switchTab} notif={notif} visits={myVisits} />;
+    if (tab === "home") base = <Home nav={nav} favs={favs} toggleFav={toggleFav} setTab={switchTab} hasNotifs={upcoming > 0} visits={myVisits} />;
     else if (tab === "search") base = <Search nav={nav} favs={favs} toggleFav={toggleFav} />;
     else if (tab === "bookings") base = <Bookings bookings={bookings} nav={nav} onManage={setManage} reviewed={reviewed} />;
     else base = <Account user={user} setUser={setUser} favs={favs} nav={nav} notif={notif} setNotif={setNotif} isOwner={!!ownerStudio} onSwitchToPro={() => setOwnerMode("pro")} visitCount={myVisits.length} />;

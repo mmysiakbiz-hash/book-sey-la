@@ -212,7 +212,7 @@
       className: "scard-row"
     }, /*#__PURE__*/React.createElement("span", {
       className: "scard-name"
-    }, s.name), /*#__PURE__*/React.createElement(Stars, {
+    }, s.name), typeof s.rating === "number" && /*#__PURE__*/React.createElement(Stars, {
       r: s.rating
     })), /*#__PURE__*/React.createElement("div", {
       className: "scard-meta"
@@ -339,7 +339,7 @@
     favs,
     toggleFav,
     setTab,
-    notif,
+    hasNotifs,
     visits
   }) {
     const near = D.STUDIOS;
@@ -398,7 +398,7 @@
         onClick: () => nav.push("notif")
       }, /*#__PURE__*/React.createElement(Ic, {
         name: "bell"
-      }), notif && /*#__PURE__*/React.createElement("span", {
+      }), hasNotifs && /*#__PURE__*/React.createElement("span", {
         className: "dot"
       }))
     }), /*#__PURE__*/React.createElement("div", {
@@ -716,15 +716,15 @@
         marginTop: 8,
         fontSize: "0.9rem"
       }
-    }, /*#__PURE__*/React.createElement(Stars, {
+    }, typeof s.rating === "number" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Stars, {
       r: s.rating
     }), " ", /*#__PURE__*/React.createElement("b", {
       style: {
         color: "var(--ink)"
       }
-    }, s.rating), " (", s.reviews, ")", /*#__PURE__*/React.createElement("i", {
+    }, s.rating), s.reviews ? ` (${s.reviews})` : "", /*#__PURE__*/React.createElement("i", {
       className: "dotsep"
-    }), /*#__PURE__*/React.createElement(Ic, {
+    })), /*#__PURE__*/React.createElement(Ic, {
       name: "pin",
       size: 13,
       color: "var(--cocoa-40)"
@@ -2649,7 +2649,29 @@
     }, /*#__PURE__*/React.createElement(Ic, {
       name: "pin",
       size: 20
-    })), "Call ", booking.phone), mode === "actions" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    })), "Call ", booking.phone), booking.phone && mode === "actions" && (() => {
+      const digits = String(booking.phone).replace(/[^0-9]/g, "");
+      const text = `Hi ${booking.client || "there"}, about your ${booking.service || "appointment"} on ${mDayLabel(booking.start)} at ${mTime(booking.start)} — `;
+      return /*#__PURE__*/React.createElement("a", {
+        className: "act",
+        href: `https://wa.me/${digits}?text=${encodeURIComponent(text)}`,
+        target: "_blank",
+        rel: "noreferrer",
+        style: {
+          textDecoration: "none"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        className: "act-ic",
+        style: {
+          background: "#25D36622",
+          color: "#128C7E"
+        }
+      }, /*#__PURE__*/React.createElement(Ic, {
+        name: "bell",
+        size: 19,
+        color: "#128C7E"
+      })), "Message on WhatsApp");
+    })(), mode === "actions" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
       className: "act",
       onClick: () => setMode("reschedule")
     }, /*#__PURE__*/React.createElement("span", {
@@ -2996,7 +3018,7 @@
       favs: favs,
       toggleFav: toggleFav,
       setTab: switchTab,
-      notif: notif,
+      hasNotifs: upcoming > 0,
       visits: myVisits
     });else if (tab === "search") base = /*#__PURE__*/React.createElement(Search, {
       nav: nav,

@@ -46,7 +46,7 @@
     for (var i = 0; i < 8; i++) {
       var dt = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
       var dow = (dt.getDay() + 6) % 7; // Mon=0..Sun=6
-      var label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : DAYLBL[dow];
+      var label = i === 0 ? "Today" : DAYLBL[dow];
       out.push({ d: label, n: String(dt.getDate()), dow: dow });
     }
     return out;
@@ -94,7 +94,7 @@
       cat: CAT[r.category] || "spa",
       area: r.address || r.island || "Seychelles",
       about: r.bio || r.tagline || "",
-      rating: rating != null ? rating : 4.8,
+      rating: rating != null ? rating : null,
       reviews: revCount,
       reviews_list: reviewsList,
       distance: "",
