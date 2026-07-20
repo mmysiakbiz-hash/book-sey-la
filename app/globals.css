@@ -486,7 +486,15 @@ a:hover { color: var(--brand-hover); }
 .sr-layout--map { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
 .sr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .sr-layout--map .sr-grid { grid-template-columns: repeat(2, 1fr); }
-@media (max-width: 1000px) { .sr-grid { grid-template-columns: repeat(2, 1fr); } .sr-layout--map { grid-template-columns: 1fr; } .sr-layout--map .sr-grid { grid-template-columns: repeat(2, 1fr); } .sr-map { display: none; } }
+@media (max-width: 1000px) {
+  .sr-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Map view stacks on mobile: map on top (order:-1), list below — instead of
+     being hidden entirely (which left the "Hide map" toggle pointing at nothing). */
+  .sr-layout--map { display: flex; flex-direction: column; }
+  .sr-layout--map .sr-grid { grid-template-columns: repeat(2, 1fr); }
+  .sr-map { position: static; order: -1; }
+  .sr-map-inner { height: 52vh; min-height: 300px; }
+}
 @media (max-width: 620px) { .sr-grid, .sr-layout--map .sr-grid { grid-template-columns: 1fr; } }
 
 .sr-empty { grid-column: 1 / -1; text-align: center; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius-xl); padding: 56px 24px; }
