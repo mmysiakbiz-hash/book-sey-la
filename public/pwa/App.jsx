@@ -525,6 +525,8 @@
     const [pay, setPay] = useState("salon"); // salon | now
     const [step, setStep] = useState(serviceId || prefill ? 1 : 0); // 0 svc,1 staff,2 time,3 pay
     const [done, setDone] = useState(false);
+    const [booking, setBooking] = useState(false);
+    const [bookErr, setBookErr] = useState("");
 
     const chosen = allItems.filter((it) => picked.includes(it.id));
     const total = chosen.reduce((n, it) => n + it.price, 0);
@@ -535,8 +537,52 @@
     const staffName = staff === "any" ? "Any professional" : (staffPool.find((p) => p.id === staff) || {}).name;
     const TITLES = ["Choose services", "Choose professional", "Pick a time", "Review"];
 
-    function confirm() {
-      // Instant local booking — offline/demo fallback + drives the PWA "My bookings" list.
+    function bookErrText(code) {
+      return code === "auth_required" ? "Please log in again to book."
+        : code === "slot_taken" ? "That time was just taken — please pick another slot."
+        : code === "outside_hours" ? "That's outside the studio's opening hours."
+        : code === "studio_unavailable" ? "The studio has blocked that time."
+        : code === "studio_unclaimed" ? "This studio isn't taking online bookings yet."
+        : code === "missing_studio_or_time" ? "Please pick a service and a time."
+        : "Couldn't complete the booking — please try again.";
+    }
+
+    async function confirm() {
+      if (booking) return;
+      setBookErr("");
+      // A real studio always has a dbId + the SEY_BOOK bridge. The booking only counts
+      // once the SERVER write succeeds — we never show "You're booked" on a failed write.
+      if (window.SEY_BOOK && s.dbId) {
+        setBooking(true);
+        const first = chosen.find((c) => c.sid) || null;
+        // Interpret the picked day + slot as MAHÉ local time (UTC+4, no DST),
+        // not the visitor's browser timezone.
+        const now = new Date();
+        const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
+        const parts = (slot || "09:00").split(":");
+        const pad = (n) => String(n).padStart(2, "0");
+        const mahe = when.getFullYear() + "-" + pad(when.getMonth() + 1) + "-" + pad(when.getDate())
+          + "T" + pad(Number(parts[0]) || 9) + ":" + pad(Number(parts[1]) || 0) + ":00+04:00";
+        const realStaff = (staff !== "any" && s.staff && s.staff.some((p) => p.id === staff)) ? staff : null;
+        let res;
+        try {
+          res = await window.SEY_BOOK.createBooking({
+            studioDbId: s.dbId,
+            serviceDbId: first ? first.sid : null,
+            staffId: realStaff,
+            startsAt: new Date(mahe).toISOString(),
+            durationMin: first ? first.durMin : 60,
+            priceEur: total,
+          });
+        } catch (e) { res = { error: "network_error" }; }
+        setBooking(false);
+        if (!res || res.error) { setBookErr(bookErrText(res && res.error)); return; }
+      } else {
+        // No backend bridge (shouldn't happen for a real studio) — fail honestly.
+        setBookErr("Booking isn't available right now — please try again in a moment.");
+        return;
+      }
+      // Server confirmed → record it for the "My bookings" list and show the receipt.
       addBooking({
         id: "bk" + Date.now(), studioId: s.id, studio: s.name, area: s.area,
         service: chosen.map((c) => c.name).join(", ") || "Appointment",
@@ -545,30 +591,6 @@
         price: total, status: "Confirmed", photo: s.photo, past: false,
       });
       setDone(true);
-      // Best-effort real write to Supabase (+ Brevo confirmation email) via /api/book.
-      // Needs a live session (shared from the site login); silently no-ops otherwise.
-      try {
-        if (window.SEY_BOOK && s.dbId) {
-          const first = chosen.find((c) => c.sid) || null;
-          // Interpret the picked day + slot as MAHÉ local time (UTC+4, no DST),
-          // not the visitor's browser timezone.
-          const now = new Date();
-          const when = new Date(now.getFullYear(), now.getMonth(), now.getDate() + day);
-          const parts = (slot || "09:00").split(":");
-          const pad = (n) => String(n).padStart(2, "0");
-          const mahe = when.getFullYear() + "-" + pad(when.getMonth() + 1) + "-" + pad(when.getDate())
-            + "T" + pad(Number(parts[0]) || 9) + ":" + pad(Number(parts[1]) || 0) + ":00+04:00";
-          const realStaff = (staff !== "any" && s.staff && s.staff.some((p) => p.id === staff)) ? staff : null;
-          window.SEY_BOOK.createBooking({
-            studioDbId: s.dbId,
-            serviceDbId: first ? first.sid : null,
-            staffId: realStaff,
-            startsAt: new Date(mahe).toISOString(),
-            durationMin: first ? first.durMin : 60,
-            priceEur: total,
-          });
-        }
-      } catch (e) { /* keep the local booking; never break the UI */ }
     }
 
     if (done) {
@@ -687,7 +709,8 @@
           {step === 0 && <button className="btn btn--primary btn--full" disabled={!picked.length} onClick={() => setStep(1)}>Continue{total ? " · SCR " + total : ""}</button>}
           {step === 1 && <button className="btn btn--primary btn--full" onClick={() => setStep(2)}>Continue</button>}
           {step === 2 && <button className="btn btn--primary btn--full" disabled={!slot} onClick={() => setStep(3)}>Continue {slot ? "· " + D.DAYS[day].d + " " + slot : ""}</button>}
-          {step === 3 && <button className="btn btn--primary btn--full" onClick={confirm}>Confirm booking</button>}
+          {step === 3 && bookErr && <div style={{ color: "var(--clay)", fontSize: "0.85rem", textAlign: "center", marginBottom: 8 }}>{bookErr}</div>}
+          {step === 3 && <button className="btn btn--primary btn--full" onClick={confirm} disabled={booking}>{booking ? "Booking…" : "Confirm booking"}</button>}
         </div>
       </div>
     );
