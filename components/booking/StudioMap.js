@@ -1,26 +1,44 @@
 "use client";
 import React from "react";
-import "leaflet/dist/leaflet.css";
 
 // StudioMap — a real OpenStreetMap (Leaflet) with a pin per studio that has
-// coordinates. Leaflet is bundled (imported from node_modules, same-origin) —
-// NOT loaded from a CDN — so a third-party CDN outage can't blank the map.
-// Studios without coordinates simply don't get a pin; the map still shows the region.
+// coordinates. Leaflet is SELF-HOSTED (served from /vendor/leaflet, same-origin)
+// and loaded as a plain <script> exposing window.L — the exact approach the PWA
+// uses. No third-party CDN (unpkg) and no bundler/dynamic-import quirks, both of
+// which had left the map blank. Studios without coordinates just don't get a pin.
 
 const SEYCHELLES = [-4.62, 55.45]; // Mahé area
 // OSM's current recommended single-host tile endpoint (HTTP/2, no a/b/c subdomains).
 const OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const LEAFLET_CSS = "/vendor/leaflet/leaflet.css";
+const LEAFLET_JS = "/vendor/leaflet/leaflet.js";
 
-// Leaflet references `window`/`document` at eval time, so it must be imported
-// lazily on the client (inside the effect), never at module top / on the server.
-let _leafletPromise = null;
+// Inject Leaflet's CSS + JS from our own domain and resolve with window.L.
 function loadLeaflet() {
-  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
-  if (window.L) return Promise.resolve(window.L);
-  if (!_leafletPromise) {
-    _leafletPromise = import("leaflet").then((mod) => mod.default || mod);
-  }
-  return _leafletPromise;
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") return reject(new Error("no window"));
+    if (window.L) return resolve(window.L);
+    if (!document.querySelector("link[data-leaflet]")) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = LEAFLET_CSS;
+      link.setAttribute("data-leaflet", "1");
+      document.head.appendChild(link);
+    }
+    const existing = document.querySelector("script[data-leaflet]");
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.L));
+      existing.addEventListener("error", reject);
+      if (window.L) resolve(window.L);
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = LEAFLET_JS;
+    s.setAttribute("data-leaflet", "1");
+    s.onload = () => resolve(window.L);
+    s.onerror = reject;
+    document.body.appendChild(s);
+  });
 }
 
 const esc = (s) => String(s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
