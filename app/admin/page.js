@@ -49,7 +49,9 @@ export default function AdminPage() {
       const j = await call("bi", tok, sess);
       setToken(tok || ""); setSession(sess || null);
       setBi(j.bi); setReady(true);
-      if (tok) { try { localStorage.setItem("sey.admin.token", tok); } catch (e) {} }
+      // sessionStorage (not localStorage): the break-glass token is a server secret;
+      // keep it out of durable storage so it can't be read back in a later session.
+      if (tok) { try { sessionStorage.setItem("sey.admin.token", tok); } catch (e) {} }
     } catch (e) {
       setGateState("gate");
       setErr(gateError(e));
@@ -58,7 +60,12 @@ export default function AdminPage() {
 
   // On load: prefer an existing Supabase admin session; else a stored token.
   React.useEffect(() => {
-    let stored = ""; try { stored = localStorage.getItem("sey.admin.token") || ""; } catch (e) {}
+    let stored = ""; try { stored = sessionStorage.getItem("sey.admin.token") || ""; } catch (e) {}
+    // Migrate any legacy token out of durable localStorage into this session only.
+    try {
+      const legacy = localStorage.getItem("sey.admin.token");
+      if (legacy) { if (!stored) { stored = legacy; sessionStorage.setItem("sey.admin.token", legacy); } localStorage.removeItem("sey.admin.token"); }
+    } catch (e) {}
     (async () => {
       let sess = null;
       if (supabase) { try { const { data } = await supabase.auth.getSession(); sess = data && data.session; } catch (e) {} }
@@ -91,7 +98,8 @@ export default function AdminPage() {
 
   async function signOut() {
     try { if (supabase) await supabase.auth.signOut({ scope: "local" }); } catch (e) {}
-    try { localStorage.removeItem("sey.admin.token"); } catch (e) {}
+    try { sessionStorage.removeItem("sey.admin.token"); } catch (e) {}
+    try { localStorage.removeItem("sey.admin.token"); } catch (e) {} // clear any legacy value
     setSession(null); setToken(""); setReady(false); setBi(null); setStudios(null); setBookings(null); setUsers(null); setSent(false);
   }
 

@@ -1,12 +1,15 @@
 "use client";
 import React from "react";
 import { Logo } from "@/components/brand/Logo";
+import { supabase } from "@/lib/supabaseClient";
 import { PROSPECT_CATEGORIES } from "@/lib/prospectPresets";
 
 // Admin tool: generate a pre-listed page for one prospect and get the links to
-// send. Gated by ADMIN_TOKEN (remembered locally for convenience).
+// send. Auth = your admin session (magic-link login) OR, as a break-glass
+// fallback, the ADMIN_TOKEN. Same model as the main /admin dashboard.
 export default function ProspectPage() {
   const [token, setToken] = React.useState("");
+  const [session, setSession] = React.useState(null);
   const [f, setF] = React.useState({ name: "", category: "Barber", email: "", island: "Mahé", address: "", phone: "", tagline: "" });
   const [svc, setSvc] = React.useState([]); // optional overrides; empty → preset menu
   const [photos, setPhotos] = React.useState(""); // optional, comma/newline separated
@@ -14,24 +17,32 @@ export default function ProspectPage() {
   const [res, setRes] = React.useState(null);
   const [err, setErr] = React.useState("");
 
-  React.useEffect(() => { try { setToken(localStorage.getItem("sey.admin.token") || ""); } catch (e) {} }, []);
+  React.useEffect(() => {
+    // sessionStorage (not localStorage): the break-glass token never persists past
+    // this tab, shrinking the window a stray script could read a server secret.
+    try { setToken(sessionStorage.getItem("sey.admin.token") || ""); } catch (e) {}
+    if (supabase) { supabase.auth.getSession().then(({ data }) => setSession(data && data.session)).catch(() => {}); }
+  }, []);
   const set = (p) => setF((v) => ({ ...v, ...p }));
 
   async function submit() {
     setErr(""); setRes(null);
     if (!f.name.trim()) { setErr("Name is required."); return; }
-    try { localStorage.setItem("sey.admin.token", token); } catch (e) {}
+    if (!session && !token.trim()) { setErr("Sign in as admin (at /admin) or paste the admin token."); return; }
+    try { if (token) sessionStorage.setItem("sey.admin.token", token); } catch (e) {}
     setState("sending");
     const photoList = photos.split(/[\n,]/).map((s) => s.trim()).filter(Boolean);
     const services = svc.filter((s) => s.name && s.name.trim());
     try {
+      const headers = { "content-type": "application/json" };
+      if (session && session.access_token) headers.Authorization = "Bearer " + session.access_token;
       const r = await fetch("/api/prospect", {
-        method: "POST", headers: { "content-type": "application/json" },
+        method: "POST", headers,
         body: JSON.stringify({ token, ...f, photos: photoList, services }),
       });
       const j = await r.json().catch(() => ({}));
       if (r.ok && j.ok) { setRes(j); setState("idle"); }
-      else { setState("idle"); setErr(j.error === "unauthorized" ? "Wrong admin token." : j.error === "admin_token_not_set" ? "Set ADMIN_TOKEN in Vercel first." : (j.error || "Failed.")); }
+      else { setState("idle"); setErr(j.error === "unauthorized" ? "Not authorized — sign in as admin or check the token." : j.error === "admin_not_configured" ? "Set ADMIN_TOKEN or ADMIN_EMAILS in Vercel first." : (j.error || "Failed.")); }
     } catch (e) { setState("idle"); setErr("Network error."); }
   }
 
@@ -47,7 +58,9 @@ export default function ProspectPage() {
         <p style={{ color: "var(--text-muted)", margin: "0 0 22px", fontSize: "var(--text-sm)" }}>Enter the basics — we fill the rest from category presets so it looks finished. You get a public link and a claim link to send.</p>
 
         <div style={{ display: "grid", gap: 14, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", padding: 20 }}>
-          <label><span style={label}>Admin token</span><input style={field} type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="ADMIN_TOKEN" /></label>
+          {session
+            ? <div style={{ fontSize: "var(--text-sm)", color: "var(--eucalyptus)", fontWeight: 600 }}>✓ Signed in as admin — no token needed.</div>
+            : <label><span style={label}>Admin token <span style={{ fontWeight: 400, color: "var(--text-caption)" }}>(only if you're not signed in at /admin)</span></span><input style={field} type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="ADMIN_TOKEN" /></label>}
           <label><span style={label}>Studio name *</span><input style={field} value={f.name} onChange={(e) => set({ name: e.target.value })} placeholder="e.g. L'Accent Barber" /></label>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <label style={{ flex: 1, minWidth: 160 }}><span style={label}>Category *</span><select style={field} value={f.category} onChange={(e) => set({ category: e.target.value })}>{PROSPECT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select></label>

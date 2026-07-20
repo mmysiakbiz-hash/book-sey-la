@@ -7,20 +7,55 @@
 //   → { ok, slug, studioUrl, claimUrl }
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
 import { presetFor } from "@/lib/prospectPresets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Constant-time token compare (avoids leaking length/prefix via timing).
+function tokenMatches(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length || !a) return false;
+  try { return timingSafeEqual(Buffer.from(a), Buffer.from(b)); } catch { return false; }
+}
+
+// Same auth model as /api/admin: a valid ADMIN_TOKEN OR an admin session
+// (row in `admins`, or first login by an ADMIN_EMAILS address → auto-enrol).
+async function isAdmin(req, body, { url, anon, db }) {
+  const adminToken = process.env.ADMIN_TOKEN;
+  if (adminToken && body && tokenMatches(body.token, adminToken)) return true;
+  const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  if (bearer && anon) {
+    const asUser = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data } = await asUser.auth.getUser(bearer);
+    const user = data && data.user;
+    if (user) {
+      const { data: row } = await db.from("admins").select("user_id").eq("user_id", user.id).maybeSingle();
+      if (row) return true;
+      const allow = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+      if (user.email && allow.includes(user.email.toLowerCase())) {
+        await db.from("admins").upsert({ user_id: user.id }, { onConflict: "user_id" });
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 export async function POST(req) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const adminToken = process.env.ADMIN_TOKEN;
   if (!url || !service) return NextResponse.json({ error: "not_configured" }, { status: 503 });
-  if (!adminToken) return NextResponse.json({ error: "admin_token_not_set" }, { status: 503 });
+  if (!process.env.ADMIN_TOKEN && !process.env.ADMIN_EMAILS) {
+    return NextResponse.json({ error: "admin_not_configured" }, { status: 503 });
+  }
 
   const body = await req.json().catch(() => null);
-  if (!body || body.token !== adminToken) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const db = createClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } });
+  if (!(await isAdmin(req, body || {}, { url, anon, db }))) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const name = (body.name || "").trim();
   const category = (body.category || "").trim();
@@ -29,7 +64,6 @@ export async function POST(req) {
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return NextResponse.json({ error: "invalid_email" }, { status: 400 });
 
   const preset = presetFor(category);
-  const db = createClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const { data: slug, error: slugErr } = await db.rpc("gen_studio_slug", { p_name: name });
   if (slugErr) return NextResponse.json({ error: slugErr.message }, { status: 400 });
