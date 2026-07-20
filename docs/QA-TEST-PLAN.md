@@ -24,7 +24,7 @@ test at **desktop (≥1200px)** and **mobile (390px)** widths.
 4. Owner "pro" mode requires an account that **owns a studio** (e.g. the owner of a test studio).
 
 ## Invariants to assert on EVERY screen (global acceptance criteria)
-- **Currency:** client-facing **service/package prices in SCR**; **subscription/referral in EUR (€)**. No mix-ups. A price-less service shows **"On request"**, never "SCR 0".
+- **Currency:** client-facing **service/package prices in SCR**; the **referral bonus is SCR 250** (client-facing, in SCR — this is intentional, not a bug); only the **studio subscription/MRR is EUR (€25/month)**. No mix-ups. A price-less service shows **"On request"**, never "SCR 0".
 - **Timezone:** every slot/booking/agenda time is **Mahé (UTC+4)** — a time picked as 14:00 must persist/show as 14:00 Mahé.
 - **No fake/placeholder data:** no invented ratings (e.g. "4.9 (128)"), reviews, opening hours, "Available today", or demo studios (Kreol Spa, L'Accent Barber…). Empty → honest empty state.
 - **No false promises:** nothing claims push notifications, SMS, online payment, or spendable gift-card/wallet credit (there are none).

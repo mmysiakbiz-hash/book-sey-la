@@ -12,7 +12,8 @@ const minToHHMM = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${Strin
 
 // Build the bookable time slots for a given day from the studio's real opening
 // hours (array of [weekdayLabel, "9:00 – 18:00"]); past times on today are dropped.
-function slotsForDay(day, hours) {
+// The last slot must leave room for the full service duration before closing.
+function slotsForDay(day, hours, durationMin = 30) {
   if (!Array.isArray(hours) || !hours.length) return [];
   const label = day.toLocaleDateString("en-GB", { weekday: "short", timeZone: MTZ });
   const row = hours.find((h) => Array.isArray(h) && h[0] === label);
@@ -25,8 +26,9 @@ function slotsForDay(day, hours) {
   const todayKey = now.toLocaleDateString("en-CA", { timeZone: MTZ });
   const isToday = day.toLocaleDateString("en-CA", { timeZone: MTZ }) === todayKey;
   const nowMin = isToday ? hhmmToMin(now.toLocaleTimeString("en-GB", { timeZone: MTZ, hour: "2-digit", minute: "2-digit" })) : -1;
+  const dur = Math.max(15, durationMin || 30);
   const out = [];
-  for (let m = open; m + 30 <= close; m += 30) { if (m > nowMin) out.push(minToHHMM(m)); }
+  for (let m = open; m + dur <= close; m += 30) { if (m > nowMin) out.push(minToHHMM(m)); }
   return out;
 }
 
@@ -56,7 +58,7 @@ export function BookNow({ studioId, service, team = [], hours = [], onClose }) {
   const [msg, setMsg] = React.useState("");
 
   // Real slots for the selected day, from the studio's opening hours.
-  const slots = React.useMemo(() => slotsForDay(days[dayIdx], hours), [days, dayIdx, hours]);
+  const slots = React.useMemo(() => slotsForDay(days[dayIdx], hours, service.durationMin || 60), [days, dayIdx, hours, service.durationMin]);
   // Keep the picked time valid as the day (and thus slot set) changes.
   React.useEffect(() => { setTime((t) => (t && slots.includes(t) ? t : (slots[0] || null))); }, [slots]);
 

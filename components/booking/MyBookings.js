@@ -5,9 +5,9 @@ import { cancelMyBooking, rescheduleMyBooking } from "@/lib/bookings";
 import { scr } from "@/lib/money";
 
 function fmtWhen(startsAt) {
-  if (!startsAt) return "Upcoming";
+  if (!startsAt) return "";
   const d = new Date(startsAt);
-  if (isNaN(d)) return "Upcoming";
+  if (isNaN(d)) return "";
   return d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" });
 }
 
