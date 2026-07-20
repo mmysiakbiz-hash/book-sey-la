@@ -91,7 +91,11 @@ export function BookNow({ studioId, service, team = [], hours = [], onClose }) {
         res.error === "auth_required" ? "Please log in to book."
         : res.error === "supabase_not_configured" ? "Booking isn't connected yet."
         : res.error === "missing_studio_or_time" ? "This is a preview studio — bookings go live on a real listing."
-        : res.error
+        : res.error === "slot_taken" ? "That time's just been booked — please pick another."
+        : res.error === "outside_hours" ? "That's outside the studio's opening hours."
+        : res.error === "studio_unavailable" ? "The studio has blocked that time."
+        : res.error === "studio_unclaimed" ? "This studio isn't taking online bookings yet."
+        : "Couldn't book — please try another time."
       );
     } else {
       setState("done");

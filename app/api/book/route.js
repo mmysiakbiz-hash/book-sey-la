@@ -117,7 +117,12 @@ export async function POST(req) {
     .select("id, during, status, price_eur")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    // no_overlap EXCLUDE constraint (staff_id + during, SQLSTATE 23P01) → the slot
+    // was taken between showing it and confirming. Surface a clear, retryable code.
+    const taken = error.code === "23P01" || /no_overlap|exclusion constraint/i.test(error.message || "");
+    return NextResponse.json({ error: taken ? "slot_taken" : error.message }, { status: taken ? 409 : 400 });
+  }
 
   const whenText = start.toLocaleString("en-GB", {
     weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe",

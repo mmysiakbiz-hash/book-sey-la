@@ -46,7 +46,7 @@ function Row({ b, onChange }) {
     const r = await rescheduleMyBooking(b.id, b.studioId, startsAt, b.durationMin, b.staffId);
     setBusy(false);
     if (r.error) {
-      setErr(r.error === "outside_hours" ? "That's outside the studio's opening hours." : r.error === "studio_unavailable" ? "The studio has blocked that time." : "Couldn't reschedule — try another time.");
+      setErr(r.error === "outside_hours" ? "That's outside the studio's opening hours." : r.error === "studio_unavailable" ? "The studio has blocked that time." : r.error === "slot_taken" ? "That time's already booked — please pick another." : "Couldn't reschedule — try another time.");
       return;
     }
     onChange({ ...b, startsAt }); setMode(null); setOpen(false);
