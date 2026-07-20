@@ -1734,8 +1734,6 @@
     nav,
     notif,
     setNotif,
-    isOwner,
-    onSwitchToPro,
     visitCount
   }) {
     if (!user) return /*#__PURE__*/React.createElement(Login, {
@@ -1786,42 +1784,7 @@
       className: "h-md"
     }, user.name), /*#__PURE__*/React.createElement("div", {
       className: "tiny muted"
-    }, user.phone))), isOwner && /*#__PURE__*/React.createElement("button", {
-      className: "arow",
-      onClick: onSwitchToPro,
-      style: {
-        width: "100%",
-        background: "var(--ink)",
-        color: "var(--cream)",
-        borderRadius: "var(--radius-lg)",
-        marginBottom: 14
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "arow-ic",
-      style: {
-        background: "rgba(255,255,255,0.14)",
-        color: "var(--cream)"
-      }
-    }, /*#__PURE__*/React.createElement(Ic, {
-      name: "calendar",
-      size: 20,
-      color: "var(--cream)"
-    })), /*#__PURE__*/React.createElement("span", {
-      className: "arow-lb",
-      style: {
-        color: "var(--cream)"
-      }
-    }, "Studio dashboard", /*#__PURE__*/React.createElement("span", {
-      style: {
-        display: "block",
-        fontSize: "0.78rem",
-        opacity: 0.75
-      }
-    }, "Manage your bookings & clients")), /*#__PURE__*/React.createElement(Ic, {
-      name: "chevronRight",
-      size: 18,
-      color: "var(--cream)"
-    })), /*#__PURE__*/React.createElement("div", {
+    }, user.phone))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 10
@@ -2550,8 +2513,7 @@
   });
   function OwnerApp({
     studio,
-    onLogout,
-    onSwitchToClient
+    onLogout
   }) {
     const [agenda, setAgenda] = useState(null);
     const [sel, setSel] = useState(0);
@@ -2597,12 +2559,6 @@
     }, studio.name || "Your studio"), /*#__PURE__*/React.createElement("div", {
       className: "topbar-spacer"
     }), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn--soft btn--sm",
-      style: {
-        marginRight: 8
-      },
-      onClick: onSwitchToClient
-    }, "Client view"), /*#__PURE__*/React.createElement("button", {
       className: "iconbtn iconbtn--plain",
       onClick: onLogout,
       "aria-label": "Log out"
@@ -3037,8 +2993,6 @@
     const [user, setUser] = useState(() => load("user", null));
     const [authChecked, setAuthChecked] = useState(false); // resolved the initial session yet?
     const [ownerStudio, setOwnerStudio] = useState(undefined); // undefined=checking · null=not an owner · {…}=owner
-    const [ownerMode, setOwnerMode] = useState(() => load("ownerMode", "pro")); // owners: 'pro' dashboard vs 'client' booking view
-    useEffect(() => save("ownerMode", ownerMode), [ownerMode]);
     const [notif, setNotif] = useState(() => load("notif", true));
     const [toast, setToast] = useState(null);
     const [install, setInstall] = useState(false);
@@ -3189,8 +3143,6 @@
       nav: nav,
       notif: notif,
       setNotif: setNotif,
-      isOwner: !!ownerStudio,
-      onSwitchToPro: () => setOwnerMode("pro"),
       visitCount: myVisits.length
     });
 
@@ -3303,10 +3255,9 @@
         }
       }, "Loading your studio\u2026")));
     }
-    if (ownerStudio && ownerMode === "pro") {
+    if (ownerStudio) {
       return /*#__PURE__*/React.createElement(OwnerApp, {
         studio: ownerStudio,
-        onSwitchToClient: () => setOwnerMode("client"),
         onLogout: () => {
           if (window.SEY_BOOK) window.SEY_BOOK.signOut();
           setUser(null);
