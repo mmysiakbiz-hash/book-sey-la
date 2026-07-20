@@ -853,7 +853,7 @@
     const rows = [
       { ic: "sparkle", lb: "Rewards & stamps", go: () => nav.push("rewards") },
       { ic: "heart", lb: "Favourites", go: () => nav.push("favs") },
-      { ic: "sparkle", lb: "Invite a studio · €15", go: () => nav.push("invite") },
+      { ic: "sparkle", lb: "Invite a studio · SCR 250", go: () => nav.push("invite") },
       { ic: "bell", lb: "Notifications", go: () => nav.push("notif") },
       { ic: "globe", lb: "Language · English", go: () => nav.push("language") },
       { ic: "help", lb: "Help & support" },
@@ -1045,13 +1045,13 @@
         <div className="app-scroll">
           <div className="screen" style={{ paddingTop: 8 }}>
             <div className="wallet">
-              <div className="tiny" style={{ opacity: 0.8 }}>Your wallet</div>
-              <div className="wallet-amt">€15</div>
-              <div className="tiny" style={{ opacity: 0.8 }}>Credit toward any booking</div>
+              <div className="tiny" style={{ opacity: 0.8 }}>Referral bonus</div>
+              <div className="wallet-amt">SCR 250</div>
+              <div className="tiny" style={{ opacity: 0.8 }}>for you and the studio</div>
             </div>
             <div className="block--flush">
               <h2 className="h-md">Know a great studio?</h2>
-              <p className="muted" style={{ marginTop: 6 }}>Invite a salon, spa or barber to join sey.la | book. When they go live, you both get <b style={{ color: "var(--ink)" }}>€15</b> in credit.</p>
+              <p className="muted" style={{ marginTop: 6 }}>Invite a salon, spa or barber to join sey.la | book. When they go live, you both get <b style={{ color: "var(--ink)" }}>SCR 250</b> in credit.</p>
             </div>
             <div className="block--flush">
               <div className="tiny muted" style={{ marginBottom: 8, fontWeight: 600 }}>Your invite code</div>

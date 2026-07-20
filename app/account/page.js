@@ -124,16 +124,16 @@ export default function AccountPage() {
             <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
                 <span style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>Balance</span>
-                <span style={{ fontSize: "var(--text-h2)", fontWeight: 700 }}>€{wallet.balance.toFixed(0)}</span>
+                <span style={{ fontSize: "var(--text-h2)", fontWeight: 700 }}>SCR {wallet.balance.toFixed(0)}</span>
               </div>
               {wallet.transactions.length === 0 ? (
-                <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", margin: "10px 0 0" }}>No credit yet — invite a studio to sey.la and earn €15 in referral credit.</p>
+                <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", margin: "10px 0 0" }}>No credit yet — invite a studio to sey.la and earn SCR 250 in referral credit.</p>
               ) : (
                 <div style={{ display: "grid", gap: 8, marginTop: 12, borderTop: "1px solid var(--line)", paddingTop: 12 }}>
                   {wallet.transactions.map((t) => (
                     <div key={t.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: "var(--text-sm)" }}>
                       <span style={{ color: "var(--cocoa)" }}>{t.note || t.kind || "Credit"}</span>
-                      <span style={{ fontWeight: 600, color: t.amount >= 0 ? "var(--confirmed)" : "var(--clay)" }}>{t.amount >= 0 ? "+" : ""}€{t.amount.toFixed(0)}</span>
+                      <span style={{ fontWeight: 600, color: t.amount >= 0 ? "var(--confirmed)" : "var(--clay)" }}>{t.amount >= 0 ? "+" : ""}SCR {t.amount.toFixed(0)}</span>
                     </div>
                   ))}
                 </div>
@@ -146,7 +146,7 @@ export default function AccountPage() {
       {user && (
         <section>
           <div className="sey-container" style={{ paddingBlock: "22px", maxWidth: 720 }}>
-            <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Invite a studio · €15</h2>
+            <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 12px" }}>Invite a studio · SCR 250</h2>
             <ReferStudio />
           </div>
         </section>

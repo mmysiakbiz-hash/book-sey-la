@@ -2,7 +2,7 @@
 import React from "react";
 import { getMyReferrals, createReferral } from "@/lib/referrals";
 
-// Invite a studio → €15 credit for both once they go live. Self-loads the
+// Invite a studio → SCR 250 credit for both once they go live. Self-loads the
 // caller's referrals (RLS referrals_self).
 export function ReferStudio() {
   const [email, setEmail] = React.useState("");
@@ -34,7 +34,7 @@ export function ReferStudio() {
   return (
     <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "16px 18px" }}>
       <p style={{ margin: "0 0 12px", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
-        Know a great salon, spa or barber? Invite them — when they go live, you both get <b style={{ color: "var(--cocoa)" }}>€15</b> in credit.
+        Know a great salon, spa or barber? Invite them — when they go live, you both get <b style={{ color: "var(--cocoa)" }}>SCR 250</b> in credit.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input style={inp} type="email" inputMode="email" placeholder="studio@email.com" value={email}
@@ -49,7 +49,7 @@ export function ReferStudio() {
             <div key={r.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: "var(--text-sm)" }}>
               <span style={{ color: "var(--cocoa)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.referred_email}</span>
               <span style={{ fontWeight: 600, color: r.status === "completed" ? "var(--confirmed)" : "var(--text-muted)" }}>
-                {r.status === "completed" ? `+€${Math.round(r.credit_eur || 15)} earned` : "Invited · pending"}
+                {r.status === "completed" ? `+SCR ${Math.round(r.credit_eur || 250)} earned` : "Invited · pending"}
               </span>
             </div>
           ))}

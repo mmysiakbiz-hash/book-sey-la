@@ -13,7 +13,7 @@ import { createClient } from "@supabase/supabase-js";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CREDIT_EUR = 15;
+const CREDIT_SCR = 250;
 
 export async function POST(req) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,12 +44,12 @@ export async function POST(req) {
     referrer_email: referrer,
     referred_email: email,
     status: "pending",
-    credit_eur: CREDIT_EUR,
+    credit_eur: CREDIT_SCR,
   });
   if (error) {
     if ((error.code || "") === "23505") return NextResponse.json({ error: "already_invited" }, { status: 409 });
     console.error("[refer] insert failed:", error.message);
     return NextResponse.json({ error: "could_not_invite" }, { status: 400 });
   }
-  return NextResponse.json({ ok: true, credit: CREDIT_EUR });
+  return NextResponse.json({ ok: true, credit: CREDIT_SCR });
 }

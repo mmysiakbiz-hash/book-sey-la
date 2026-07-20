@@ -197,7 +197,7 @@ function Overview({ bi, range, onRange }) {
         <Stat label="Classes" value={bi.classes} sub={`${bi.class_bookings || 0} joins`} />
         <Stat label="Reviews" value={bi.reviews} sub={bi.avg_rating ? `avg ${bi.avg_rating}★` : "—"} />
         <Stat label="Referrals" value={(bi.referrals_completed || 0) + (bi.referrals_pending || 0)} sub={`${bi.referrals_completed || 0} paid · ${bi.referrals_pending || 0} pending`} />
-        <Stat label="Wallet credit out" value={`€${bi.wallet_out_eur || 0}`} />
+        <Stat label="Wallet credit out" value={`SCR ${bi.wallet_out_eur || 0}`} />
         <Stat label="Billing-blocked" value={s.blocked || 0} />
       </div>
 
@@ -289,7 +289,7 @@ function Users({ rows }) {
         <div key={u.email + i} style={{ padding: "12px 14px", borderTop: i ? "1px solid var(--line)" : "none", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ flex: 1, minWidth: 180, fontWeight: 600, color: "var(--cocoa)", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</span>
           <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{u.bookings} bookings</span>
-          <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>€{u.wallet} wallet</span>
+          <span style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>SCR {u.wallet} wallet</span>
           {u.owns > 0 && <span style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--eucalyptus)" }}>owner</span>}
         </div>
       ))}

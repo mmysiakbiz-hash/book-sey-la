@@ -1749,7 +1749,7 @@
       go: () => nav.push("favs")
     }, {
       ic: "sparkle",
-      lb: "Invite a studio · €15",
+      lb: "Invite a studio · SCR 250",
       go: () => nav.push("invite")
     }, {
       ic: "bell",
@@ -2180,14 +2180,14 @@
       style: {
         opacity: 0.8
       }
-    }, "Your wallet"), /*#__PURE__*/React.createElement("div", {
+    }, "Referral bonus"), /*#__PURE__*/React.createElement("div", {
       className: "wallet-amt"
-    }, "\u20AC15"), /*#__PURE__*/React.createElement("div", {
+    }, "SCR 250"), /*#__PURE__*/React.createElement("div", {
       className: "tiny",
       style: {
         opacity: 0.8
       }
-    }, "Credit toward any booking")), /*#__PURE__*/React.createElement("div", {
+    }, "for you and the studio")), /*#__PURE__*/React.createElement("div", {
       className: "block--flush"
     }, /*#__PURE__*/React.createElement("h2", {
       className: "h-md"
@@ -2200,7 +2200,7 @@
       style: {
         color: "var(--ink)"
       }
-    }, "\u20AC15"), " in credit.")), /*#__PURE__*/React.createElement("div", {
+    }, "SCR 250"), " in credit.")), /*#__PURE__*/React.createElement("div", {
       className: "block--flush"
     }, /*#__PURE__*/React.createElement("div", {
       className: "tiny muted",
