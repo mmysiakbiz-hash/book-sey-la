@@ -82,11 +82,25 @@ export async function POST(req) {
   const displayName = (user.user_metadata && user.user_metadata.name) || null;
   const phone = typeof body.phone === "string" && body.phone.trim() ? body.phone.trim() : ((user.user_metadata && user.user_metadata.phone) || null);
 
+  // Look up names up-front: used both to snapshot the service name onto the booking
+  // (so a later rename/removal never rewrites this booking's history) and for the email.
+  let studioName = "";
+  let serviceName = "";
+  try {
+    const { data: s } = await supabase.from("studios").select("name").eq("id", body.studioId).maybeSingle();
+    studioName = (s && s.name) || "";
+    if (body.serviceId) {
+      const { data: sv } = await supabase.from("services").select("name").eq("id", body.serviceId).maybeSingle();
+      serviceName = (sv && sv.name) || "";
+    }
+  } catch {}
+
   const { data: booking, error } = await supabase
     .from("bookings")
     .insert({
       studio_id: body.studioId,
       service_id: body.serviceId || null,
+      service_name: serviceName || null,
       staff_id: body.staffId || null,
       customer_id: user.id,
       during,
@@ -104,18 +118,6 @@ export async function POST(req) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-
-  // Look up names for the email (public read); best-effort.
-  let studioName = "";
-  let serviceName = "";
-  try {
-    const { data: s } = await supabase.from("studios").select("name").eq("id", body.studioId).maybeSingle();
-    studioName = (s && s.name) || "";
-    if (body.serviceId) {
-      const { data: sv } = await supabase.from("services").select("name").eq("id", body.serviceId).maybeSingle();
-      serviceName = (sv && sv.name) || "";
-    }
-  } catch {}
 
   const whenText = start.toLocaleString("en-GB", {
     weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe",

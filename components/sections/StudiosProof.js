@@ -13,7 +13,7 @@ const FEATURES = [
   { icon: "calendar", title: "Packages & memberships", body: "Sell prepaid bundles and memberships — remaining credits are tracked for you and redeemed at checkout." },
   { icon: "pin", title: "Your page, and a widget", body: "A polished public page comes built in — plus a one-line widget to drop your live calendar onto your own site or Instagram bio." },
   { icon: "shield", title: "Real multi-team scheduling", body: "Add each team member with their own working hours and calendar — bookings only offer times when that person actually works." },
-  { icon: "heart", title: "Stay in touch on WhatsApp", body: "Automatic WhatsApp and email reminders cut no-shows, and simple campaigns bring past clients back — the islands live on WhatsApp." },
+  { icon: "heart", title: "Stay in touch on WhatsApp", body: "Automatic email reminders cut no-shows, and one-tap WhatsApp lets you reach any client straight from a booking — the islands live on WhatsApp." },
 ];
 
 function StudiosProof() {

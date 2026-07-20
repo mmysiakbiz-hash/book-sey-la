@@ -119,7 +119,7 @@
     if (!client) return [];
     try {
       var res = await client.from("bookings")
-        .select("id, during, status, price_eur, studios(slug,name), services(id,name), staff(name)")
+        .select("id, during, status, price_eur, service_name, studios(slug,name), services(id,name), staff(name)")
         .order("during", { ascending: false });
       var rows = (res && res.data) || [];
       return rows.map(function (b) {
@@ -131,7 +131,7 @@
           price: b.price_eur != null ? Number(b.price_eur) : null,
           studioSlug: (b.studios && b.studios.slug) || null,
           studioName: (b.studios && b.studios.name) || "",
-          serviceName: (b.services && b.services.name) || "",
+          serviceName: b.service_name || (b.services && b.services.name) || "",
           staffName: (b.staff && b.staff.name) || "",
         };
       }).filter(function (b) { return b.studioSlug; });
@@ -165,7 +165,7 @@
     if (!client || !studioId) return [];
     try {
       var res = await client.from("bookings")
-        .select("id, during, status, price_eur, guest_name, guest_phone, services(name), staff(name)")
+        .select("id, during, status, price_eur, guest_name, guest_phone, service_name, services(name), staff(name)")
         .eq("studio_id", studioId).order("during", { ascending: true });
       var rows = (res && res.data) || [];
       return rows.map(function (b) {
@@ -173,7 +173,7 @@
         return { id: b.id, start: r.start, end: r.end, status: b.status,
           price: b.price_eur != null ? Number(b.price_eur) : null,
           client: b.guest_name || "Client", phone: b.guest_phone || "",
-          service: (b.services && b.services.name) || "Appointment",
+          service: b.service_name || (b.services && b.services.name) || "Appointment",
           staff: (b.staff && b.staff.name) || "" };
       }).filter(function (b) { return b.start && b.status !== "cancelled"; });
     } catch (e) { return []; }
