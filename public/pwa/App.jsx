@@ -16,13 +16,15 @@
     if (window.L) return Promise.resolve(window.L);
     if (_leafletPromise) return _leafletPromise;
     _leafletPromise = new Promise((resolve, reject) => {
+      // Self-hosted (./vendor/, resolved against <base href="/pwa/">) — same as
+      // React/supabase. No CDN, so an unpkg outage can't blank the map.
       if (!document.querySelector("link[data-leaflet]")) {
         const link = document.createElement("link");
-        link.rel = "stylesheet"; link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        link.rel = "stylesheet"; link.href = "./vendor/leaflet/leaflet.css";
         link.setAttribute("data-leaflet", "1"); document.head.appendChild(link);
       }
       const s = document.createElement("script");
-      s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      s.src = "./vendor/leaflet/leaflet.js";
       s.setAttribute("data-leaflet", "1");
       s.onload = () => resolve(window.L); s.onerror = reject;
       document.body.appendChild(s);
@@ -44,7 +46,7 @@
         if (cancelled || !elRef.current) return;
         if (!mapRef.current) {
           mapRef.current = L.map(elRef.current, { scrollWheelZoom: false, attributionControl: false }).setView(SEY_CENTER, 11);
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(mapRef.current);
+          L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(mapRef.current);
         }
         const map = mapRef.current;
         (map._seyMarkers || []).forEach((m) => map.removeLayer(m));
