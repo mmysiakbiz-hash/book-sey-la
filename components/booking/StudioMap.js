@@ -14,6 +14,9 @@ const LEAFLET_CSS = "/vendor/leaflet/leaflet.css";
 const LEAFLET_JS = "/vendor/leaflet/leaflet.js";
 
 // Inject Leaflet's CSS + JS from our own domain and resolve with window.L.
+// Polls for window.L (handles an already-loaded/cached script that won't re-fire
+// its load event) and hard-times-out so the map can never hang silently blank —
+// on timeout it rejects, which shows the visible "Map couldn't load" fallback.
 function loadLeaflet() {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") return reject(new Error("no window"));
@@ -25,19 +28,22 @@ function loadLeaflet() {
       link.setAttribute("data-leaflet", "1");
       document.head.appendChild(link);
     }
-    const existing = document.querySelector("script[data-leaflet]");
-    if (existing) {
-      existing.addEventListener("load", () => resolve(window.L));
-      existing.addEventListener("error", reject);
-      if (window.L) resolve(window.L);
-      return;
+    let s = document.querySelector("script[data-leaflet]");
+    if (!s) {
+      s = document.createElement("script");
+      s.src = LEAFLET_JS;
+      s.setAttribute("data-leaflet", "1");
+      document.body.appendChild(s);
     }
-    const s = document.createElement("script");
-    s.src = LEAFLET_JS;
-    s.setAttribute("data-leaflet", "1");
-    s.onload = () => resolve(window.L);
-    s.onerror = reject;
-    document.body.appendChild(s);
+    const ready = () => (window.L ? (resolve(window.L), true) : false);
+    s.addEventListener("load", () => { if (!ready()) reject(new Error("leaflet loaded but window.L missing")); });
+    s.addEventListener("error", () => reject(new Error("leaflet failed to load")));
+    // Backstop for a cached script (load already fired) or a stalled network.
+    let waited = 0;
+    const iv = setInterval(() => {
+      if (ready()) clearInterval(iv);
+      else if ((waited += 200) >= 8000) { clearInterval(iv); reject(new Error("leaflet timeout")); }
+    }, 200);
   });
 }
 
