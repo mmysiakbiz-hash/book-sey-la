@@ -12,7 +12,7 @@ import {
   getStudioBookings, setBookingStatus, rescheduleBooking,
   getOwnerClasses, createClassSession, deleteClassSession,
   claimUnclaimedForMe, rejectListing,
-  createOwnerBooking, getStudioClients, saveClientNote, saveClientTags, importClients,
+  createOwnerBooking, getStudioClients, saveClientNote, saveClientTags, importClients, deleteStudioClient,
   getTimeOff, addTimeOff, deleteTimeOff,
   getLoyalty, saveLoyalty, redeemLoyalty, sendMarketing,
   getWaitlist, setWaitlistStatus, deleteWaitlistEntry,
@@ -335,7 +335,8 @@ export default function OwnerPanel() {
           onSaveNote={(email, note) => saveClientNote(studio.id, email, note)}
           onSaveTags={async (email, tags) => { await saveClientTags(studio.id, email, tags); loadClients(studio.id); }}
           onSaveLoyalty={async (p) => { const r = await saveLoyalty(studio.id, p); loadClients(studio.id); return r; }}
-          onRedeem={async (email) => { await redeemLoyalty(studio.id, email); loadClients(studio.id); }} />
+          onRedeem={async (email) => { await redeemLoyalty(studio.id, email); loadClients(studio.id); }}
+          onDeleteClient={async (email) => { const r = await deleteStudioClient(studio.id, email); loadClients(studio.id); return r; }} />
       ) : view === "classes" && studio ? (
         <Classes studioId={studio.id} classes={classes} onRefresh={() => loadClasses(studio.id)} />
       ) : view === "billing" && studio ? (
@@ -1007,7 +1008,7 @@ function ImportClients({ onImport }) {
   );
 }
 
-function Clients2({ clients, loyalty, onImport, onSaveNote, onSaveTags, onSaveLoyalty, onRedeem }) {
+function Clients2({ clients, loyalty, onImport, onSaveNote, onSaveTags, onSaveLoyalty, onRedeem, onDeleteClient }) {
   const [open, setOpen] = React.useState(null); // client key with note editor open
   const [draft, setDraft] = React.useState("");
   const [tagInput, setTagInput] = React.useState("");
@@ -1097,6 +1098,14 @@ function Clients2({ clients, loyalty, onImport, onSaveNote, onSaveTags, onSaveLo
                 </div>
               )}
               {!c.email && <span style={{ color: "var(--text-caption)", fontSize: "var(--text-xs)" }}>Notes & tags need an email on the client.</span>}
+              {c.email && c.visits === 0 && onDeleteClient && (
+                <div style={{ borderTop: "1px solid var(--line)", paddingTop: 10 }}>
+                  <button onClick={async () => { if (window.confirm(`Remove ${c.name} from your clients? This clears their imported record — it won't touch any booking history.`)) await onDeleteClient(c.email); }}
+                    style={{ border: "1px solid var(--clay)", background: "var(--surface)", borderRadius: 999, padding: "6px 12px", fontSize: "var(--text-xs)", fontWeight: 600, cursor: "pointer", color: "var(--clay)" }}>
+                    Remove client
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
