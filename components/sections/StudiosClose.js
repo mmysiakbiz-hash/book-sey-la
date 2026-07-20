@@ -72,7 +72,7 @@ function StudiosClose() {
         </div>
         <div className="sey-container st-footer-bottom">
           <span>© 2026 sey.la</span>
-          <div className="st-footer-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Support</a></div>
+          <div className="st-footer-links"><a href="/terms">Terms &amp; Privacy</a><a href="/contact">Contact</a></div>
         </div>
       </footer>
     </React.Fragment>

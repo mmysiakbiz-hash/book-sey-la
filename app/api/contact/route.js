@@ -9,7 +9,7 @@ import { sendBrevoEmail, hasBrevo, SENDER } from "@/lib/email";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const SUPPORT_INBOX = "hello@sey.la";
+const SUPPORT_INBOX = "book@sey.la";
 const isEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 const esc = (s) =>
   String(s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -47,9 +47,10 @@ export async function POST(req) {
 
   const r = await sendBrevoEmail({
     to: SUPPORT_INBOX,
-    toName: "sey.la support",
+    toName: "sey.la | book",
     subject: `Contact · ${topic} · ${name}`,
     html,
+    replyTo: { email, name },
   });
   if (r.error) return NextResponse.json({ error: "send_failed" }, { status: 502 });
   return NextResponse.json({ ok: true });

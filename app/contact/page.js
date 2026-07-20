@@ -31,13 +31,13 @@ export default function ContactPage() {
         setState("error");
         setErr(
           j.error === "not_configured"
-            ? "Email isn't set up yet — please write to us at hello@sey.la in the meantime."
-            : "Couldn't send your message. Please try again, or email hello@sey.la."
+            ? "Email isn't set up yet — please write to us at book@sey.la in the meantime."
+            : "Couldn't send your message. Please try again, or email book@sey.la."
         );
       }
     } catch (e) {
       setState("error");
-      setErr("Network error — please try again, or email hello@sey.la.");
+      setErr("Network error — please try again, or email book@sey.la.");
     }
   }
 
@@ -109,7 +109,7 @@ export default function ContactPage() {
             <aside>
               <div className="pg-info-item">
                 <div className="t">General enquiries</div>
-                <div className="d"><a href="mailto:hello@sey.la">hello@sey.la</a></div>
+                <div className="d"><a href="mailto:book@sey.la">book@sey.la</a></div>
               </div>
               <div className="pg-info-item">
                 <div className="t">Privacy / data requests</div>

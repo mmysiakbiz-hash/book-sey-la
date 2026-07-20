@@ -210,12 +210,16 @@ function Overview({ bi, range, onRange }) {
       </div>
 
       <h2 style={{ fontSize: "var(--text-h3)", margin: "0 0 10px" }}>Bookings · {chartLabel}</h2>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14 }}>
+      <div style={{ display: "flex", alignItems: "stretch", gap: 6, height: 120, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: 14, overflow: "hidden" }}>
         {(bi.bookings_14d || []).length === 0 && <span style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No bookings in the last 14 days.</span>}
         {(bi.bookings_14d || []).map((d) => (
-          <div key={d.day} title={`${d.day}: ${d.count}`} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <div style={{ width: "100%", height: `${Math.round((d.count / max) * 88)}px`, background: "var(--clay)", borderRadius: 4, minHeight: 2 }} />
-            <span style={{ fontSize: 9, color: "var(--text-caption)" }}>{String(d.day).slice(5)}</span>
+          <div key={d.day} title={`${d.day}: ${d.count}`} style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {/* Bar area flexes to fill the space above the label; the bar is a % of it,
+                so the tallest bar can never overflow the card (it did before at 88px). */}
+            <div style={{ flex: 1, minHeight: 0, width: "100%", display: "flex", alignItems: "flex-end" }}>
+              <div style={{ width: "100%", height: `${Math.round((d.count / max) * 100)}%`, background: "var(--clay)", borderRadius: 4, minHeight: 2 }} />
+            </div>
+            <span style={{ marginTop: 4, fontSize: 9, color: "var(--text-caption)" }}>{String(d.day).slice(5)}</span>
           </div>
         ))}
       </div>
