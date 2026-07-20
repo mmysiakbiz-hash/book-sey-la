@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { SectionHeader } from "@/components/core/SectionHeader";
 import { Button } from "@/components/core/Button";
 import { Input } from "@/components/core/Input";
 import { Icon } from "@/components/brand/Icon";
@@ -22,6 +23,12 @@ function StudiosClose() {
     <React.Fragment>
       <section className="st-section" id="pricing">
         <div className="sey-container">
+          <SectionHeader
+            align="center"
+            eyebrow="Simple, honest pricing"
+            title="One flat price,"
+            accent="no surprises."
+          />
           <div className="st-pricing">
             <div className="st-price-head">
               <span className="st-price-amt">Free</span>
