@@ -508,6 +508,23 @@ export default function OwnerPanel() {
   );
 }
 
+// Human label for a blocked-time entry, in Mahé time. Full-day blocks sit on
+// Mahé midnight boundaries (00:00 → next 00:00) — show "All day", not "00:00 → 00:00".
+function fmtBlockedWhen(t) {
+  if (!t.start) return "—";
+  const start = new Date(t.start);
+  const end = t.end ? new Date(t.end) : null;
+  const TZ = "Indian/Mahe";
+  const mTime = (d) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
+  const mDate = (d) => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: TZ });
+  const mYmd = (d) => d.toLocaleDateString("en-CA", { timeZone: TZ });
+  if (end && mTime(start) === "00:00" && mTime(end) === "00:00") {
+    const lastDay = new Date(end.getTime() - 1); // end is exclusive next-midnight
+    return mYmd(start) === mYmd(lastDay) ? `${mDate(start)} · All day` : `${mDate(start)} → ${mDate(lastDay)} · All day`;
+  }
+  return `${mDate(start)}, ${mTime(start)}${end ? " → " + mTime(end) : ""}`;
+}
+
 function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, timeOff, onAddTimeOff, onDeleteTimeOff, onReschedule }) {
   const [busy, setBusy] = React.useState(null);
   const [adding, setAdding] = React.useState(false);
@@ -567,8 +584,7 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
             {timeOff.map((t) => (
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface)", border: "1px dashed var(--line-strong)", borderRadius: "var(--radius-md)", padding: "8px 12px" }}>
                 <span style={{ flex: 1, fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>
-                  {t.start ? t.start.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : "—"}
-                  {t.end ? " → " + t.end.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" }) : ""}
+                  {fmtBlockedWhen(t)}
                   {t.reason ? ` · ${t.reason}` : ""}
                 </span>
                 <button onClick={async () => { await onDeleteTimeOff(t.id); onRefresh(); }} style={{ border: "none", background: "none", color: "var(--cocoa-40)", cursor: "pointer", fontSize: 18 }}>×</button>
@@ -631,7 +647,10 @@ function Agenda({ bookings, onRefresh, onEdit, publicUrl, live, catalog, onAdd, 
               <div style={{ display: "grid", gap: 8 }}>
                 {past.slice(0, 20).map((b) => (
                   <div key={b.id} style={{ ...card, opacity: 0.72 }}>
-                    <div style={{ width: 58, fontSize: "var(--text-xs)", color: "var(--cocoa-40)" }}>{b.start ? b.start.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}</div>
+                    <div style={{ width: 58, fontSize: "var(--text-xs)", color: "var(--cocoa-40)" }}>
+                      {b.start ? b.start.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Indian/Mahe" }) : "—"}
+                      {b.start && <span style={{ display: "block" }}>{b.start.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Indian/Mahe" })}</span>}
+                    </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, color: "var(--cocoa)" }}>{b.service}</div>
                       <div style={{ fontSize: "var(--text-sm)", color: "var(--cocoa-60)" }}>{b.client}</div>

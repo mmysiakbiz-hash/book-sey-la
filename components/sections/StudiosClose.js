@@ -12,7 +12,7 @@ import { Logo } from "@/components/brand/Logo";
 const INCLUDED = [
   "Live real-time calendar",
   "Verified local listing",
-  "WhatsApp & email reminders",
+  "Automatic email reminders",
   "Cancellation protection",
   "Client & loyalty tools",
   "Always free for your clients",

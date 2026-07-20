@@ -21,13 +21,20 @@ export function BlockCalendar({ blocked = [], onAdd, onDone }) {
   const [err, setErr] = React.useState("");
   const todayStr = ymd(now);
 
+  // Blocks are stored on Mahé-day boundaries (00:00 +04:00 = 20:00 UTC the day
+  // before). Enumerate the covered days in MAHÉ time — using the browser's local
+  // timezone here struck an extra (previous) day for viewers west of UTC+4.
+  const maheYmd = (d) => d.toLocaleDateString("en-CA", { timeZone: "Indian/Mahe" });
+  const nextYmd = (s) => { const [Y, M, D] = s.split("-").map(Number); const n = new Date(Date.UTC(Y, M - 1, D + 1)); return `${n.getUTCFullYear()}-${String(n.getUTCMonth() + 1).padStart(2, "0")}-${String(n.getUTCDate()).padStart(2, "0")}`; };
   const blockedDays = React.useMemo(() => {
     const s = new Set();
     (blocked || []).forEach((t) => {
       if (!t.start) return;
-      const a = new Date(t.start); a.setHours(0, 0, 0, 0);
-      const b = t.end ? new Date(t.end) : new Date(a.getTime() + 86400000);
-      for (let d = new Date(a); d < b; d.setDate(d.getDate() + 1)) s.add(ymd(d));
+      const startInstant = new Date(t.start);
+      const endInstant = t.end ? new Date(t.end) : new Date(startInstant.getTime() + 86400000);
+      let cur = maheYmd(startInstant);
+      const last = maheYmd(new Date(endInstant.getTime() - 1)); // inclusive last covered Mahé day
+      for (let i = 0; i < 400 && cur <= last; i++) { s.add(cur); cur = nextYmd(cur); }
     });
     return s;
   }, [blocked]);

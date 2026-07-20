@@ -32,7 +32,6 @@ const HTML=`<header class="pg-nav">
 
       <div class="pg-prose">
         <p class="intro">This policy explains how sey.la | book collects, uses and protects your personal data when you use our booking platform.</p>
-        <div class="pg-note">This is a design-system template. Replace with a policy reviewed by qualified legal counsel before going live.</div>
 
         <h2 id="who"><span class="num">1</span>Who we are</h2>
         <p>sey.la | book is a booking platform for beauty, wellness and studio services in the Seychelles, operated by <strong>Nexora Consulting LLC</strong>, Sharjah Media City, Sharjah, United Arab Emirates (Formation No. 2541456). We are the data controller for the personal data described here.</p>

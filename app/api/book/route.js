@@ -3,7 +3,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendBrevoEmail, bookingConfirmationEmail } from "@/lib/email";
-import { sendWhatsApp, bookingConfirmationText, hasWhatsApp } from "@/lib/whatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -130,17 +129,9 @@ export async function POST(req) {
   const priceText = body.priceEur != null ? `SCR ${Math.round(body.priceEur)}` : "";
   const { subject, html } = bookingConfirmationEmail({ studioName, serviceName, whenText, priceText });
 
-  // Email is best-effort — the booking is already saved either way.
+  // Confirmation is by email only. Best-effort — the booking is already saved.
   const mail = await sendBrevoEmail({ to: user.email, subject, html });
   if (mail.error) console.error("[book] confirmation email failed:", mail.error);
 
-  // WhatsApp confirmation is additive (no-op unless WHAPI_TOKEN is set + phone known).
-  let waSent = false;
-  if (phone && hasWhatsApp()) {
-    const wa = await sendWhatsApp({ to: phone, body: bookingConfirmationText({ studioName, serviceName, whenText, priceText }) });
-    waSent = !!wa.ok;
-    if (wa.error) console.error("[book] confirmation whatsapp failed:", wa.error);
-  }
-
-  return NextResponse.json({ ok: true, booking, emailed: !mail.error, whatsapped: waSent, emailError: mail.error || null });
+  return NextResponse.json({ ok: true, booking, emailed: !mail.error, emailError: mail.error || null });
 }

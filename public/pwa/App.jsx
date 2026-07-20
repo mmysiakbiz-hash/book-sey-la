@@ -941,7 +941,7 @@
               </div>
               <button className="btn btn--primary btn--full" style={{ marginTop: 14 }} disabled={estate === "sending" || !email.trim()} onClick={sendLink}>{estate === "sending" ? "Sending…" : "Send magic link"}</button>
               {estate === "error" && <p className="tiny" style={{ color: "var(--clay)", marginTop: 12 }}>Couldn't send the link ({emsg}). Please try again.</p>}
-              <p className="tiny muted" style={{ marginTop: 14, lineHeight: 1.5 }}>By continuing you agree to the Terms and Privacy Policy.</p>
+              <p className="tiny muted" style={{ marginTop: 14, lineHeight: 1.5 }}>By continuing you agree to the <a href="/terms" target="_blank" rel="noopener" style={{ color: "var(--clay)", fontWeight: 600 }}>Terms</a> and <a href="/privacy" target="_blank" rel="noopener" style={{ color: "var(--clay)", fontWeight: 600 }}>Privacy Policy</a>.</p>
             </>
           )}
         </div>
@@ -1346,8 +1346,9 @@
       (async () => {
         const list = window.SEY_BOOK ? await window.SEY_BOOK.getStudioClients(studio.id) : [];
         setClients(list);
-        const all = {}; list.forEach((c) => { all[c.email] = true; });
-        setSel(all);
+        // Start with NO ONE selected — the owner opts recipients in on purpose, so a
+        // stray tap can't fire a mass email to every client at once.
+        setSel({});
       })();
     }, []);
 

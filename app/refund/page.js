@@ -30,7 +30,6 @@ const HTML=`<header class="pg-nav">
 
       <div class="pg-prose">
         <p class="intro">How refunds work for clients booking services and for studios subscribing to sey.la | book.</p>
-        <div class="pg-note">This is a design-system template. Replace with a policy reviewed by qualified legal counsel before going live.</div>
 
         <h2 id="clients"><span class="num">1</span>Client bookings</h2>
         <p>Booking through sey.la | book is <strong>free for clients</strong> — we don't charge you a booking fee, so there's nothing for us to refund. Any payment for the service itself is made to the studio, and refunds for services are handled by that studio under its own policy.</p>

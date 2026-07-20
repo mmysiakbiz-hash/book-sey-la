@@ -62,7 +62,7 @@ export function BookNow({ studioId, service, team = [], hours = [], onClose }) {
   // Keep the picked time valid as the day (and thus slot set) changes.
   React.useEffect(() => { setTime((t) => (t && slots.includes(t) ? t : (slots[0] || null))); }, [slots]);
 
-  // Prefill the WhatsApp number from the profile if we have one.
+  // Prefill the phone number from the profile if we have one.
   React.useEffect(() => {
     const p = user && user.user_metadata && user.user_metadata.phone;
     if (p) setPhone(String(p));
@@ -163,7 +163,7 @@ export function BookNow({ studioId, service, team = [], hours = [], onClose }) {
 
           {user && (
             <>
-              <div style={{ marginTop: 12, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: ".04em", color: "var(--text-caption)" }}>WhatsApp number <span style={{ textTransform: "none", letterSpacing: 0 }}>(optional — for confirmation & reminders)</span></div>
+              <div style={{ marginTop: 12, fontSize: "var(--text-xs)", textTransform: "uppercase", letterSpacing: ".04em", color: "var(--text-caption)" }}>Phone number <span style={{ textTransform: "none", letterSpacing: 0 }}>(optional — only your studio sees it, for last-minute changes)</span></div>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" inputMode="tel" placeholder="+248 …"
                 style={{ marginTop: 6, width: "100%", boxSizing: "border-box", border: "1px solid var(--line)", borderRadius: "var(--radius-md)", padding: "10px 12px", font: "inherit", color: "var(--text-body)", background: "var(--surface)" }} />
             </>

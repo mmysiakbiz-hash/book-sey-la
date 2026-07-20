@@ -1959,7 +1959,23 @@
         marginTop: 14,
         lineHeight: 1.5
       }
-    }, "By continuing you agree to the Terms and Privacy Policy."))));
+    }, "By continuing you agree to the ", /*#__PURE__*/React.createElement("a", {
+      href: "/terms",
+      target: "_blank",
+      rel: "noopener",
+      style: {
+        color: "var(--clay)",
+        fontWeight: 600
+      }
+    }, "Terms"), " and ", /*#__PURE__*/React.createElement("a", {
+      href: "/privacy",
+      target: "_blank",
+      rel: "noopener",
+      style: {
+        color: "var(--clay)",
+        fontWeight: 600
+      }
+    }, "Privacy Policy"), "."))));
   }
 
   // ---------- LOYALTY / REWARDS ----------
@@ -2852,11 +2868,9 @@
       (async () => {
         const list = window.SEY_BOOK ? await window.SEY_BOOK.getStudioClients(studio.id) : [];
         setClients(list);
-        const all = {};
-        list.forEach(c => {
-          all[c.email] = true;
-        });
-        setSel(all);
+        // Start with NO ONE selected — the owner opts recipients in on purpose, so a
+        // stray tap can't fire a mass email to every client at once.
+        setSel({});
       })();
     }, []);
     const chosen = Object.keys(sel).filter(e => sel[e]);

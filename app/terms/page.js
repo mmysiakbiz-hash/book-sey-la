@@ -32,7 +32,6 @@ const HTML=`<header class="pg-nav">
 
       <div class="pg-prose">
         <p class="intro">These terms govern your use of sey.la | book. By using the platform you agree to them.</p>
-        <div class="pg-note">This is a design-system template. Replace with terms reviewed by qualified legal counsel before going live.</div>
 
         <h2 id="accept"><span class="num">1</span>Acceptance</h2>
         <p>sey.la | book is operated by <strong>Nexora Consulting LLC</strong> (Sharjah Media City, UAE). By creating an account or booking through the platform, you accept these terms. If you do not agree, please don't use the service.</p>

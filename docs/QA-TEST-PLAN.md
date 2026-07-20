@@ -27,9 +27,31 @@ test at **desktop (≥1200px)** and **mobile (390px)** widths.
 - **Currency:** client-facing **service/package prices in SCR**; the **referral bonus is SCR 250** (client-facing, in SCR — this is intentional, not a bug); only the **studio subscription/MRR is EUR (€25/month)**. No mix-ups. A price-less service shows **"On request"**, never "SCR 0".
 - **Timezone:** every slot/booking/agenda time is **Mahé (UTC+4)** — a time picked as 14:00 must persist/show as 14:00 Mahé.
 - **No fake/placeholder data:** no invented ratings (e.g. "4.9 (128)"), reviews, opening hours, "Available today", or demo studios (Kreol Spa, L'Accent Barber…). Empty → honest empty state.
-- **No false promises:** nothing claims push notifications, SMS, online payment, or spendable gift-card/wallet credit (there are none).
+- **No false promises:** nothing claims push notifications, SMS, **WhatsApp confirmations/reminders**, online payment, or spendable gift-card/wallet credit (there are none). **Client notifications are email-only.** A studio may still list its own WhatsApp number as a contact, and an owner may tap to message a client manually — but nothing may imply the *system* sends WhatsApp messages.
 - **Brand links** (logo, "powered by") go to **book.sey.la**, never the parent `sey.la`.
 - **Mobile:** no horizontal page scroll / elements bleeding off the right edge.
+- **Rendering actually happens (not just DOM present):** anything that depends on a
+  third-party asset or a canvas/tile render — above all the **map** — must be checked
+  *visually*, not by asserting the container exists. A present-but-blank `<div>` is a
+  FAIL. For the map: confirm **OSM tiles are actually painted** (take a screenshot; the
+  map area is not empty/grey), and open **devtools → Network** to confirm no failed
+  requests for `leaflet.js`/`leaflet.css` or `*/tile.openstreetmap.org/*`. The map must
+  **not** depend on a public CDN (unpkg) being up — assets are self-hosted; a blocked CDN
+  must not blank it. If the map fails, a **visible fallback** ("Map couldn't load…") must
+  show — a silent blank is itself a bug to report.
+
+---
+
+## 0) COVERAGE — do not skip a surface
+
+A single run must touch **all three personas AND both app layers**. A panel-only (or
+client-only) run is incomplete — log which of these you actually exercised, and flag any
+you skipped so a gap is never mistaken for a pass:
+
+- [ ] Client · web (`/`, `/search`, `/studio/[slug]`, `/account`) — **includes the map, verified visually**
+- [ ] Client · PWA (`/pwa`)
+- [ ] Salon/owner · web `/panel` and PWA pro mode
+- [ ] Admin · `/admin` (if in scope)
 
 ---
 
@@ -38,7 +60,7 @@ test at **desktop (≥1200px)** and **mobile (390px)** widths.
 Discovery & search
 - Home: categories, "Popular" chips (filter by type), island chips, "Visited & favourites" hub (only if you have history/favourites) with **Book again**.
 - `/search`: text query matches name/category/service; **location/island** filter works (island chip `?loc=Mahé`); category chips; sort (Recommended / Top rated / Price).
-- **Map (Airbnb-style):** floating **Map/List** toggle; map shows real OSM pins; **draggable sheet** (drag handle up/down, snaps); clear way back to list. No fake grid.
+- **Map (Airbnb-style):** floating **Map/List** toggle; **the map tiles actually render** (screenshot it — not a blank/grey box; see the Rendering invariant); real OSM pins in the right place; **draggable sheet** (drag handle up/down, snaps); clear way back to list. No fake grid. Check devtools Network for any failed leaflet/tile request. Repeat this check on the **studio page** map and the **PWA** map.
 
 Studio page (`/studio/test-barber-victoria`)
 - Services grouped w/ **SCR** prices + duration; **Book** buttons. Team shows photos (if set). Packages shown only if defined. Hours table only if real hours. Reviews section only if real reviews. **Share** button opens native share / copies link. No fake rating pill.

@@ -10,7 +10,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendBrevoEmail, bookingReminderEmail, reviewRequestEmail, billingBlockedEmail } from "@/lib/email";
-import { sendWhatsApp, bookingReminderText, hasWhatsApp } from "@/lib/whatsapp";
 import { signReviewToken } from "@/lib/reviewToken";
 
 const GRACE_MS = 14 * 24 * 3600 * 1000;
@@ -46,15 +45,7 @@ async function processKind(supabase, kind) {
       if (!mail.error) delivered = true;
       else console.error(`[cron] ${kind} reminder email failed for ${b.id}:`, mail.error);
     }
-    if (b.phone && hasWhatsApp()) {
-      const wa = await sendWhatsApp({
-        to: b.phone,
-        body: bookingReminderText({ studioName: b.studio_name || "", serviceName: b.service_name || "", whenText: whenText(b.starts_at), kind }),
-      });
-      if (wa.ok) delivered = true;
-      else if (wa.error) console.error(`[cron] ${kind} reminder whatsapp failed for ${b.id}:`, wa.error);
-    }
-    // Flag flips when the reminder went out on at least one channel.
+    // Reminders are email-only. Flag flips when the email went out.
     if (delivered) sentIds.push(b.id);
   }
 
