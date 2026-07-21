@@ -20,15 +20,31 @@ function priceLabel(s) {
   return min != null ? `SCR ${min}` : null;
 }
 
-// Resolve with window.L (loaded in <head>); reject after ~4s so we can fall back.
-function waitForL() {
+// Ensure Leaflet is loaded (inject the self-hosted script — a manually-appended
+// <script> is reliably executed), then resolve with window.L. Rejects after ~6s
+// so the caller can fall back to the iframe map.
+function ensureLeaflet() {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") return reject(new Error("no window"));
     if (window.L) return resolve(window.L);
+    if (!document.querySelector("link[data-leaflet]")) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "/vendor/leaflet/leaflet.css";
+      link.setAttribute("data-leaflet", "1");
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector("script[data-leaflet]")) {
+      const sc = document.createElement("script");
+      sc.src = "/vendor/leaflet/leaflet.js";
+      sc.setAttribute("data-leaflet", "1");
+      sc.async = true;
+      document.body.appendChild(sc);
+    }
     let waited = 0;
     const iv = setInterval(() => {
       if (window.L) { clearInterval(iv); resolve(window.L); }
-      else if ((waited += 100) >= 4000) { clearInterval(iv); reject(new Error("leaflet unavailable")); }
+      else if ((waited += 100) >= 6000) { clearInterval(iv); reject(new Error("leaflet unavailable")); }
     }, 100);
   });
 }
@@ -53,7 +69,7 @@ export function StudioMap({ studios = [] }) {
   React.useEffect(() => {
     if (!pins.length) return;
     let cancelled = false;
-    waitForL()
+    ensureLeaflet()
       .then((L) => {
         if (cancelled || !elRef.current) return;
         if (!mapRef.current) {
